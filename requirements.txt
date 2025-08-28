@@ -1,7 +1,11 @@
+# pydanticは型間違うとすぐエラーを出してくれる
 fastapi
 uvicorn[standard]
-sqlalchemy
+pydantic[email]
+pydantic-settings
+SQLAlchemy>=2.0
+asyncpg
+greenlet
 psycopg2-binary
-pydantic
-python-dotenv
+psycopg[binary]
 alembic

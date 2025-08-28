@@ -1,12 +1,18 @@
-from pydantic import BaseModel
+# app/schemas/user.py
+# User schema definition: minimal example
+
+from pydantic import BaseModel, EmailStr
+
+
+class userBase(BaseModel):
+    email: EmailStr
+    displayname: str
 
 class UserCreate(BaseModel):
-    nickname: str
-    email: str
-    gender_identity: str
-    sexuality: str
+    pass
 
-class UserResponse(UserCreate):
-    id: int
+class UserRead(BaseModel):
+    id : int
+
     class Config:
-        orm_mode = True
+        from_attributes = True

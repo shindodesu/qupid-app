@@ -1,0 +1,27 @@
+# docker-compose.yml
+
+services:
+  api:
+    build: # 読み込むDockerfileの指定
+      context: .
+      dockerfile: Dockerfile
+    ports: #  ホスト側:コンテナ側
+      - "8000:8000"
+    volumes: # ローカルファイルをコンテナにコピー・同期
+      - .:/app
+    environment: # 環境変数の設定
+      - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/mydatabase
+    depends_on: # dbコンテナが起動してからapiコンテナを起動
+      - db
+
+  db:
+    image: postgres:16-alpine # 使うイメージの指定
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/ # データ永続化のためのボリュームマウント # コンテナを停止してもデータが消えない。
+    environment:
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=mydatabase
+
+volumes:
+  postgres_data:
