@@ -15,6 +15,7 @@ class User(Base, TimestampMixin):
     display_name: Mapped[str] = mapped_column(String(100), nullable=False, default="Anonymous")
     bio: Mapped[str | None] = mapped_column(String(1000), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # 学内属性（必要に応じて調整）
     faculty: Mapped[str | None] = mapped_column(String(100), nullable=True)

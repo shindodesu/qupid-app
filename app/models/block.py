@@ -14,5 +14,5 @@ class Block(Base, TimestampMixin):
     blocker_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
     blocked_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False)
 
-    blocker = relationship("User", foreign_keys=[blocker_id])
-    blocked = relationship("User", foreign_keys=[blocked_id])
+    blocker = relationship("User", foreign_keys=[blocker_id], lazy="joined")
+    blocked = relationship("User", foreign_keys=[blocked_id], lazy="joined")

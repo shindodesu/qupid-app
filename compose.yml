@@ -18,6 +18,8 @@ services:
     image: postgres:16-alpine # 使うイメージの指定
     volumes:
       - postgres_data:/var/lib/postgresql/data/ # データ永続化のためのボリュームマウント # コンテナを停止してもデータが消えない。
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_USER=user
       - POSTGRES_PASSWORD=password

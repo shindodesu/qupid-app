@@ -14,5 +14,5 @@ class Report(Base, TimestampMixin):
     status: Mapped[ReportStatus] = mapped_column(default=ReportStatus.open, nullable=False)
     admin_note: Mapped[str | None] = mapped_column(String(1000))
 
-    reporter = relationship("User", foreign_keys=[reporter_id])
-    target_user = relationship("User", foreign_keys=[target_user_id])
+    reporter = relationship("User", foreign_keys=[reporter_id], lazy="joined")
+    target_user = relationship("User", foreign_keys=[target_user_id], lazy="joined")
