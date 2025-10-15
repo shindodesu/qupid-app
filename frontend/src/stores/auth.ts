@@ -54,6 +54,11 @@ export interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     immer((set, get) => ({
+      // デバッグ用初期ログ
+      _debug: (() => {
+        console.log('AuthStore: initializing')
+        return undefined
+      })(),
       // 初期状態
       user: null,
       tokens: null,
@@ -84,7 +89,19 @@ export const useAuthStore = create<AuthState>()(
             state.error = null
           })
           
-          console.log('Auth state after login:', get())
+          const authState = get()
+          console.log('Auth state after login:', authState)
+          console.log('Auth state - isAuthenticated:', authState.isAuthenticated)
+          console.log('Auth state - user:', authState.user)
+          console.log('Auth state - tokens:', authState.tokens ? 'exists' : 'null')
+          
+          // LocalStorageに保存されているか確認
+          try {
+            const stored = localStorage.getItem('auth-storage')
+            console.log('LocalStorage auth-storage:', stored ? 'saved' : 'not saved')
+          } catch (e) {
+            console.error('LocalStorage access error:', e)
+          }
         } catch (error) {
           set((state) => {
             state.error = error instanceof Error ? error.message : 'ログインに失敗しました'
