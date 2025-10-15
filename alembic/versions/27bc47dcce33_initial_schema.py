@@ -1,19 +1,19 @@
-"""add_likes_blocks_conversations_messages_reports_tables
+"""initial_schema
 
-Revision ID: 06a62eda3ddb
-Revises: 6f1434563960
-Create Date: 2025-10-13 10:01:10.793748
+Revision ID: 27bc47dcce33
+Revises: 
+Create Date: 2025-10-15 17:10:57.576464
 
 """
 from typing import Sequence, Union
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+
 
 # revision identifiers, used by Alembic.
-revision: str = '06a62eda3ddb'
-down_revision: Union[str, Sequence[str], None] = '6f1434563960'
+revision: str = '27bc47dcce33'
+down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -29,6 +29,30 @@ def upgrade() -> None:
     sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('tags',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('name', sa.String(length=64), nullable=False),
+    sa.Column('description', sa.String(length=255), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index(op.f('ix_tags_name'), 'tags', ['name'], unique=True)
+    op.create_table('users',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('email', sa.String(length=255), nullable=False),
+    sa.Column('display_name', sa.String(length=100), nullable=False),
+    sa.Column('bio', sa.String(length=1000), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('is_admin', sa.Boolean(), nullable=False),
+    sa.Column('faculty', sa.String(length=100), nullable=True),
+    sa.Column('grade', sa.String(length=50), nullable=True),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_index('ix_users_active_name', 'users', ['is_active', 'display_name'], unique=False)
+    op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_table('blocks',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('blocker_id', sa.Integer(), nullable=False),
@@ -56,6 +80,20 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_conversation_members_conversation_id'), 'conversation_members', ['conversation_id'], unique=False)
     op.create_index(op.f('ix_conversation_members_user_id'), 'conversation_members', ['user_id'], unique=False)
+    op.create_table('likes',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('liker_id', sa.Integer(), nullable=False),
+    sa.Column('liked_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.CheckConstraint('liker_id <> liked_id', name='ck_like_not_self'),
+    sa.ForeignKeyConstraint(['liked_id'], ['users.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['liker_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('liker_id', 'liked_id', name='uq_like_unique')
+    )
+    op.create_index(op.f('ix_likes_liked_id'), 'likes', ['liked_id'], unique=False)
+    op.create_index(op.f('ix_likes_liker_id'), 'likes', ['liker_id'], unique=False)
     op.create_table('messages',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('conversation_id', sa.Integer(), nullable=False),
@@ -85,123 +123,47 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_reports_reporter_id'), 'reports', ['reporter_id'], unique=False)
     op.create_index(op.f('ix_reports_target_user_id'), 'reports', ['target_user_id'], unique=False)
-    op.alter_column('likes', 'created_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=False,
-               existing_server_default=sa.text('now()'))
-    op.alter_column('likes', 'updated_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=False,
-               existing_server_default=sa.text('now()'))
-    op.drop_constraint(op.f('likes_liker_id_liked_id_key'), 'likes', type_='unique')
-    op.create_unique_constraint('uq_like_unique', 'likes', ['liker_id', 'liked_id'])
-    op.alter_column('tags', 'created_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=False,
-               existing_server_default=sa.text('now()'))
-    op.alter_column('tags', 'updated_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=False,
-               existing_server_default=sa.text('now()'))
-    op.drop_constraint(op.f('tags_name_key'), 'tags', type_='unique')
-    op.drop_index(op.f('ix_tags_name'), table_name='tags')
-    op.create_index(op.f('ix_tags_name'), 'tags', ['name'], unique=True)
-    op.alter_column('user_tags', 'created_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=False,
-               existing_server_default=sa.text('now()'))
-    op.alter_column('user_tags', 'updated_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=False,
-               existing_server_default=sa.text('now()'))
-    op.drop_constraint(op.f('user_tags_user_id_tag_id_key'), 'user_tags', type_='unique')
-    op.create_unique_constraint('uq_user_tag_unique', 'user_tags', ['user_id', 'tag_id'])
-    op.alter_column('users', 'display_name',
-               existing_type=sa.VARCHAR(length=100),
-               server_default=None,
-               existing_nullable=False)
-    op.alter_column('users', 'is_active',
-               existing_type=sa.BOOLEAN(),
-               server_default=None,
-               existing_nullable=False)
-    op.alter_column('users', 'created_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=False,
-               existing_server_default=sa.text('now()'))
-    op.alter_column('users', 'updated_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=False,
-               existing_server_default=sa.text('now()'))
-    op.drop_constraint(op.f('users_email_key'), 'users', type_='unique')
-    op.drop_index(op.f('ix_users_email'), table_name='users')
-    op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
+    op.create_table('user_tags',
+    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
+    sa.Column('user_id', sa.Integer(), nullable=False),
+    sa.Column('tag_id', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.ForeignKeyConstraint(['tag_id'], ['tags.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['user_id'], ['users.id'], ondelete='CASCADE'),
+    sa.PrimaryKeyConstraint('id'),
+    sa.UniqueConstraint('user_id', 'tag_id', name='uq_user_tag_unique')
+    )
+    op.create_index(op.f('ix_user_tags_tag_id'), 'user_tags', ['tag_id'], unique=False)
+    op.create_index(op.f('ix_user_tags_user_id'), 'user_tags', ['user_id'], unique=False)
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index(op.f('ix_users_email'), table_name='users')
-    op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=False)
-    op.create_unique_constraint(op.f('users_email_key'), 'users', ['email'], postgresql_nulls_not_distinct=False)
-    op.alter_column('users', 'updated_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=True,
-               existing_server_default=sa.text('now()'))
-    op.alter_column('users', 'created_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=True,
-               existing_server_default=sa.text('now()'))
-    op.alter_column('users', 'is_active',
-               existing_type=sa.BOOLEAN(),
-               server_default=sa.text('true'),
-               existing_nullable=False)
-    op.alter_column('users', 'display_name',
-               existing_type=sa.VARCHAR(length=100),
-               server_default=sa.text("'Anonymous'::character varying"),
-               existing_nullable=False)
-    op.drop_constraint('uq_user_tag_unique', 'user_tags', type_='unique')
-    op.create_unique_constraint(op.f('user_tags_user_id_tag_id_key'), 'user_tags', ['user_id', 'tag_id'], postgresql_nulls_not_distinct=False)
-    op.alter_column('user_tags', 'updated_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=True,
-               existing_server_default=sa.text('now()'))
-    op.alter_column('user_tags', 'created_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=True,
-               existing_server_default=sa.text('now()'))
-    op.drop_index(op.f('ix_tags_name'), table_name='tags')
-    op.create_index(op.f('ix_tags_name'), 'tags', ['name'], unique=False)
-    op.create_unique_constraint(op.f('tags_name_key'), 'tags', ['name'], postgresql_nulls_not_distinct=False)
-    op.alter_column('tags', 'updated_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=True,
-               existing_server_default=sa.text('now()'))
-    op.alter_column('tags', 'created_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=True,
-               existing_server_default=sa.text('now()'))
-    op.drop_constraint('uq_like_unique', 'likes', type_='unique')
-    op.create_unique_constraint(op.f('likes_liker_id_liked_id_key'), 'likes', ['liker_id', 'liked_id'], postgresql_nulls_not_distinct=False)
-    op.alter_column('likes', 'updated_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=True,
-               existing_server_default=sa.text('now()'))
-    op.alter_column('likes', 'created_at',
-               existing_type=postgresql.TIMESTAMP(timezone=True),
-               nullable=True,
-               existing_server_default=sa.text('now()'))
+    op.drop_index(op.f('ix_user_tags_user_id'), table_name='user_tags')
+    op.drop_index(op.f('ix_user_tags_tag_id'), table_name='user_tags')
+    op.drop_table('user_tags')
     op.drop_index(op.f('ix_reports_target_user_id'), table_name='reports')
     op.drop_index(op.f('ix_reports_reporter_id'), table_name='reports')
     op.drop_table('reports')
     op.drop_index(op.f('ix_messages_sender_id'), table_name='messages')
     op.drop_index(op.f('ix_messages_conversation_id'), table_name='messages')
     op.drop_table('messages')
+    op.drop_index(op.f('ix_likes_liker_id'), table_name='likes')
+    op.drop_index(op.f('ix_likes_liked_id'), table_name='likes')
+    op.drop_table('likes')
     op.drop_index(op.f('ix_conversation_members_user_id'), table_name='conversation_members')
     op.drop_index(op.f('ix_conversation_members_conversation_id'), table_name='conversation_members')
     op.drop_table('conversation_members')
     op.drop_index(op.f('ix_blocks_blocker_id'), table_name='blocks')
     op.drop_index(op.f('ix_blocks_blocked_id'), table_name='blocks')
     op.drop_table('blocks')
+    op.drop_index(op.f('ix_users_email'), table_name='users')
+    op.drop_index('ix_users_active_name', table_name='users')
+    op.drop_table('users')
+    op.drop_index(op.f('ix_tags_name'), table_name='tags')
+    op.drop_table('tags')
     op.drop_table('conversations')
     # ### end Alembic commands ###
