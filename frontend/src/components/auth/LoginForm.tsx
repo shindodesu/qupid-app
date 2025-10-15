@@ -53,7 +53,12 @@ export function LoginForm({ className, onSuccess }: LoginFormProps) {
     try {
       console.log('LoginForm: submitting', formData.email)
       await handleLogin(formData)
-      console.log('LoginForm: login successful, redirecting to /home')
+      console.log('LoginForm: login successful')
+      
+      // ログイン成功後、少し待ってからリダイレクト（状態更新を待つ）
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      console.log('LoginForm: redirecting to /home')
       onSuccess?.()
       router.push('/home')
     } catch (error) {
