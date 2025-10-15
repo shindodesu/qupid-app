@@ -14,10 +14,16 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:3001",
+        # Vercel本番環境
+        "https://frontend-795trryv0-shindodesus-projects.vercel.app",
+        "https://frontend-seven-psi-84.vercel.app",
+        # すべてのVercelプレビュー環境を許可
+        "https://*.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_origin_regex=r"https://.*\.vercel\.app",
 )
 
 # Include routers for different endpoints
