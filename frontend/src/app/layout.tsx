@@ -6,6 +6,7 @@ import { ToastContainer } from "@/components/common";
 import { ErrorBoundary } from "@/components/common";
 import { PWALifecycle } from "@/components/common/PWALifecycle";
 import { PWAEnhancer } from "@/components/common/PWAEnhancer";
+import { PWAInstallPrompt } from "@/components/common/PWAInstallPrompt";
 // import { PWANavigationFix } from "@/components/common/PWANavigationFix";
 
 const inter = Inter({
@@ -122,6 +123,7 @@ export default function RootLayout({
       >
         <PWALifecycle />
         <PWAEnhancer />
+        <PWAInstallPrompt />
         {/* <PWANavigationFix /> */}
         <ThemeProvider
           attribute="class"
