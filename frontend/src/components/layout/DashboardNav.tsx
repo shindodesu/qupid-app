@@ -62,6 +62,28 @@ export function DashboardNav() {
                       ? 'bg-primary-50 text-primary-700'
                       : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                   )}
+                  onClick={(e) => {
+                    // PWA モードでの追加処理
+                    if (typeof window !== 'undefined') {
+                      const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                        (window.navigator as any).standalone === true
+                      
+                      if (isPWA) {
+                        console.log('PWA Link clicked:', item.href)
+                        // デフォルトの動作をキャンセル
+                        e.preventDefault()
+                        
+                        // Next.js Router を使用してナビゲート
+                        if (window.history && window.history.pushState) {
+                          window.history.pushState({}, '', item.href)
+                          const event = new PopStateEvent('popstate', { state: {} })
+                          window.dispatchEvent(event)
+                        } else {
+                          window.location.href = item.href
+                        }
+                      }
+                    }
+                  }}
                 >
                   <span>{item.icon}</span>
                   <span>{item.name}</span>
@@ -83,6 +105,26 @@ export function DashboardNav() {
                         ? 'bg-primary-50 text-primary-700'
                         : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                     )}
+                    onClick={(e) => {
+                      // PWA モードでの追加処理
+                      if (typeof window !== 'undefined') {
+                        const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                          (window.navigator as any).standalone === true
+                        
+                        if (isPWA) {
+                          console.log('PWA Settings Link clicked:', item.href)
+                          e.preventDefault()
+                          
+                          if (window.history && window.history.pushState) {
+                            window.history.pushState({}, '', item.href)
+                            const event = new PopStateEvent('popstate', { state: {} })
+                            window.dispatchEvent(event)
+                          } else {
+                            window.location.href = item.href
+                          }
+                        }
+                      }
+                    }}
                   >
                     <span>{item.icon}</span>
                     <span>{item.name}</span>
@@ -110,6 +152,26 @@ export function DashboardNav() {
                     ? 'text-red-500'
                     : 'text-neutral-600'
                 )}
+                onClick={(e) => {
+                  // PWA モードでの追加処理
+                  if (typeof window !== 'undefined') {
+                    const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
+                      (window.navigator as any).standalone === true
+                    
+                    if (isPWA) {
+                      console.log('PWA Mobile Link clicked:', item.href)
+                      e.preventDefault()
+                      
+                      if (window.history && window.history.pushState) {
+                        window.history.pushState({}, '', item.href)
+                        const event = new PopStateEvent('popstate', { state: {} })
+                        window.dispatchEvent(event)
+                      } else {
+                        window.location.href = item.href
+                      }
+                    }
+                  }
+                }}
               >
                 <span className="text-2xl mb-1">{item.icon}</span>
                 <span className="text-xs">{item.name}</span>
