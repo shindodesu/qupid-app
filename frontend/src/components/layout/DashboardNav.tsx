@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useEffect, useState } from 'react'
 
 const navItems = [
   {
@@ -38,6 +39,31 @@ const settingsItems = [
 export function DashboardNav() {
   const pathname = usePathname()
   const router = useRouter()
+  const [isPWA, setIsPWA] = useState(false)
+
+  useEffect(() => {
+    const checkPWAMode = () => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches
+      const iosStandalone = (window.navigator as any).standalone === true
+      const isStandalone = standalone || iosStandalone
+      setIsPWA(isStandalone)
+      console.log('DashboardNav PWA Detection:', { standalone, iosStandalone, isStandalone })
+    }
+
+    checkPWAMode()
+  }, [])
+
+  const handleNavigation = (href: string) => {
+    console.log('DashboardNav Navigation:', { href, isPWA })
+    
+    if (isPWA) {
+      // PWAモードでは強制的にrouter.pushを使用
+      router.push(href)
+    } else {
+      // ブラウザモードでは通常のナビゲーション
+      window.location.href = href
+    }
+  }
 
   return (
     <nav className="bg-white border-b border-neutral-200" role="navigation" aria-label="メインナビゲーション">
@@ -45,10 +71,7 @@ export function DashboardNav() {
         <div className="flex items-center justify-between h-16">
           {/* ロゴ */}
           <button 
-            onClick={() => {
-              console.log('PWA Logo Navigation: Navigating to /home')
-              router.push('/home')
-            }}
+            onClick={() => handleNavigation('/home')}
             className="flex items-center gap-2"
           >
             <img src="/icon.png" alt="Qupid" className="w-8 h-8" />
@@ -62,10 +85,7 @@ export function DashboardNav() {
               return (
                 <button
                   key={item.href}
-                  onClick={() => {
-                    console.log('PWA Navigation: Navigating to', item.href)
-                    router.push(item.href)
-                  }}
+                  onClick={() => handleNavigation(item.href)}
                   className={cn(
                     'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
                     isActive
@@ -86,10 +106,7 @@ export function DashboardNav() {
                 return (
                   <button
                     key={item.href}
-                    onClick={() => {
-                      console.log('PWA Settings Navigation: Navigating to', item.href)
-                      router.push(item.href)
-                    }}
+                    onClick={() => handleNavigation(item.href)}
                     className={cn(
                       'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
                       isActive
@@ -116,10 +133,7 @@ export function DashboardNav() {
             return (
               <button
                 key={item.href}
-                onClick={() => {
-                  console.log('PWA Mobile Navigation: Navigating to', item.href)
-                  router.push(item.href)
-                }}
+                onClick={() => handleNavigation(item.href)}
                 className={cn(
                   'flex flex-col items-center justify-center py-2 px-2 transition-colors flex-1',
                   isActive

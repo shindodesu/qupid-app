@@ -7,7 +7,8 @@ import { ErrorBoundary } from "@/components/common";
 import { PWALifecycle } from "@/components/common/PWALifecycle";
 import { PWAEnhancer } from "@/components/common/PWAEnhancer";
 import { PWAInstallPrompt } from "@/components/common/PWAInstallPrompt";
-// import { PWANavigationFix } from "@/components/common/PWANavigationFix";
+import { PWANavigationFix } from "@/components/common/PWANavigationFix";
+import { ServiceWorkerRegistration } from "@/components/common/ServiceWorkerRegistration";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -112,6 +113,9 @@ export default function RootLayout({
         <meta name="msapplication-TileColor" content="#E94057" />
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="format-detection" content="telephone=no" />
+        <meta name="apple-touch-fullscreen" content="yes" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-orientations" content="portrait" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
         <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
@@ -121,10 +125,11 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
+        <ServiceWorkerRegistration />
         <PWALifecycle />
         <PWAEnhancer />
         <PWAInstallPrompt />
-        {/* <PWANavigationFix /> */}
+        <PWANavigationFix />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

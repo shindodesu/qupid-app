@@ -1,90 +1,104 @@
-// Custom Service Worker for PWA
-const CACHE_NAME = 'qupid-pwa-v1';
+// カスタムService Worker for PWA
+const CACHE_NAME = 'qupid-pwa-v1'
 const urlsToCache = [
   '/',
   '/home',
-  '/chat',
   '/matches',
+  '/chat',
   '/profile',
-  '/offline',
+  '/safety',
   '/manifest.json',
   '/icon.png',
   '/apple-icon.png'
-];
+]
 
-// Install event
+// Service Worker インストール
 self.addEventListener('install', (event) => {
+  console.log('Service Worker: Installing...')
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        return cache.addAll(urlsToCache);
+        console.log('Service Worker: Caching files')
+        return cache.addAll(urlsToCache)
       })
       .then(() => {
-        return self.skipWaiting();
+        console.log('Service Worker: Skip waiting')
+        return self.skipWaiting()
       })
-  );
-});
+  )
+})
 
-// Activate event
+// Service Worker アクティベート
 self.addEventListener('activate', (event) => {
+  console.log('Service Worker: Activating...')
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName);
+            console.log('Service Worker: Deleting old cache:', cacheName)
+            return caches.delete(cacheName)
           }
         })
-      );
+      )
     }).then(() => {
-      return self.clients.claim();
+      console.log('Service Worker: Claiming clients')
+      return self.clients.claim()
     })
-  );
-});
+  )
+})
 
-// Fetch event
+// フェッチイベント
 self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
+  console.log('Service Worker: Fetching:', event.request.url)
+  
+  // 同じオリジンのリクエストのみ処理
   if (!event.request.url.startsWith(self.location.origin)) {
-    return;
+    return
   }
 
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Return cached version or fetch from network
+        // キャッシュにヒットした場合はキャッシュを返す
         if (response) {
-          return response;
+          console.log('Service Worker: Cache hit:', event.request.url)
+          return response
         }
 
-        return fetch(event.request).then((response) => {
-          // Don't cache non-successful responses
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response;
-          }
+        // キャッシュにない場合はネットワークから取得
+        console.log('Service Worker: Cache miss, fetching from network:', event.request.url)
+        return fetch(event.request)
+          .then((response) => {
+            // 有効なレスポンスかチェック
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response
+            }
 
-          // Clone the response
-          const responseToCache = response.clone();
+            // レスポンスをクローンしてキャッシュに保存
+            const responseToCache = response.clone()
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache)
+              })
 
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-
-          return response;
-        }).catch(() => {
-          // Return offline page for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('/offline');
-          }
-        });
+            return response
+          })
       })
-  );
-});
+      .catch(() => {
+        // ネットワークエラーの場合はオフラインページを返す
+        if (event.request.destination === 'document') {
+          return caches.match('/offline')
+        }
+      })
+  )
+})
 
-// Handle PWA install prompt
+// メッセージイベント
 self.addEventListener('message', (event) => {
+  console.log('Service Worker: Message received:', event.data)
+  
   if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
+    self.skipWaiting()
   }
-});
+})

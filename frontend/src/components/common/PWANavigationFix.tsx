@@ -1,86 +1,44 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 /**
  * PWA ナビゲーション修正コンポーネント
- * iOS PWAでリンクが別タブで開かれる問題を修正
+ * iOS Safari でPWA内のリンクが新しいタブで開かれる問題を解決
  */
 export function PWANavigationFix() {
-  useEffect(() => {
-    // PWA モードかどうかを判定
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true ||
-      document.referrer.includes('android-app://')
+  const router = useRouter()
 
-    if (!isPWA) {
+  useEffect(() => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+    const isPWA = window.matchMedia('(display-mode: standalone)').matches || 
+                  (window.navigator as any).standalone === true
+
+    if (!isIOS || !isPWA) {
+      console.log('PWANavigationFix: Not iOS PWA, skipping fix')
       return
     }
 
-    console.log('PWA Navigation Fix: Initializing')
+    console.log('PWANavigationFix: iOS PWA detected, applying navigation fix')
 
-    // iOS 特有の処理
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
-    
-    // より強力なリンク修正
+    // リンクの修正関数
     const fixLinks = () => {
       const links = document.querySelectorAll('a[href^="/"]')
       links.forEach(link => {
         const href = link.getAttribute('href')
-        if (!href || href.startsWith('http') || href.startsWith('#')) {
-          return
-        }
-
-        // target="_blank" でない場合は、すべての属性を削除
-        if (link.getAttribute('target') !== '_blank') {
-          // すべての属性を削除
+        if (href && !href.startsWith('http') && link.getAttribute('target') !== '_blank') {
+          // rel属性とtarget属性を削除
           link.removeAttribute('rel')
           link.removeAttribute('target')
           
-          // 既存のイベントリスナーを削除
-          link.onclick = null
-          if ((link as any)._pwaClickHandler) {
-            link.removeEventListener('click', (link as any)._pwaClickHandler, true)
-          }
-          
-          // 新しいクリックイベントを追加
-          const handleClick = (e: Event) => {
+          // クリックイベントを上書き
+          link.addEventListener('click', (e) => {
             e.preventDefault()
             e.stopPropagation()
-            e.stopImmediatePropagation()
-            
-            console.log('PWA Navigation Fix: Navigating to', href)
-            
-            // Next.jsのクライアントサイドルーティングを使用
-            if (window.history && window.history.pushState) {
-              window.history.pushState({}, '', href)
-              // ページの変更を通知
-              const event = new PopStateEvent('popstate', { state: {} })
-              window.dispatchEvent(event)
-            } else {
-              // フォールバック: ページをリロード
-              window.location.href = href
-            }
-            
-            return false
-          }
-          
-          // イベントリスナーを追加（キャプチャフェーズ）
-          link.addEventListener('click', handleClick, true)
-          
-          // 古いイベントリスナーをクリーンアップするための参照を保存
-          ;(link as any)._pwaClickHandler = handleClick
-          
-          // iOS 特有の追加処理
-          if (isIOS) {
-            // タッチイベントも処理
-            link.addEventListener('touchend', (e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              e.stopImmediatePropagation()
-              handleClick(e)
-            }, true)
-          }
+            console.log('PWA Navigation: Navigating to', href)
+            router.push(href)
+          }, { capture: true })
         }
       })
     }
@@ -88,9 +46,25 @@ export function PWANavigationFix() {
     // 初期実行
     fixLinks()
 
-    // DOM変更を監視して新しいリンクも修正
-    const observer = new MutationObserver(() => {
-      fixLinks()
+    // DOM変更を監視して新しく追加されたリンクも修正
+    const observer = new MutationObserver((mutations) => {
+      let shouldFix = false
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'childList') {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const element = node as Element
+              if (element.tagName === 'A' || element.querySelector('a[href^="/"]')) {
+                shouldFix = true
+              }
+            }
+          })
+        }
+      })
+      
+      if (shouldFix) {
+        setTimeout(fixLinks, 100)
+      }
     })
 
     observer.observe(document.body, {
@@ -98,51 +72,33 @@ export function PWANavigationFix() {
       subtree: true
     })
 
-    // iOS 特有の処理
-    if (isIOS) {
-      // iOSではより積極的にリンクを修正
-      const intervalId = setInterval(() => {
-        fixLinks()
-      }, 500) // 0.5秒ごとにチェック
+    // 定期的にも修正を実行（バックアップ）
+    const interval = setInterval(fixLinks, 2000)
 
-      // ページ全体のクリックイベントをインターセプト
-      const globalClickHandler = (e: Event) => {
-        const target = (e.target as HTMLElement)?.closest('a')
-        if (target && target.getAttribute('href')?.startsWith('/')) {
-          const href = target.getAttribute('href')
-          if (href && !target.getAttribute('target')) {
-            e.preventDefault()
-            e.stopPropagation()
-            e.stopImmediatePropagation()
-            
-            console.log('Global PWA Navigation Fix: Navigating to', href)
-            
-            if (window.history && window.history.pushState) {
-              window.history.pushState({}, '', href)
-              const event = new PopStateEvent('popstate', { state: {} })
-              window.dispatchEvent(event)
-            } else {
-              window.location.href = href
-            }
-            
-            return false
-          }
+    // グローバルクリックハンドラー（最後の手段）
+    const globalClickHandler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement
+      const link = target.closest('a[href^="/"]')
+      
+      if (link && link.getAttribute('target') !== '_blank') {
+        const href = link.getAttribute('href')
+        if (href && !href.startsWith('http')) {
+          e.preventDefault()
+          e.stopPropagation()
+          console.log('Global PWA Navigation: Navigating to', href)
+          router.push(href)
         }
       }
-
-      document.addEventListener('click', globalClickHandler, true)
-
-      return () => {
-        observer.disconnect()
-        clearInterval(intervalId)
-        document.removeEventListener('click', globalClickHandler, true)
-      }
     }
+
+    document.addEventListener('click', globalClickHandler, { capture: true })
 
     return () => {
       observer.disconnect()
+      clearInterval(interval)
+      document.removeEventListener('click', globalClickHandler, { capture: true })
     }
-  }, [])
+  }, [router])
 
   return null
 }

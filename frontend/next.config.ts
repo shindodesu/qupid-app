@@ -86,6 +86,8 @@ const pwaConfig = withPWA({
   disable: process.env.NODE_ENV === 'development', // 開発環境では無効化
   scope: '/',
   sw: 'sw.js',
+  reloadOnOnline: true,
+  buildExcludes: [/middleware-manifest\.json$/],
   fallbacks: {
     document: '/offline',
   },

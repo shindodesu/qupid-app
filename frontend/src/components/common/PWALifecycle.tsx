@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 
 /**
@@ -9,19 +9,51 @@ import { useRouter } from 'next/navigation'
  */
 export function PWALifecycle() {
   const router = useRouter()
+  const [isPWA, setIsPWA] = useState(false)
 
   useEffect(() => {
-    // PWA モードかどうかを判定
-    const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
-      (window.navigator as any).standalone === true ||
-      document.referrer.includes('android-app://')
+    // PWA モードかどうかを判定（より厳密に）
+    const checkPWAMode = () => {
+      const standalone = window.matchMedia('(display-mode: standalone)').matches
+      const iosStandalone = (window.navigator as any).standalone === true
+      const androidApp = document.referrer.includes('android-app://')
+      const isStandalone = standalone || iosStandalone || androidApp
+      
+      setIsPWA(isStandalone)
+      
+      console.log('PWA Detection:', {
+        standalone,
+        iosStandalone,
+        androidApp,
+        isStandalone,
+        userAgent: navigator.userAgent,
+        referrer: document.referrer
+      })
+      
+      return isStandalone
+    }
 
-    if (!isPWA) {
-      console.log('Running in browser mode')
+    const isPWAMode = checkPWAMode()
+
+    if (!isPWAMode) {
+      console.log('Running in browser mode - PWA features disabled')
       return
     }
 
-    console.log('Running in PWA mode')
+    console.log('Running in PWA mode - PWA features enabled')
+
+    // Service Worker の登録確認
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then((registration) => {
+        console.log('Service Worker is ready:', registration)
+      }).catch((error) => {
+        console.error('Service Worker registration failed:', error)
+      })
+    }
+
+    // PWAスタイルを強制適用
+    document.documentElement.style.setProperty('--pwa-mode', '1')
+    document.body.classList.add('pwa-mode')
 
     // リンククリックをインターセプトして、アプリ内で開く
     const handleClick = (e: MouseEvent) => {

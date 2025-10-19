@@ -435,6 +435,27 @@ body {
   }
 }
 
+/* PWAモードクラスが適用されている場合の追加スタイル */
+.pwa-mode {
+  /* PWAモードでの追加スタイル */
+  overflow-x: hidden;
+}
+
+.pwa-mode a[href^="/"]:not([target="_blank"]) {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  text-decoration: none !important;
+}
+
+.pwa-mode a[href^="/"]:not([target="_blank"]):hover {
+  text-decoration: none !important;
+}
+
+.pwa-mode a[href^="/"]:not([target="_blank"]):active {
+  -webkit-tap-highlight-color: transparent !important;
+}
+
 /* iOS PWA のステータスバー対応 */
 @supports (padding-top: env(safe-area-inset-top)) {
   body {

@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Qupid - マッチングアプリ',
     short_name: 'Qupid',
     description: 'Qupidは、九州大学のLGBTQ+当事者学生が安全で快適にマッチングできるアプリです。',
-    start_url: '/',
+    start_url: '/home',
     scope: '/',
     display: 'standalone',
     display_override: ['standalone', 'fullscreen', 'minimal-ui'],
