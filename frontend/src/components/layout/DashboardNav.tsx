@@ -12,17 +12,17 @@ const navItems = [
     icon: '💖',
   },
   {
-    name: 'マッチ',
+    name: 'matches',
     href: '/matches',
     icon: '💕',
   },
   {
-    name: 'チャット',
+    name: 'chat',
     href: '/chat',
     icon: '💬',
   },
   {
-    name: 'プロフィール',
+    name: 'profile',
     href: '/profile',
     icon: '👤',
   },
@@ -30,7 +30,7 @@ const navItems = [
 
 const settingsItems = [
   {
-    name: 'セーフティ',
+    name: 'safety',
     href: '/safety',
     icon: '🛡️',
   },
