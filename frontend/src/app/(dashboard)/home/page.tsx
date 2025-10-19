@@ -92,7 +92,7 @@ export default function DiscoverPage() {
       <div className="bg-white/80 backdrop-blur-sm border-b border-neutral-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-neutral-900">Discover</h1>
+            <h1 className="text-2xl font-bold text-neutral-900">探す</h1>
             <button 
               onClick={() => setShowFilters(!showFilters)}
               className="p-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
