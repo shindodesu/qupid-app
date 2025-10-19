@@ -15,28 +15,29 @@ export default function DashboardLayout({
   const isAuthenticated = useIsAuthenticated()
   const user = useUser()
 
-  useEffect(() => {
-    console.log('DashboardLayout: isAuthenticated =', isAuthenticated)
-    if (!isAuthenticated) {
-      console.log('DashboardLayout: redirecting to login')
-      router.push('/auth/login')
-    } else if (user && !user.profile_completed) {
-      console.log('DashboardLayout: profile not completed, redirecting to initial profile')
-      router.push('/initial-profile')
-    }
-  }, [isAuthenticated, user, router])
+  // 認証チェックを一時的に無効化
+  // useEffect(() => {
+  //   console.log('DashboardLayout: isAuthenticated =', isAuthenticated)
+  //   if (!isAuthenticated) {
+  //     console.log('DashboardLayout: redirecting to login')
+  //     router.push('/auth/login')
+  //   } else if (user && !user.profile_completed) {
+  //     console.log('DashboardLayout: profile not completed, redirecting to initial profile')
+  //     router.push('/initial-profile')
+  //   }
+  // }, [isAuthenticated, user, router])
 
-  if (!isAuthenticated) {
-    console.log('DashboardLayout: rendering loading screen')
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-white dark:bg-neutral-900">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-          <p className="mt-4 text-neutral-600 dark:text-neutral-400">認証を確認中...</p>
-        </div>
-      </div>
-    )
-  }
+  // if (!isAuthenticated) {
+  //   console.log('DashboardLayout: rendering loading screen')
+  //   return (
+  //     <div className="flex items-center justify-center min-h-screen bg-white dark:bg-neutral-900">
+  //       <div className="text-center">
+  //         <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
+  //         <p className="mt-4 text-neutral-600 dark:text-neutral-400">認証を確認中...</p>
+  //       </div>
+  //     </div>
+  //   )
+  // }
 
   console.log('DashboardLayout: rendering dashboard')
 

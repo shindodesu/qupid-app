@@ -2,8 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authMiddleware } from './src/middleware/auth'
 
 export function middleware(request: NextRequest) {
-  // 認証ミドルウェアを実行
-  return authMiddleware(request)
+  // 認証ミドルウェアを一時的に無効化
+  return NextResponse.next()
+  
+  // 認証を有効にする場合は以下のコメントを解除
+  // return authMiddleware(request)
 }
 
 // ミドルウェアを実行するパスの設定
