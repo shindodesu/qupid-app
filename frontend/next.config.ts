@@ -84,6 +84,8 @@ const pwaConfig = withPWA({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development', // 開発環境では無効化
+  scope: '/',
+  sw: 'sw.js',
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
@@ -118,8 +120,20 @@ const pwaConfig = withPWA({
           maxAgeSeconds: 5 * 60 // 5分
         }
       }
+    },
+    {
+      urlPattern: /^https?:\/\/.*\/_next\/.*/i,
+      handler: 'CacheFirst',
+      options: {
+        cacheName: 'next-assets',
+        expiration: {
+          maxEntries: 100,
+          maxAgeSeconds: 30 * 24 * 60 * 60 // 30日
+        }
+      }
     }
-  ]
+  ],
+  publicExcludes: ['!noprecache/**/*']
 });
 
 export default pwaConfig(nextConfig);

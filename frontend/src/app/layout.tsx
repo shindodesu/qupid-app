@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider, AuthProvider, QueryProvider } from "@/components/providers";
 import { ToastContainer } from "@/components/common";
 import { ErrorBoundary } from "@/components/common";
+import { PWALifecycle } from "@/components/common/PWALifecycle";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -102,6 +103,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
+        <PWALifecycle />
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

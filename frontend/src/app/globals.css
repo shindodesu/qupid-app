@@ -402,3 +402,31 @@ body {
     opacity: 1;
   }
 }
+
+/* PWA スタイル - アプリ内ナビゲーション */
+@media (display-mode: standalone) {
+  /* スタンドアローンモード（PWAとして起動されている場合） */
+  html, body {
+    overscroll-behavior: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* すべてのリンクをアプリ内で開く */
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* iOS Safari 特有のスタイル */
+  * {
+    -webkit-touch-callout: none;
+  }
+}
+
+/* iOS PWA のステータスバー対応 */
+@supports (padding-top: env(safe-area-inset-top)) {
+  body {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
