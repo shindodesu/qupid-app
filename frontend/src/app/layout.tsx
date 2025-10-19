@@ -5,7 +5,7 @@ import { ThemeProvider, AuthProvider, QueryProvider } from "@/components/provide
 import { ToastContainer } from "@/components/common";
 import { ErrorBoundary } from "@/components/common";
 import { PWALifecycle } from "@/components/common/PWALifecycle";
-import { PWANavigationFix } from "@/components/common/PWANavigationFix";
+// import { PWANavigationFix } from "@/components/common/PWANavigationFix";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -105,7 +105,7 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <PWALifecycle />
-        <PWANavigationFix />
+        {/* <PWANavigationFix /> */}
         <ThemeProvider
           attribute="class"
           defaultTheme="light"

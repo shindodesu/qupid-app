@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 
 const navItems = [
@@ -37,57 +37,45 @@ const settingsItems = [
 
 export function DashboardNav() {
   const pathname = usePathname()
+  const router = useRouter()
 
   return (
     <nav className="bg-white border-b border-neutral-200" role="navigation" aria-label="メインナビゲーション">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* ロゴ */}
-          <Link href="/home" className="flex items-center gap-2">
+          <button 
+            onClick={() => {
+              console.log('PWA Logo Navigation: Navigating to /home')
+              router.push('/home')
+            }}
+            className="flex items-center gap-2"
+          >
             <img src="/icon.png" alt="Qupid" className="w-8 h-8" />
             <span className="text-xl font-bold text-primary-500">Qupid</span>
-          </Link>
+          </button>
 
           {/* デスクトップナビゲーション */}
           <div className="hidden md:flex items-center gap-1">
             {navItems.map((item) => {
               const isActive = pathname?.startsWith(item.href)
               return (
-                <Link
+                <button
                   key={item.href}
-                  href={item.href}
+                  onClick={() => {
+                    console.log('PWA Navigation: Navigating to', item.href)
+                    router.push(item.href)
+                  }}
                   className={cn(
                     'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
                     isActive
                       ? 'bg-primary-50 text-primary-700'
                       : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                   )}
-                  onClick={(e) => {
-                    // PWA モードでの追加処理
-                    if (typeof window !== 'undefined') {
-                      const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
-                        (window.navigator as any).standalone === true
-                      
-                      if (isPWA) {
-                        console.log('PWA Link clicked:', item.href)
-                        // デフォルトの動作をキャンセル
-                        e.preventDefault()
-                        
-                        // Next.js Router を使用してナビゲート
-                        if (window.history && window.history.pushState) {
-                          window.history.pushState({}, '', item.href)
-                          const event = new PopStateEvent('popstate', { state: {} })
-                          window.dispatchEvent(event)
-                        } else {
-                          window.location.href = item.href
-                        }
-                      }
-                    }
-                  }}
                 >
                   <span>{item.icon}</span>
                   <span>{item.name}</span>
-                </Link>
+                </button>
               )
             })}
             
@@ -96,39 +84,22 @@ export function DashboardNav() {
               {settingsItems.map((item) => {
                 const isActive = pathname?.startsWith(item.href)
                 return (
-                  <Link
+                  <button
                     key={item.href}
-                    href={item.href}
+                    onClick={() => {
+                      console.log('PWA Settings Navigation: Navigating to', item.href)
+                      router.push(item.href)
+                    }}
                     className={cn(
                       'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
                       isActive
                         ? 'bg-primary-50 text-primary-700'
                         : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
                     )}
-                    onClick={(e) => {
-                      // PWA モードでの追加処理
-                      if (typeof window !== 'undefined') {
-                        const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
-                          (window.navigator as any).standalone === true
-                        
-                        if (isPWA) {
-                          console.log('PWA Settings Link clicked:', item.href)
-                          e.preventDefault()
-                          
-                          if (window.history && window.history.pushState) {
-                            window.history.pushState({}, '', item.href)
-                            const event = new PopStateEvent('popstate', { state: {} })
-                            window.dispatchEvent(event)
-                          } else {
-                            window.location.href = item.href
-                          }
-                        }
-                      }
-                    }}
                   >
                     <span>{item.icon}</span>
                     <span>{item.name}</span>
-                  </Link>
+                  </button>
                 )
               })}
             </div>
@@ -143,39 +114,22 @@ export function DashboardNav() {
           {navItems.map((item) => {
             const isActive = pathname?.startsWith(item.href)
             return (
-              <Link
+              <button
                 key={item.href}
-                href={item.href}
+                onClick={() => {
+                  console.log('PWA Mobile Navigation: Navigating to', item.href)
+                  router.push(item.href)
+                }}
                 className={cn(
                   'flex flex-col items-center justify-center py-2 px-2 transition-colors flex-1',
                   isActive
                     ? 'text-red-500'
                     : 'text-neutral-600'
                 )}
-                onClick={(e) => {
-                  // PWA モードでの追加処理
-                  if (typeof window !== 'undefined') {
-                    const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
-                      (window.navigator as any).standalone === true
-                    
-                    if (isPWA) {
-                      console.log('PWA Mobile Link clicked:', item.href)
-                      e.preventDefault()
-                      
-                      if (window.history && window.history.pushState) {
-                        window.history.pushState({}, '', item.href)
-                        const event = new PopStateEvent('popstate', { state: {} })
-                        window.dispatchEvent(event)
-                      } else {
-                        window.location.href = item.href
-                      }
-                    }
-                  }
-                }}
               >
                 <span className="text-2xl mb-1">{item.icon}</span>
                 <span className="text-xs">{item.name}</span>
-              </Link>
+              </button>
             )
           })}
           
