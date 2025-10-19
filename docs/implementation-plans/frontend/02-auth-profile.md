@@ -34,12 +34,25 @@ src/app/
 - UI: Tailwind + Headless UI（モーダル/ドロップダウン）
 
 ## 🔌 API I/F（バックエンド整合）
-- POST `/auth/login` ログイン
+### 認証
+- POST `/auth/login` ログイン（従来型）
+- POST `/auth/email/send-code` メール認証コード送信
+- POST `/auth/email/verify-code` 認証コード検証・ログイン/新規登録
+- POST `/auth/email/resend-code` 認証コード再送信
+
+### ユーザー情報
 - GET `/users/me` 自分の情報
 - PUT `/users/me` プロフィール更新
 - POST `/users/me/initial-profile` 初回プロフィール登録
+- PUT `/users/me/privacy` プライバシー設定更新
+
+### タグ管理
 - GET `/users/me/tags` 自分のタグ
-- POST `/users/me/tags` 追加、DELETE `/users/me/tags/{tag_id}` 削除
+- POST `/users/me/tags` 追加
+- DELETE `/users/me/tags/{tag_id}` 削除
+
+### ファイル
+- POST `/files/upload/avatar` プロフィール画像アップロード
 
 ## 🧱 データ型（フロント側）
 ```ts
@@ -140,17 +153,51 @@ export const profileSchema = z.object({
 
 ## 📋 実装チェックリスト
 - [x] `/auth/login` 画面/フォーム/エラー表示
+- [x] メール認証システム（`/email-login`）
 - [x] 認証API接続・トークン保持
 - [x] 初回プロフィール入力ページ（`/initial-profile`）- 画像デザインに基づく
+- [x] プロフィール画像アップロード機能
 - [x] `/users/me` 取得・キャッシュ
 - [x] プロフィール編集（保存/差分UI）
+- [x] プライバシー設定管理
 - [x] 自己タグ追加/削除UI
 - [x] 保護ルート/リダイレクト
 - [x] プロフィール完了状態チェック
+- [x] 環境別メッセージ表示（開発/本番）
 - [ ] 単体/統合/E2Eテスト
+
+## 🔮 将来的な改善計画
+
+### メール認証の本格運用
+**現状**: 
+- 開発環境モード（`ENABLE_EMAIL=false`）
+- 認証コードはRenderのログに出力
+- ユーザーには手動で認証コードを伝える
+
+**Phase 1: Gmailでの自動送信（ドメイン不要・無料）**
+- Gmailのアプリパスワードを使用
+- `@gmail.com` からメール送信
+- コスト: 無料
+- 実装: 環境変数の設定のみ（5分）
+
+**Phase 2: 独自ドメインでの運用（推奨）**
+- 独自ドメイン取得（例: `qupid.app`, `qupid.jp`）
+- コスト: 年間1,000〜3,000円
+- メール送信サービス:
+  - SendGrid: 月100通まで無料
+  - Mailgun: 月5,000通まで無料
+  - AWS SES: 月62,000通まで無料（EC2経由）
+- プロフェッショナルなメールアドレス（`noreply@qupid.app`）
+- 必要な設定:
+  - ドメインのDNS設定（SPF, DKIM, DMARC）
+  - メール送信サービスの連携
+  - 環境変数の更新
+
+**実装タイミング**: ユーザー数が増えて自動化が必要になった段階
 
 ---
 作成日: 2025-10-13 / 担当: Qupid開発チーム
+最終更新: 2025-10-19 / メール認証・プライバシー設定・アバター機能追加
 
 
 
