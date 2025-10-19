@@ -28,8 +28,23 @@ const PUBLIC_ROUTES = [
   '/terms',
 ]
 
+// 静的リソース（認証不要）
+const PUBLIC_RESOURCES = [
+  '/manifest.webmanifest',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/favicon.ico',
+  '/icon.png',
+  '/apple-icon.png',
+]
+
 export function authMiddleware(request: NextRequest) {
   const { pathname } = request.nextUrl
+  
+  // 静的リソースは認証チェックをスキップ
+  if (PUBLIC_RESOURCES.some(resource => pathname === resource)) {
+    return NextResponse.next()
+  }
   
   // 認証トークンを取得
   const token = request.cookies.get('auth-token')?.value

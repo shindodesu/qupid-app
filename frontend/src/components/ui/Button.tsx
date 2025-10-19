@@ -9,9 +9,9 @@ const buttonVariants = cva(
       variant: {
         default: '!bg-primary-500 !text-white hover:!bg-primary-600',  // 赤/ピンク背景 - !importantで強制
         destructive: '!bg-red-500 !text-white hover:!bg-red-600',
-        outline: 'border border-neutral-200 bg-white hover:bg-neutral-50 hover:text-neutral-900',
+        outline: 'border border-neutral-200 bg-white text-neutral-900 hover:bg-neutral-50 hover:text-neutral-900',
         secondary: '!bg-secondary-100 !text-secondary-700 hover:!bg-secondary-200',  // 薄いピンク背景
-        ghost: 'hover:bg-neutral-100 hover:text-neutral-900',
+        ghost: 'text-neutral-900 hover:bg-neutral-100 hover:text-neutral-900',
         link: 'underline-offset-4 hover:underline text-primary-500',
       },
       size: {

@@ -89,6 +89,13 @@ export const useAuthStore = create<AuthState>()(
             state.error = null
           })
           
+          // Cookieにトークンを保存（ミドルウェア用）
+          if (typeof document !== 'undefined') {
+            const expiresDate = new Date(Date.now() + (24 * 60 * 60 * 1000))
+            document.cookie = `auth-token=${response.token}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`
+            console.log('Cookie set: auth-token')
+          }
+          
           const authState = get()
           console.log('Auth state after login:', authState)
           console.log('Auth state - isAuthenticated:', authState.isAuthenticated)
@@ -141,6 +148,13 @@ export const useAuthStore = create<AuthState>()(
             state.error = null
           })
           
+          // Cookieにトークンを保存（ミドルウェア用）
+          if (typeof document !== 'undefined') {
+            const expiresDate = new Date(Date.now() + (24 * 60 * 60 * 1000))
+            document.cookie = `auth-token=${response.token}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`
+            console.log('Cookie set: auth-token')
+          }
+          
           console.log('Auth state after register:', get())
         } catch (error) {
           set((state) => {
@@ -172,6 +186,12 @@ export const useAuthStore = create<AuthState>()(
 
         // ローカルストレージからも削除
         localStorage.removeItem('auth-storage')
+        
+        // Cookieからも削除（ミドルウェア用）
+        if (typeof document !== 'undefined') {
+          document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax'
+          console.log('Cookie removed: auth-token')
+        }
       },
 
       // トークンリフレッシュ
@@ -228,6 +248,24 @@ export const useAuthStore = create<AuthState>()(
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,
       }),
+      onRehydrateStorage: () => {
+        console.log('AuthStore: rehydrating from localStorage')
+        return (state, error) => {
+          if (error) {
+            console.error('AuthStore: rehydration error', error)
+          } else if (state && state.isAuthenticated && state.tokens) {
+            console.log('AuthStore: rehydrated successfully')
+            // LocalStorageから復元された認証データをCookieにも保存
+            if (typeof document !== 'undefined') {
+              const expiresDate = new Date(state.tokens.expiresAt)
+              document.cookie = `auth-token=${state.tokens.accessToken}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`
+              console.log('Cookie restored: auth-token')
+            }
+          } else {
+            console.log('AuthStore: no authentication data to restore')
+          }
+        }
+      },
     }
   )
 )

@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
+import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useUser, useAuthStore } from '@/stores/auth'
@@ -17,8 +18,8 @@ export default function ProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
-    display_name: user?.displayName || '',
-    bio: user?.bio || '',
+    display_name: '',
+    bio: '',
     faculty: '',
     grade: '',
   })
@@ -29,10 +30,28 @@ export default function ProfilePage() {
     queryFn: () => apiClient.getCurrentUser(),
   })
 
+  // userDataが取得されたら、formDataを初期化
+  useEffect(() => {
+    if (userData) {
+      setFormData({
+        display_name: userData.display_name || '',
+        bio: userData.bio || '',
+        faculty: userData.faculty || '',
+        grade: userData.grade || '',
+      })
+    }
+  }, [userData])
+
   // 自分のタグ取得
   const { data: tagsData } = useQuery({
     queryKey: ['user', 'me', 'tags'],
     queryFn: () => apiClient.getUserTags(),
+  })
+
+  // 全タグ取得
+  const { data: allTagsData } = useQuery({
+    queryKey: ['tags'],
+    queryFn: () => apiClient.getTags(),
   })
 
   // プロフィール更新
@@ -42,6 +61,22 @@ export default function ProfilePage() {
       updateUser(data)
       queryClient.invalidateQueries({ queryKey: ['user', 'me'] })
       setIsEditing(false)
+    },
+  })
+
+  // タグ追加
+  const addTagMutation = useMutation({
+    mutationFn: (tagId: number) => apiClient.addUserTag(tagId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'me', 'tags'] })
+    },
+  })
+
+  // タグ削除
+  const removeTagMutation = useMutation({
+    mutationFn: (tagId: number) => apiClient.removeUserTag(tagId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'me', 'tags'] })
     },
   })
 
@@ -105,19 +140,46 @@ export default function ProfilePage() {
                   placeholder="あなたについて教えてください..."
                 />
               </div>
-              <Input
+              <Select
                 label="学部"
                 value={formData.faculty}
                 onChange={(e) =>
                   setFormData({ ...formData, faculty: e.target.value })
                 }
+                options={[
+                  { value: '', label: '選択してください' },
+                  { value: '文学部', label: '文学部' },
+                  { value: '教育学部', label: '教育学部' },
+                  { value: '法学部', label: '法学部' },
+                  { value: '経済学部', label: '経済学部' },
+                  { value: '理学部', label: '理学部' },
+                  { value: '医学部', label: '医学部' },
+                  { value: '歯学部', label: '歯学部' },
+                  { value: '薬学部', label: '薬学部' },
+                  { value: '工学部', label: '工学部' },
+                  { value: '芸術工学部', label: '芸術工学部' },
+                  { value: '農学部', label: '農学部' },
+                  { value: '共創学部', label: '共創学部' },
+                ]}
               />
-              <Input
+              <Select
                 label="学年"
                 value={formData.grade}
                 onChange={(e) =>
                   setFormData({ ...formData, grade: e.target.value })
                 }
+                options={[
+                  { value: '', label: '選択してください' },
+                  { value: '1年生', label: '1年生' },
+                  { value: '2年生', label: '2年生' },
+                  { value: '3年生', label: '3年生' },
+                  { value: '4年生', label: '4年生' },
+                  { value: '修士1年', label: '修士1年' },
+                  { value: '修士2年', label: '修士2年' },
+                  { value: '博士1年', label: '博士1年' },
+                  { value: '博士2年', label: '博士2年' },
+                  { value: '博士3年', label: '博士3年' },
+                ]}
               />
               <Button type="submit" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? '保存中...' : '保存'}
@@ -176,17 +238,76 @@ export default function ProfilePage() {
           <CardTitle>タグ</CardTitle>
         </CardHeader>
         <CardContent>
-          {tagsData && tagsData.tags && tagsData.tags.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {tagsData.tags.map((tag: any) => (
-                <Badge key={tag.id} variant="secondary">
-                  {tag.name}
-                </Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="text-neutral-600">タグが設定されていません</p>
-          )}
+          {/* 現在のタグ */}
+          <div className="mb-4">
+            <label className="text-sm font-medium text-neutral-900 mb-2 block">
+              設定中のタグ
+            </label>
+            {tagsData && tagsData.tags && tagsData.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {tagsData.tags.map((tag: any) => (
+                  <div
+                    key={tag.id}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full bg-primary-500 text-white"
+                  >
+                    <span>{tag.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeTagMutation.mutate(tag.id)}
+                      className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                      disabled={removeTagMutation.isPending}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        className="h-4 w-4"
+                        viewBox="0 0 20 20"
+                        fill="currentColor"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-neutral-600">タグが設定されていません</p>
+            )}
+          </div>
+
+          {/* タグを追加 */}
+          <div>
+            <label className="text-sm font-medium text-neutral-900 mb-2 block">
+              タグを追加
+            </label>
+            {allTagsData && allTagsData.tags && allTagsData.tags.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {allTagsData.tags
+                  .filter(
+                    (tag: any) =>
+                      !tagsData?.tags?.some((userTag: any) => userTag.id === tag.id)
+                  )
+                  .map((tag: any) => (
+                    <button
+                      key={tag.id}
+                      type="button"
+                      onClick={() => addTagMutation.mutate(tag.id)}
+                      className="px-3 py-1.5 text-sm rounded-full bg-white text-neutral-700 border border-neutral-200 hover:border-primary-300 hover:bg-primary-50 transition-colors"
+                      disabled={addTagMutation.isPending}
+                    >
+                      + {tag.name}
+                    </button>
+                  ))}
+              </div>
+            ) : (
+              <p className="text-neutral-600 text-sm">
+                利用可能なタグがありません
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 

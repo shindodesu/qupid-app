@@ -96,21 +96,6 @@ export function DashboardNav() {
               })}
             </div>
           </div>
-
-          {/* モバイルメニューボタン（将来実装） */}
-          <button className="md:hidden p-2">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
-          </button>
         </div>
       </div>
 
