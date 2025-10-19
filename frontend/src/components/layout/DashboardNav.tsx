@@ -30,7 +30,7 @@ const navItems = [
 
 const settingsItems = [
   {
-    name: 'safety',
+    name: 'セーフティ',
     href: '/safety',
     icon: '🛡️',
   },
