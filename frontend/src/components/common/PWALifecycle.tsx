@@ -1,12 +1,15 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 /**
  * PWA ライフサイクル管理コンポーネント
  * アプリ起動時にPWA関連の初期化を行う
  */
 export function PWALifecycle() {
+  const router = useRouter()
+
   useEffect(() => {
     // PWA モードかどうかを判定
     const isPWA = window.matchMedia('(display-mode: standalone)').matches ||
@@ -54,7 +57,8 @@ export function PWALifecycle() {
       e.stopPropagation()
 
       // Next.js Router を使用してナビゲート
-      window.location.href = href
+      console.log('Navigating to:', href)
+      router.push(href)
     }
 
     // キャプチャフェーズでイベントをインターセプト
@@ -87,7 +91,7 @@ export function PWALifecycle() {
     return () => {
       document.removeEventListener('click', handleClick, true)
     }
-  }, [])
+  }, [router])
 
   return null
 }
