@@ -28,16 +28,16 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
 
   // 性別オプション
   const sexOptions: { value: Sex; label: string }[] = [
-    { value: 'male', label: 'Male' },
-    { value: 'female', label: 'Female' },
-    { value: 'other', label: 'Other' },
+    { value: 'male', label: '男性' },
+    { value: 'female', label: '女性' },
+    { value: 'other', label: 'その他' },
   ]
 
   // 関係性目標オプション
   const relationshipGoalOptions: { value: RelationshipGoal; label: string }[] = [
     { value: 'friends', label: '友人' },
     { value: 'dating', label: '恋人' },
-    { value: 'all', label: 'ALL' },
+    { value: 'all', label: 'すべて' },
   ]
 
   // セクシュアリティ選択のハンドラー
@@ -84,13 +84,13 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
     <div className="bg-white rounded-t-3xl shadow-lg">
       {/* ヘッダー */}
       <div className="flex items-center justify-between p-6 border-b border-neutral-200">
-        <h2 className="text-xl font-bold text-neutral-900">Filters</h2>
+        <h2 className="text-xl font-bold text-neutral-900">フィルター</h2>
         <Button
           variant="text"
           onClick={onClear}
           className="text-red-500 hover:text-red-600 font-medium"
         >
-          Clear
+          クリア
         </Button>
       </div>
 
@@ -152,7 +152,7 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
 
         {/* 性別フィルター */}
         <div>
-          <label className="block text-sm text-neutral-900 mb-3">Sex</label>
+          <label className="block text-sm text-neutral-900 mb-3">性別</label>
           <div className="grid grid-cols-3 gap-3">
             {sexOptions.map((option) => (
               <button
@@ -172,11 +172,11 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
 
         {/* ジェンダーフィルター */}
         <div>
-          <label className="block text-sm text-neutral-900 mb-3">Gender</label>
+          <label className="block text-sm text-neutral-900 mb-3">ジェンダー</label>
           <div className="space-y-4">
             <div className="flex justify-between text-sm text-neutral-600">
-              <span>Man</span>
-              <span>Woman</span>
+              <span>男性</span>
+              <span>女性</span>
             </div>
             <div className="relative">
               <input
@@ -212,7 +212,7 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
           onClick={onApply}
           className="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl font-medium text-lg"
         >
-          Continue
+          適用
         </Button>
       </div>
     </div>

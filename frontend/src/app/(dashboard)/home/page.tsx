@@ -131,9 +131,13 @@ export default function DiscoverPage() {
               後でもう一度チェックしてみてください！
             </p>
             <button 
-              onClick={() => {
+              onClick={async () => {
                 setCurrentIndex(0)
-                refetch()
+                try {
+                  await refetch()
+                } catch (error) {
+                  console.error('更新エラー:', error)
+                }
               }}
               className="px-6 py-3 bg-pink-500 text-white rounded-full hover:bg-pink-600 transition-colors"
             >
