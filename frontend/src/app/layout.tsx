@@ -30,6 +30,12 @@ export const metadata: Metadata = {
     telephone: false,
   },
   metadataBase: new URL("https://qupid.app"),
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Qupid',
+  },
   icons: {
     icon: [
       { url: '/icon.png', sizes: 'any' },
@@ -70,6 +76,13 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  viewport: {
+    width: 'device-width',
+    initialScale: 1,
+    maximumScale: 1,
+    userScalable: false,
+  },
+  themeColor: '#E94057',
 };
 
 export default function RootLayout({
@@ -79,6 +92,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" suppressHydrationWarning>
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="Qupid" />
+      </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
