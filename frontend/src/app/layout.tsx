@@ -5,6 +5,7 @@ import { ThemeProvider, AuthProvider, QueryProvider } from "@/components/provide
 import { ToastContainer } from "@/components/common";
 import { ErrorBoundary } from "@/components/common";
 import { PWALifecycle } from "@/components/common/PWALifecycle";
+import { PWAEnhancer } from "@/components/common/PWAEnhancer";
 // import { PWANavigationFix } from "@/components/common/PWANavigationFix";
 
 const inter = Inter({
@@ -37,6 +38,12 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'default',
     title: 'Qupid',
+    startupImage: [
+      {
+        url: '/apple-icon.png',
+        media: '(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2)',
+      },
+    ],
   },
   icons: {
     icon: [
@@ -98,13 +105,23 @@ export default function RootLayout({
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Qupid" />
+        <meta name="application-name" content="Qupid" />
+        <meta name="msapplication-TileColor" content="#E94057" />
+        <meta name="msapplication-tap-highlight" content="no" />
+        <meta name="format-detection" content="telephone=no" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon.png" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon.png" />
+        <link rel="apple-touch-icon" sizes="167x167" href="/apple-icon.png" />
+        <link rel="apple-touch-startup-image" href="/apple-icon.png" />
       </head>
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <PWALifecycle />
+        <PWAEnhancer />
         {/* <PWANavigationFix /> */}
         <ThemeProvider
           attribute="class"

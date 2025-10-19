@@ -86,6 +86,9 @@ const pwaConfig = withPWA({
   disable: process.env.NODE_ENV === 'development', // 開発環境では無効化
   scope: '/',
   sw: 'sw.js',
+  fallbacks: {
+    document: '/offline',
+  },
   runtimeCaching: [
     {
       urlPattern: /^https:\/\/fonts\.(?:googleapis|gstatic)\.com\/.*/i,
