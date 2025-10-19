@@ -56,6 +56,8 @@
 ### 使用API
 - `GET /users/suggestions` - おすすめユーザー取得（フィルター対応）
 - `POST /likes` - いいね送信
+- `GET /likes/sent`, `/likes/received` - いいね履歴
+- `GET /matches`, `/matches/{user_id}` - マッチ一覧・状態確認
 - `DELETE /likes/{user_id}` - いいね取り消し
 
 ### フィルターパラメータ

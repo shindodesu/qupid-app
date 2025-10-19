@@ -11,11 +11,6 @@ const navItems = [
     icon: '💖',
   },
   {
-    name: '探す',
-    href: '/search',
-    icon: '🔍',
-  },
-  {
     name: 'マッチ',
     href: '/matches',
     icon: '💕',

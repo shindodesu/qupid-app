@@ -12,7 +12,6 @@ export const API_CONFIG = {
 export const PAGINATION = {
   DEFAULT_LIMIT: 20,
   MAX_LIMIT: 100,
-  SEARCH_LIMIT: 20,
   CHAT_MESSAGE_LIMIT: 50,
   CONVERSATION_LIMIT: 20,
 } as const
@@ -46,7 +45,6 @@ export const VALIDATION = {
 // ルート定義
 export const ROUTES = {
   HOME: '/home',
-  SEARCH: '/search',
   MATCHES: '/matches',
   CHAT: '/chat',
   PROFILE: '/profile',
@@ -88,7 +86,6 @@ export const QUERY_KEYS = {
   ME: ['user', 'me'] as const,
   USER_TAGS: ['user', 'me', 'tags'] as const,
   TAGS: ['tags'] as const,
-  SEARCH: (filters: any) => ['search', filters] as const,
   SUGGESTIONS: ['suggestions'] as const,
   MATCHES: ['matches'] as const,
   CONVERSATIONS: ['conversations'] as const,
