@@ -7,22 +7,22 @@ import { useFilter } from '@/components/providers/FilterProvider'
 
 const navItems = [
   {
-    name: 'Discover',
+    name: '探す',
     href: '/home',
-    icon: '💖',
+    icon: '🎴',
   },
   {
-    name: 'matches',
+    name: 'いいね',
     href: '/matches',
     icon: '💕',
   },
   {
-    name: 'chat',
+    name: 'チャット',
     href: '/chat',
     icon: '💬',
   },
   {
-    name: 'profile',
+    name: 'プロフィール',
     href: '/profile',
     icon: '👤',
   },
@@ -121,14 +121,13 @@ export function DashboardNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex flex-col items-center gap-1 py-3 px-2 text-xs font-medium transition-colors flex-1',
+                  'flex items-center justify-center py-3 px-2 transition-colors flex-1',
                   isActive
                     ? 'text-primary-500'
                     : 'text-neutral-600'
                 )}
               >
-                <span className="text-xl">{item.icon}</span>
-                <span>{item.name}</span>
+                <span className="text-2xl">{item.icon}</span>
               </Link>
             )
           })}
@@ -137,12 +136,11 @@ export function DashboardNav() {
           {pathname?.startsWith('/home') && (
             <button
               onClick={() => setShowFilters(true)}
-              className="flex flex-col items-center gap-1 py-3 px-2 text-xs font-medium text-neutral-600 transition-colors flex-1"
+              className="flex items-center justify-center py-3 px-2 text-neutral-600 transition-colors flex-1"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
-              <span>フィルター</span>
             </button>
           )}
         </div>
