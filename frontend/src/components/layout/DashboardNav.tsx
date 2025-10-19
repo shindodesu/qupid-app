@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useFilter } from '@/components/providers/FilterProvider'
 
 const navItems = [
   {
@@ -37,6 +38,7 @@ const settingsItems = [
 
 export function DashboardNav() {
   const pathname = usePathname()
+  const { setShowFilters } = useFilter()
 
   return (
     <nav className="bg-white border-b border-neutral-200" role="navigation" aria-label="メインナビゲーション">
@@ -90,6 +92,21 @@ export function DashboardNav() {
                 )
               })}
             </div>
+
+            {/* フィルターボタン（Discoverページでのみ表示） */}
+            {pathname?.startsWith('/home') && (
+              <div className="ml-2 pl-2 border-l border-neutral-200">
+                <button
+                  onClick={() => setShowFilters(true)}
+                  className="flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <span>フィルター</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -115,6 +132,19 @@ export function DashboardNav() {
               </Link>
             )
           })}
+          
+          {/* モバイルフィルターボタン（Discoverページでのみ表示） */}
+          {pathname?.startsWith('/home') && (
+            <button
+              onClick={() => setShowFilters(true)}
+              className="flex flex-col items-center gap-1 py-3 px-2 text-xs font-medium text-neutral-600 transition-colors flex-1"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <span>フィルター</span>
+            </button>
+          )}
         </div>
       </div>
     </nav>
