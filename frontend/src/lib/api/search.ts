@@ -5,6 +5,7 @@ import type {
   SearchFilters,
   SendLikeRequest,
   SendLikeResponse,
+  DiscoverFilters,
 } from '@/types/search'
 
 // APIエラークラス
@@ -78,9 +79,40 @@ export const searchApi = {
   /**
    * おすすめユーザー取得
    */
-  async getSuggestions(limit: number = 10): Promise<UserSuggestionsResponse> {
+  async getSuggestions(limit: number = 10, filters?: DiscoverFilters): Promise<UserSuggestionsResponse> {
     try {
-      const endpoint = `/users/suggestions?limit=${limit}`
+      const params = new URLSearchParams()
+      params.append('limit', String(limit))
+      
+      // Discoverフィルターの追加
+      if (filters) {
+        if (filters.sexuality && filters.sexuality.length > 0) {
+          params.append('sexuality', filters.sexuality.join(','))
+        }
+        
+        if (filters.relationship_goal) {
+          params.append('relationship_goal', filters.relationship_goal)
+        }
+        
+        if (filters.sex && filters.sex.length > 0) {
+          params.append('sex', filters.sex.join(','))
+        }
+        
+        if (filters.gender_range) {
+          params.append('gender_min', String(filters.gender_range.min))
+          params.append('gender_max', String(filters.gender_range.max))
+        }
+        
+        if (filters.age_min !== undefined) {
+          params.append('age_min', String(filters.age_min))
+        }
+        
+        if (filters.age_max !== undefined) {
+          params.append('age_max', String(filters.age_max))
+        }
+      }
+      
+      const endpoint = `/users/suggestions?${params.toString()}`
       return await apiClient.get<UserSuggestionsResponse>(endpoint)
     } catch (error: any) {
       throw new SearchApiError(

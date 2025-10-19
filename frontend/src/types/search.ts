@@ -59,6 +59,28 @@ export interface UserSuggestionsResponse {
 // 並び順
 export type SortOrder = 'recent' | 'popular' | 'alphabetical'
 
+// フィルター関連の型定義
+export type Sexuality = 'lesbian' | 'bisexual' | 'gay' | 'straight' | 'asexual' | 'pansexual' | 'other'
+export type Gender = 'man' | 'woman' | 'non-binary' | 'transgender' | 'other'
+export type RelationshipGoal = 'friends' | 'dating' | 'all'
+export type Sex = 'male' | 'female' | 'other'
+
+// ジェンダー範囲
+export interface GenderRange {
+  min: number // 0-100の範囲で、0がMan、100がWoman
+  max: number
+}
+
+// Discoverフィルター
+export interface DiscoverFilters {
+  sexuality?: Sexuality[]
+  relationship_goal?: RelationshipGoal
+  sex?: Sex[]
+  gender_range?: GenderRange
+  age_min?: number
+  age_max?: number
+}
+
 // 検索フィルター
 export interface SearchFilters {
   tags?: string[]
@@ -68,6 +90,8 @@ export interface SearchFilters {
   sort?: SortOrder
   limit?: number
   offset?: number
+  // Discoverフィルターを統合
+  discover?: DiscoverFilters
 }
 
 // いいね送信リクエスト

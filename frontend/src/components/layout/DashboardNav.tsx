@@ -6,9 +6,9 @@ import { cn } from '@/lib/utils'
 
 const navItems = [
   {
-    name: 'ホーム',
+    name: 'Discover',
     href: '/home',
-    icon: '🏠',
+    icon: '💖',
   },
   {
     name: '探す',

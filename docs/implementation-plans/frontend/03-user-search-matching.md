@@ -12,6 +12,7 @@
 - DELETE `/likes/{liked_user_id}`（取り消し）
 
 ## 🧭 画面/ルート
+- `/home` Discover画面（ユーザーカードのスワイプ機能）
 - `/search` 検索画面（フィルター・結果リスト）
 - `/matches` マッチ一覧
 
@@ -43,6 +44,7 @@ export type UserSearchResponse = {
 ```
 
 ## 🧰 コンポーネント
+- `DiscoverUserCard`（プロフィールカード、スワイプ機能、いいね・スキップボタン）
 - `SearchForm`（テキスト/タグ/学部/学年/ソート）
 - `UserCard`（プロフィール要約、タグ、いいねボタン）
 - `Pagination`（ページング）
@@ -85,6 +87,10 @@ URL同期:
 - E2Eグリーン > 95%
 
 ## 📋 実装チェックリスト
+- [x] `DiscoverUserCard` コンポーネント実装
+- [x] Discoverページ実装（スワイプ機能付き）
+- [x] いいね・スキップ機能実装
+- [x] ナビゲーション更新（ホーム→Discover）
 - [ ] `SearchForm` とURL同期
 - [ ] 検索API接続/無限スクロール or ページネーション
 - [ ] `UserCard` いいね実装（楽観的更新）
