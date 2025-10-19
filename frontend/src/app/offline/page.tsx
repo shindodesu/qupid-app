@@ -1,4 +1,12 @@
+'use client';
+
 export default function OfflinePage() {
+  const handleRetry = () => {
+    if (typeof window !== 'undefined') {
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center p-8">
@@ -29,7 +37,7 @@ export default function OfflinePage() {
         </p>
         
         <button
-          onClick={() => window.location.reload()}
+          onClick={handleRetry}
           className="bg-pink-500 hover:bg-pink-600 text-white font-medium py-2 px-4 rounded-lg transition-colors"
         >
           再試行
