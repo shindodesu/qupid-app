@@ -72,12 +72,14 @@ const nextConfig: NextConfig = {
   // パフォーマンス最適化
   experimental: {
     optimizePackageImports: ['@headlessui/react', '@radix-ui/react-dialog'],
-    turbo: {
-      rules: {
-        '*.svg': {
-          loaders: ['@svgr/webpack'],
-          as: '*.js',
-        },
+  },
+
+  // Turbopack設定
+  turbopack: {
+    rules: {
+      '*.svg': {
+        loaders: ['@svgr/webpack'],
+        as: '*.js',
       },
     },
   },
