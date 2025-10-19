@@ -7,12 +7,13 @@ import { DiscoverUserCard } from '@/components/features/DiscoverUserCard'
 import { DiscoverFilters } from '@/components/features/DiscoverFilters'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/common/ToastContainer'
-import { useFilter } from '@/components/providers/FilterProvider'
+import { DiscoverFilters as DiscoverFiltersType } from '@/types/search'
 
 export default function DiscoverPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [showFilters, setShowFilters] = useState(false)
+  const [filters, setFilters] = useState<DiscoverFiltersType>({})
   const { toast, toasts, removeToast } = useToast()
-  const { showFilters, setShowFilters, filters, setFilters, onApplyFilters, onClearFilters } = useFilter()
 
   // おすすめユーザー取得（より多くのユーザーを取得）
   const { data: suggestionsData, isLoading, refetch } = useQuery({
@@ -69,18 +70,18 @@ export default function DiscoverPage() {
   const currentUser = users[currentIndex]
 
   // フィルターハンドラー
-  const handleFiltersChange = (newFilters: any) => {
+  const handleFiltersChange = (newFilters: DiscoverFiltersType) => {
     setFilters(newFilters)
   }
 
   const handleApplyFilters = () => {
-    onApplyFilters()
+    setShowFilters(false)
     setCurrentIndex(0) // フィルター適用時に最初のユーザーに戻る
     refetch()
   }
 
   const handleClearFilters = () => {
-    onClearFilters()
+    setFilters({})
     setCurrentIndex(0)
     refetch()
   }
@@ -90,8 +91,16 @@ export default function DiscoverPage() {
       {/* ヘッダー */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-neutral-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-neutral-900">Discover</h1>
+            <button 
+              onClick={() => setShowFilters(!showFilters)}
+              className="p-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
