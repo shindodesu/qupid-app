@@ -97,7 +97,7 @@ export function DashboardNav() {
 
       {/* モバイルナビゲーション */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-50">
-        <div className="flex items-center justify-around">
+        <div className="flex items-center justify-around py-2">
           {navItems.map((item) => {
             const isActive = pathname?.startsWith(item.href)
             return (
@@ -105,13 +105,14 @@ export function DashboardNav() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'flex items-center justify-center py-3 px-2 transition-colors flex-1',
+                  'flex flex-col items-center justify-center py-2 px-2 transition-colors flex-1',
                   isActive
-                    ? 'text-primary-500'
+                    ? 'text-red-500'
                     : 'text-neutral-600'
                 )}
               >
-                <span className="text-2xl">{item.icon}</span>
+                <span className="text-2xl mb-1">{item.icon}</span>
+                <span className="text-xs">{item.name}</span>
               </Link>
             )
           })}

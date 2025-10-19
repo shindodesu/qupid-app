@@ -162,22 +162,51 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const otherUserName = otherUser?.sender_name || '会話'
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-white">
+      {/* グローバルアクションボタン（画像の上部中央の赤い紙飛行機） */}
+      <div className="flex justify-center pt-2 pb-1">
+        <button className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center shadow-lg">
+          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </button>
+      </div>
+
       {/* ヘッダー */}
-      <div className="border-b border-neutral-200 bg-white p-4">
+      <div className="border-b border-neutral-200 bg-white px-4 py-3">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-neutral-900">
-              {otherUserName}
-            </h2>
+          <div className="flex items-center gap-3">
+            {/* プロフィール画像（グラデーションボーダー付き） */}
+            <div className="relative">
+              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-orange-400 to-purple-500 p-0.5">
+                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="/icon.png" 
+                    alt={otherUserName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+            
+            <div>
+              <h2 className="text-lg font-bold text-neutral-900">
+                {otherUserName}
+              </h2>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span className="text-sm text-gray-500">Online</span>
+              </div>
+            </div>
           </div>
+          
           <div className="flex items-center gap-2">
             {/* メニューボタン */}
             {otherUserId && (
               <div className="relative">
                 <button
                   onClick={() => setShowMenu(!showMenu)}
-                  className="p-2 hover:bg-neutral-100 rounded-full transition-colors"
+                  className="w-10 h-10 bg-white rounded-lg border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
                 >
                   <svg
                     className="w-5 h-5 text-neutral-600"
@@ -224,12 +253,6 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                 )}
               </div>
             )}
-            
-            <Link href="/chat">
-              <Button variant="outline" size="sm">
-                ← 戻る
-              </Button>
-            </Link>
           </div>
         </div>
       </div>
@@ -238,7 +261,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 bg-neutral-50"
+        className="flex-1 overflow-y-auto bg-white"
       >
         {messages.length === 0 ? (
           <div className="flex items-center justify-center h-full">
@@ -248,7 +271,14 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
             </div>
           </div>
         ) : (
-          <>
+          <div className="p-4">
+            {/* 日付セパレーター */}
+            <div className="flex justify-center mb-4">
+              <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full">
+                Today
+              </span>
+            </div>
+            
             {messages.map((message) => (
               <MessageBubble
                 key={message.id}
@@ -257,7 +287,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
               />
             ))}
             <div ref={messagesEndRef} />
-          </>
+          </div>
         )}
       </div>
 

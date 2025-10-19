@@ -9,3 +9,8 @@ class ReportStatus(str, Enum):
     reviewing = "reviewing"
     resolved = "resolved"
     rejected = "rejected"
+
+class MessageType(str, Enum):
+    text = "text"
+    voice = "voice"
+    image = "image"

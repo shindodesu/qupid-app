@@ -24,7 +24,7 @@ export default function ChatDetailPage({ params }: ChatDetailPageProps) {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)]">
+    <div className="h-[calc(100vh-4rem)] md:h-[calc(100vh-5rem)] bg-white">
       <ChatWindow conversationId={conversationId} />
     </div>
   )

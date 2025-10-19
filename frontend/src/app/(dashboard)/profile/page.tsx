@@ -22,6 +22,10 @@ export default function ProfilePage() {
     bio: '',
     faculty: '',
     grade: '',
+    birthday: '',
+    gender: '',
+    sexuality: '',
+    looking_for: '',
   })
 
   // 自分の情報取得
@@ -38,6 +42,10 @@ export default function ProfilePage() {
         bio: userData.bio || '',
         faculty: userData.faculty || '',
         grade: userData.grade || '',
+        birthday: userData.birthday || '',
+        gender: userData.gender || '',
+        sexuality: userData.sexuality || '',
+        looking_for: userData.looking_for || '',
       })
     }
   }, [userData])
@@ -89,6 +97,52 @@ export default function ProfilePage() {
     useAuthStore.getState().logout()
   }
 
+  // アバター画像アップロード
+  const uploadAvatarMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const token = localStorage.getItem('auth-token')
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/files/upload/avatar`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'アバター画像のアップロードに失敗しました')
+      }
+      
+      return response.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'me'] })
+    },
+  })
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // ファイルサイズチェック（10MB）
+      if (file.size > 10 * 1024 * 1024) {
+        alert('ファイルサイズは10MB以下にしてください')
+        return
+      }
+      
+      // ファイルタイプチェック
+      if (!file.type.startsWith('image/')) {
+        alert('画像ファイルを選択してください')
+        return
+      }
+      
+      uploadAvatarMutation.mutate(file)
+    }
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* ヘッダー */}
@@ -100,6 +154,56 @@ export default function ProfilePage() {
           あなたのプロフィール情報を管理
         </p>
       </div>
+
+      {/* プロフィール画像 */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>プロフィール画像</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              {userData?.avatar_url ? (
+                <img
+                  src={userData.avatar_url}
+                  alt={userData.display_name}
+                  className="w-24 h-24 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-neutral-200 flex items-center justify-center">
+                  <svg className="w-12 h-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+              )}
+            </div>
+            
+            <div className="flex-1">
+              <input
+                type="file"
+                id="avatar-upload"
+                accept="image/*"
+                className="hidden"
+                onChange={handleAvatarChange}
+                disabled={uploadAvatarMutation.isPending}
+              />
+              <label htmlFor="avatar-upload">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => document.getElementById('avatar-upload')?.click()}
+                  disabled={uploadAvatarMutation.isPending}
+                >
+                  {uploadAvatarMutation.isPending ? 'アップロード中...' : '画像を変更'}
+                </Button>
+              </label>
+              <p className="text-sm text-neutral-500 mt-2">
+                推奨: 正方形の画像（最大10MB）
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* プロフィール情報 */}
       <Card className="mb-6">
@@ -181,6 +285,62 @@ export default function ProfilePage() {
                   { value: '博士3年', label: '博士3年' },
                 ]}
               />
+              <Input
+                label="生年月日"
+                type="date"
+                value={formData.birthday}
+                onChange={(e) =>
+                  setFormData({ ...formData, birthday: e.target.value })
+                }
+              />
+              <Select
+                label="性別"
+                value={formData.gender}
+                onChange={(e) =>
+                  setFormData({ ...formData, gender: e.target.value })
+                }
+                options={[
+                  { value: '', label: '選択してください' },
+                  { value: '男性', label: '男性' },
+                  { value: '女性', label: '女性' },
+                  { value: 'ノンバイナリー', label: 'ノンバイナリー' },
+                  { value: 'その他', label: 'その他' },
+                  { value: '回答しない', label: '回答しない' },
+                ]}
+              />
+              <Select
+                label="セクシュアリティ"
+                value={formData.sexuality}
+                onChange={(e) =>
+                  setFormData({ ...formData, sexuality: e.target.value })
+                }
+                options={[
+                  { value: '', label: '選択してください' },
+                  { value: 'ストレート', label: 'ストレート' },
+                  { value: 'ゲイ', label: 'ゲイ' },
+                  { value: 'レズビアン', label: 'レズビアン' },
+                  { value: 'バイセクシュアル', label: 'バイセクシュアル' },
+                  { value: 'パンセクシュアル', label: 'パンセクシュアル' },
+                  { value: 'アセクシュアル', label: 'アセクシュアル' },
+                  { value: 'その他', label: 'その他' },
+                  { value: '回答しない', label: '回答しない' },
+                ]}
+              />
+              <Select
+                label="探している関係"
+                value={formData.looking_for}
+                onChange={(e) =>
+                  setFormData({ ...formData, looking_for: e.target.value })
+                }
+                options={[
+                  { value: '', label: '選択してください' },
+                  { value: '恋愛関係', label: '恋愛関係' },
+                  { value: '友達', label: '友達' },
+                  { value: 'カジュアルな関係', label: 'カジュアルな関係' },
+                  { value: '長期的な関係', label: '長期的な関係' },
+                  { value: 'その他', label: 'その他' },
+                ]}
+              />
               <Button type="submit" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? '保存中...' : '保存'}
               </Button>
@@ -224,6 +384,42 @@ export default function ProfilePage() {
                   </label>
                   <p className="text-neutral-900">
                     {userData?.grade || '未設定'}
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-neutral-500">
+                    生年月日
+                  </label>
+                  <p className="text-neutral-900">
+                    {userData?.birthday ? new Date(userData.birthday).toLocaleDateString('ja-JP') : '未設定'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-neutral-500">
+                    性別
+                  </label>
+                  <p className="text-neutral-900">
+                    {userData?.gender || '未設定'}
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-neutral-500">
+                    セクシュアリティ
+                  </label>
+                  <p className="text-neutral-900">
+                    {userData?.sexuality || '未設定'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-neutral-500">
+                    探している関係
+                  </label>
+                  <p className="text-neutral-900">
+                    {userData?.looking_for || '未設定'}
                   </p>
                 </div>
               </div>
@@ -335,8 +531,17 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle>アカウント設定</CardTitle>
         </CardHeader>
-        <CardContent>
-          <Button variant="destructive" onClick={handleLogout}>
+        <CardContent className="space-y-3">
+          <Link href="/privacy-settings">
+            <Button variant="outline" className="w-full">
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              プライバシー設定
+            </Button>
+          </Link>
+          
+          <Button variant="destructive" className="w-full" onClick={handleLogout}>
             ログアウト
           </Button>
         </CardContent>

@@ -9,7 +9,7 @@ from app.models.user import User
 from app.models.tag import Tag, UserTag
 from app.models.like import Like
 from app.models.block import Block
-from app.schemas.user import UserCreate, UserRead
+from app.schemas.user import UserCreate, UserRead, InitialProfileCreate, PrivacySettingsUpdate
 from app.schemas.tag import (
     UserTagAdd,
     UserTagRead,
@@ -53,11 +53,17 @@ async def get_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 from pydantic import BaseModel
+from datetime import date
+
 class UserUpdate(BaseModel):
     display_name: str | None = None
     bio: str | None = None
     faculty: str | None = None
     grade: str | None = None
+    birthday: date | None = None
+    gender: str | None = None
+    sexuality: str | None = None
+    looking_for: str | None = None
 
 @router.put("/me", response_model=UserRead)
 async def update_me(
@@ -73,6 +79,79 @@ async def update_me(
         current_user.faculty = payload.faculty
     if payload.grade is not None:
         current_user.grade = payload.grade
+    if payload.birthday is not None:
+        current_user.birthday = payload.birthday
+    if payload.gender is not None:
+        current_user.gender = payload.gender
+    if payload.sexuality is not None:
+        current_user.sexuality = payload.sexuality
+    if payload.looking_for is not None:
+        current_user.looking_for = payload.looking_for
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+# 初回プロフィール登録エンドポイント
+@router.post("/me/initial-profile", response_model=UserRead)
+async def complete_initial_profile(
+    payload: InitialProfileCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    初回プロフィール登録（必須項目の設定）
+    """
+    # 既にプロフィールが完了している場合はエラー
+    if current_user.profile_completed:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Profile already completed"
+        )
+    
+    # プロフィール情報を設定
+    current_user.display_name = payload.display_name
+    current_user.birthday = payload.birthday
+    current_user.gender = payload.gender
+    current_user.sexuality = payload.sexuality
+    current_user.looking_for = payload.looking_for
+    current_user.profile_completed = True
+    
+    await db.commit()
+    await db.refresh(current_user)
+    return current_user
+
+
+# ==================== プライバシー設定エンドポイント ====================
+
+@router.put("/me/privacy", response_model=UserRead)
+async def update_privacy_settings(
+    payload: PrivacySettingsUpdate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    プライバシー設定を更新
+    """
+    # 各フィールドが指定されている場合のみ更新
+    if payload.show_faculty is not None:
+        current_user.show_faculty = payload.show_faculty
+    if payload.show_grade is not None:
+        current_user.show_grade = payload.show_grade
+    if payload.show_birthday is not None:
+        current_user.show_birthday = payload.show_birthday
+    if payload.show_age is not None:
+        current_user.show_age = payload.show_age
+    if payload.show_gender is not None:
+        current_user.show_gender = payload.show_gender
+    if payload.show_sexuality is not None:
+        current_user.show_sexuality = payload.show_sexuality
+    if payload.show_looking_for is not None:
+        current_user.show_looking_for = payload.show_looking_for
+    if payload.show_bio is not None:
+        current_user.show_bio = payload.show_bio
+    if payload.show_tags is not None:
+        current_user.show_tags = payload.show_tags
+    
     await db.commit()
     await db.refresh(current_user)
     return current_user
@@ -249,7 +328,7 @@ async def search_users(
     if excluded_user_ids:
         query = query.where(User.id.not_in(excluded_user_ids))
     
-    # タグでのフィルタリング
+    # タグでのフィルタリング（プライバシー設定でタグを公開しているユーザーのみ）
     filters_applied = {}
     
     if tags:
@@ -262,29 +341,42 @@ async def search_users(
                 # タグ名からタグIDを取得
                 tag_subquery = select(Tag.id).where(Tag.name.ilike(f"%{tag_name}%"))
                 
-                # そのタグを持つユーザーIDを取得
+                # そのタグを持つユーザーIDを取得（タグを公開しているユーザーのみ）
                 user_with_tag_subquery = select(UserTag.user_id).where(
-                    UserTag.tag_id.in_(tag_subquery)
+                    and_(
+                        UserTag.tag_id.in_(tag_subquery),
+                        UserTag.user_id.in_(select(User.id).where(User.show_tags == True))
+                    )
                 )
                 
                 query = query.where(User.id.in_(user_with_tag_subquery))
     
-    # 学部でのフィルタリング
+    # 学部でのフィルタリング（学部を公開しているユーザーのみ）
     if faculty:
         filters_applied["faculty"] = faculty
-        query = query.where(User.faculty.ilike(f"%{faculty}%"))
+        query = query.where(
+            and_(
+                User.faculty.ilike(f"%{faculty}%"),
+                User.show_faculty == True
+            )
+        )
     
-    # 学年でのフィルタリング
+    # 学年でのフィルタリング（学年を公開しているユーザーのみ）
     if grade:
         filters_applied["grade"] = grade
-        query = query.where(User.grade.ilike(f"%{grade}%"))
+        query = query.where(
+            and_(
+                User.grade.ilike(f"%{grade}%"),
+                User.show_grade == True
+            )
+        )
     
-    # フリーテキスト検索
+    # フリーテキスト検索（プライバシー設定を考慮）
     if search:
         filters_applied["search"] = search
         search_filter = or_(
             User.display_name.ilike(f"%{search}%"),
-            User.bio.ilike(f"%{search}%")
+            and_(User.bio.ilike(f"%{search}%"), User.show_bio == True)
         )
         query = query.where(search_filter)
     
@@ -362,7 +454,7 @@ async def search_users(
         else:
             their_likes_dict[like.liker_id] = like
     
-    # レスポンス整形
+    # レスポンス整形（プライバシー設定を考慮）
     search_results = []
     for user in users:
         i_liked = user.id in my_likes_dict
@@ -373,10 +465,10 @@ async def search_users(
             UserSearchResult(
                 id=user.id,
                 display_name=user.display_name,
-                bio=user.bio,
-                faculty=user.faculty,
-                grade=user.grade,
-                tags=user_tags_dict.get(user.id, []),
+                bio=user.bio if user.show_bio else None,
+                faculty=user.faculty if user.show_faculty else None,
+                grade=user.grade if user.show_grade else None,
+                tags=user_tags_dict.get(user.id, []) if user.show_tags else [],
                 created_at=user.created_at,
                 like_status=LikeStatus(
                     i_liked=i_liked,
@@ -545,10 +637,10 @@ async def get_user_suggestions(
             UserSuggestion(
                 id=user.id,
                 display_name=user.display_name,
-                bio=user.bio,
-                faculty=user.faculty,
-                grade=user.grade,
-                tags=user_tags,
+                bio=user.bio if user.show_bio else None,
+                faculty=user.faculty if user.show_faculty else None,
+                grade=user.grade if user.show_grade else None,
+                tags=user_tags if user.show_tags else [],
                 match_score=match_score,
                 reason=reason,
             )

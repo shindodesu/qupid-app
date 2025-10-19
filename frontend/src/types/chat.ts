@@ -10,7 +10,12 @@ export interface UserInfo {
   id: number
   display_name: string
   bio?: string | null
+  is_online: boolean
+  last_seen_at?: string | null
 }
+
+// メッセージタイプ
+export type MessageType = 'text' | 'voice' | 'image'
 
 // メッセージ
 export interface Message {
@@ -20,6 +25,10 @@ export interface Message {
   sender_name: string
   is_read: boolean
   created_at: string
+  message_type: MessageType
+  file_path?: string | null
+  file_size?: number | null
+  duration_seconds?: number | null
 }
 
 // 最後のメッセージ
@@ -87,5 +96,9 @@ export interface ConversationCreateRequest {
 // メッセージ送信リクエスト
 export interface MessageCreateRequest {
   content: string
+  message_type?: MessageType
+  file_path?: string | null
+  file_size?: number | null
+  duration_seconds?: number | null
 }
 

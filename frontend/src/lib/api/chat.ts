@@ -9,6 +9,7 @@ import type {
   MessageCreateRequest,
   UnreadCountResponse,
   MessageReadResponse,
+  MessageType,
 } from '@/types/chat'
 
 // APIエラークラス
@@ -99,11 +100,19 @@ export const chatApi = {
    */
   async sendMessage(
     conversationId: number,
-    content: string
+    content: string,
+    messageType: MessageType = 'text',
+    filePath?: string,
+    fileSize?: number,
+    durationSeconds?: number
   ): Promise<Message> {
     try {
       const data: MessageCreateRequest = {
         content,
+        message_type: messageType,
+        file_path: filePath,
+        file_size: fileSize,
+        duration_seconds: durationSeconds,
       }
       return await apiClient.post<Message>(
         `/conversations/${conversationId}/messages`,
@@ -149,6 +158,41 @@ export const chatApi = {
     } catch (error: any) {
       throw new ChatApiError(
         error.message || '未読数の取得に失敗しました',
+        error.status,
+        error.code
+      )
+    }
+  },
+
+  /**
+   * オンライン状態を更新
+   */
+  async updateOnlineStatus(isOnline: boolean): Promise<{ message: string; is_online: boolean }> {
+    try {
+      return await apiClient.put<{ message: string; is_online: boolean }>(
+        '/conversations/users/online-status',
+        { is_online: isOnline }
+      )
+    } catch (error: any) {
+      throw new ChatApiError(
+        error.message || 'オンライン状態の更新に失敗しました',
+        error.status,
+        error.code
+      )
+    }
+  },
+
+  /**
+   * ユーザーのオンライン状態を取得
+   */
+  async getUserOnlineStatus(userId: number): Promise<{ user_id: number; is_online: boolean; last_seen_at: string | null }> {
+    try {
+      return await apiClient.get<{ user_id: number; is_online: boolean; last_seen_at: string | null }>(
+        `/conversations/users/${userId}/online-status`
+      )
+    } catch (error: any) {
+      throw new ChatApiError(
+        error.message || 'オンライン状態の取得に失敗しました',
         error.status,
         error.code
       )

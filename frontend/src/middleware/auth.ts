@@ -19,6 +19,9 @@ const AUTH_ROUTES = [
   '/auth/forgot-password',
 ]
 
+// 初回プロフィール入力ページ
+const INITIAL_PROFILE_ROUTE = '/initial-profile'
+
 // パブリックページのパス
 const PUBLIC_ROUTES = [
   '/',
@@ -67,6 +70,16 @@ export function authMiddleware(request: NextRequest) {
     if (isAuthenticated) {
       // 認証済みの場合はホームページにリダイレクト
       return NextResponse.redirect(new URL('/home', request.url))
+    }
+  }
+
+  // 初回プロフィール入力ページへのアクセス
+  if (pathname.startsWith(INITIAL_PROFILE_ROUTE)) {
+    if (!isAuthenticated) {
+      // 未認証の場合はログインページにリダイレクト
+      const loginUrl = new URL('/auth/login', request.url)
+      loginUrl.searchParams.set('redirect', pathname)
+      return NextResponse.redirect(loginUrl)
     }
   }
 

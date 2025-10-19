@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
-from app.routers import health, users, auth, tags, chat
+from app.routers import health, users, auth, tags, chat, files, email_auth
 from app.routers.likes import router as likes_router, matches_router
 from app.routers.safety import reports_router, blocks_router, admin_router
 
@@ -14,6 +14,7 @@ app.add_middleware(
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "http://localhost:3001",
+        "http://127.0.0.1:3001",
         # Vercel本番環境
         "https://frontend-795trryv0-shindodesus-projects.vercel.app",
         "https://frontend-seven-psi-84.vercel.app",
@@ -29,11 +30,13 @@ app.add_middleware(
 # Include routers for different endpoints
 app.include_router(health.router)
 app.include_router(auth.router)
+app.include_router(email_auth.router)
 app.include_router(users.router)
 app.include_router(tags.router)
 app.include_router(likes_router)
 app.include_router(matches_router)
 app.include_router(chat.router)
+app.include_router(files.router)
 app.include_router(reports_router)
 app.include_router(blocks_router)
 app.include_router(admin_router)

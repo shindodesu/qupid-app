@@ -9,7 +9,10 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('auth-token') : null
+    const token = typeof window !== 'undefined' ? 
+      localStorage.getItem('auth-token') || 
+      document.cookie.split(';').find(c => c.trim().startsWith('auth-token='))?.split('=')[1] : 
+      null
 
     const config: RequestInit = {
       headers: {
@@ -19,6 +22,13 @@ class ApiClient {
       },
       ...options,
     }
+
+    console.log('API Request:', {
+      url: `${this.baseURL}${endpoint}`,
+      method: config.method || 'GET',
+      headers: config.headers,
+      hasToken: !!token
+    })
 
     const response = await fetch(`${this.baseURL}${endpoint}`, config)
 
@@ -89,6 +99,10 @@ class ApiClient {
 
   async updateProfile(data: any) {
     return this.put<any>('/users/me', data)
+  }
+
+  async completeInitialProfile(data: any) {
+    return this.post<any>('/users/me/initial-profile', data)
   }
 
   // タグ関連のメソッド

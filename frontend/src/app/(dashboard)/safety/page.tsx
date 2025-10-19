@@ -47,36 +47,30 @@ export default function SafetyPage() {
         </h3>
         <div className="space-y-2 text-sm text-neutral-700">
           <p>
-            <a
+            <Link
               href="/help/safety"
-              target="_blank"
-              rel="noopener noreferrer"
               className="text-primary-500 hover:underline"
             >
               セーフティガイド
-            </a>
+            </Link>
             を確認する
           </p>
           <p>
-            <a
+            <Link
               href="/guidelines"
-              target="_blank"
-              rel="noopener noreferrer"
               className="text-primary-500 hover:underline"
             >
               コミュニティガイドライン
-            </a>
+            </Link>
             を確認する
           </p>
           <p>
-            <a
+            <Link
               href="/support"
-              target="_blank"
-              rel="noopener noreferrer"
               className="text-primary-500 hover:underline"
             >
               サポートに問い合わせる
-            </a>
+            </Link>
           </p>
         </div>
       </div>

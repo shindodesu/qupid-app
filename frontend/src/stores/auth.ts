@@ -11,6 +11,11 @@ export interface User {
   bio?: string
   faculty?: string
   grade?: string
+  birthday?: string
+  gender?: string
+  sexuality?: string
+  looking_for?: string
+  profile_completed?: boolean
   is_active?: boolean
   created_at?: string
 }
@@ -89,11 +94,12 @@ export const useAuthStore = create<AuthState>()(
             state.error = null
           })
           
-          // Cookieにトークンを保存（ミドルウェア用）
+          // CookieとLocalStorageにトークンを保存
           if (typeof document !== 'undefined') {
             const expiresDate = new Date(Date.now() + (24 * 60 * 60 * 1000))
             document.cookie = `auth-token=${response.token}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`
-            console.log('Cookie set: auth-token')
+            localStorage.setItem('auth-token', response.token)
+            console.log('Cookie and localStorage set: auth-token')
           }
           
           const authState = get()
@@ -148,11 +154,12 @@ export const useAuthStore = create<AuthState>()(
             state.error = null
           })
           
-          // Cookieにトークンを保存（ミドルウェア用）
+          // CookieとLocalStorageにトークンを保存
           if (typeof document !== 'undefined') {
             const expiresDate = new Date(Date.now() + (24 * 60 * 60 * 1000))
             document.cookie = `auth-token=${response.token}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`
-            console.log('Cookie set: auth-token')
+            localStorage.setItem('auth-token', response.token)
+            console.log('Cookie and localStorage set: auth-token')
           }
           
           console.log('Auth state after register:', get())

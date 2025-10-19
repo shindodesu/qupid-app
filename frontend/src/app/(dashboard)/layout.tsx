@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useIsAuthenticated } from '@/stores/auth'
+import { useIsAuthenticated, useUser } from '@/stores/auth'
 import { DashboardNav } from '@/components/layout/DashboardNav'
 import { FilterProvider } from '@/components/providers/FilterProvider'
 
@@ -13,14 +13,18 @@ export default function DashboardLayout({
 }) {
   const router = useRouter()
   const isAuthenticated = useIsAuthenticated()
+  const user = useUser()
 
   useEffect(() => {
     console.log('DashboardLayout: isAuthenticated =', isAuthenticated)
     if (!isAuthenticated) {
       console.log('DashboardLayout: redirecting to login')
       router.push('/auth/login')
+    } else if (user && !user.profile_completed) {
+      console.log('DashboardLayout: profile not completed, redirecting to initial profile')
+      router.push('/initial-profile')
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, user, router])
 
   if (!isAuthenticated) {
     console.log('DashboardLayout: rendering loading screen')

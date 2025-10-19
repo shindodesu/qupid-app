@@ -3,7 +3,7 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
-from app.models.enums import ConversationType
+from app.models.enums import ConversationType, MessageType
 
 
 class ConversationCreate(BaseModel):
@@ -14,6 +14,10 @@ class ConversationCreate(BaseModel):
 class MessageCreate(BaseModel):
     """メッセージ作成リクエスト"""
     content: str = Field(..., min_length=1, max_length=4000, description="メッセージ内容")
+    message_type: MessageType = Field(default=MessageType.text, description="メッセージタイプ")
+    file_path: Optional[str] = Field(None, max_length=500, description="ファイルパス")
+    file_size: Optional[int] = Field(None, ge=0, description="ファイルサイズ（バイト）")
+    duration_seconds: Optional[int] = Field(None, ge=0, description="音声メッセージの長さ（秒）")
 
 
 class UserInfo(BaseModel):
@@ -21,6 +25,8 @@ class UserInfo(BaseModel):
     id: int
     display_name: str
     bio: Optional[str]
+    is_online: bool = Field(default=False, description="オンライン状態")
+    last_seen_at: Optional[datetime] = Field(None, description="最終アクセス時刻")
 
     class Config:
         from_attributes = True
@@ -34,6 +40,10 @@ class MessageRead(BaseModel):
     sender_name: str
     is_read: bool
     created_at: datetime
+    message_type: MessageType = Field(default=MessageType.text, description="メッセージタイプ")
+    file_path: Optional[str] = Field(None, description="ファイルパス")
+    file_size: Optional[int] = Field(None, description="ファイルサイズ（バイト）")
+    duration_seconds: Optional[int] = Field(None, description="音声メッセージの長さ（秒）")
 
     class Config:
         from_attributes = True

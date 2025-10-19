@@ -291,6 +291,8 @@ async def get_conversations(
                     id=other_user.id,
                     display_name=other_user.display_name,
                     bio=other_user.bio,
+                    is_online=other_user.is_online,
+                    last_seen_at=other_user.last_seen_at,
                 ),
                 last_message=last_message,
                 unread_count=unread_count,
@@ -366,6 +368,8 @@ async def create_conversation(
                 id=other_user.id,
                 display_name=other_user.display_name,
                 bio=other_user.bio,
+                is_online=other_user.is_online,
+                last_seen_at=other_user.last_seen_at,
             ),
             created_at=existing_conv.created_at,
         )
@@ -400,6 +404,8 @@ async def create_conversation(
             id=other_user.id,
             display_name=other_user.display_name,
             bio=other_user.bio,
+            is_online=other_user.is_online,
+            last_seen_at=other_user.last_seen_at,
         ),
         created_at=new_conversation.created_at,
     )
@@ -466,6 +472,10 @@ async def get_messages(
             sender_name=msg.sender.display_name,
             is_read=msg.is_read,
             created_at=msg.created_at,
+            message_type=msg.message_type,
+            file_path=msg.file_path,
+            file_size=msg.file_size,
+            duration_seconds=msg.duration_seconds,
         )
         for msg in messages
     ]
@@ -516,6 +526,10 @@ async def send_message(
         sender_id=current_user.id,
         content=payload.content,
         is_read=False,
+        message_type=payload.message_type,
+        file_path=payload.file_path,
+        file_size=payload.file_size,
+        duration_seconds=payload.duration_seconds,
     )
     db.add(new_message)
     
@@ -535,6 +549,10 @@ async def send_message(
         sender_name=new_message.sender.display_name,
         is_read=new_message.is_read,
         created_at=new_message.created_at,
+        message_type=new_message.message_type,
+        file_path=new_message.file_path,
+        file_size=new_message.file_size,
+        duration_seconds=new_message.duration_seconds,
     )
 
 
@@ -630,4 +648,54 @@ async def get_unread_count(
     unread_count = result.scalar() or 0
     
     return UnreadCountResponse(unread_count=unread_count)
+
+
+# ==================== オンライン状態管理エンドポイント ====================
+
+@router.put("/users/online-status")
+async def update_online_status(
+    is_online: bool,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    ユーザーのオンライン状態を更新
+    
+    - ログイン時にオンライン状態をtrueに設定
+    - ログアウト時にオンライン状態をfalseに設定
+    - 定期的にlast_seen_atを更新
+    """
+    
+    current_user.is_online = is_online
+    current_user.last_seen_at = datetime.now(timezone.utc)
+    
+    await db.commit()
+    
+    return {"message": "Online status updated", "is_online": is_online}
+
+
+@router.get("/users/{user_id}/online-status")
+async def get_user_online_status(
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    指定ユーザーのオンライン状態を取得
+    
+    - 会話相手のオンライン状態を確認するために使用
+    """
+    
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    
+    return {
+        "user_id": user_id,
+        "is_online": user.is_online,
+        "last_seen_at": user.last_seen_at,
+    }
 

@@ -10,10 +10,10 @@
 - 非ログイン時のアクセス制御と保護ページ
 
 ## 🧩 画面/ルート
-- `/login` ログイン
-- `/register` 初回登録（プロフィールセットアップウィザード）
-- `/profile` 自分のプロフィール表示
-- `/profile/edit` プロフィール編集（インラインでも可）
+- `/auth/login` ログイン
+- `/auth/register` 初回登録
+- `/initial-profile` 初回プロフィール入力（画像デザインに基づく）
+- `/profile` 自分のプロフィール表示・編集
 
 App Router 配下での構成案:
 ```
@@ -21,9 +21,9 @@ src/app/
   (auth)/
     login/page.tsx
     register/page.tsx
+    initial-profile/page.tsx
   (dashboard)/
     profile/page.tsx
-    profile/edit/page.tsx
 ```
 
 ## 🛠️ 技術要素
@@ -37,6 +37,7 @@ src/app/
 - POST `/auth/login` ログイン
 - GET `/users/me` 自分の情報
 - PUT `/users/me` プロフィール更新
+- POST `/users/me/initial-profile` 初回プロフィール登録
 - GET `/users/me/tags` 自分のタグ
 - POST `/users/me/tags` 追加、DELETE `/users/me/tags/{tag_id}` 削除
 
@@ -50,24 +51,38 @@ export type User = {
   bio?: string
   faculty?: string
   grade?: string
+  birthday?: string
+  gender?: string
+  sexuality?: string
+  looking_for?: string
+  profile_completed?: boolean
   tags?: { id: number; name: string; description?: string }[]
   created_at?: string
   updated_at?: string
 }
 
-export type UserUpdate = Partial<Pick<User, 'display_name' | 'bio' | 'faculty' | 'grade'>>
+export type InitialProfileData = {
+  display_name: string
+  birthday: string
+  gender: string
+  sexuality: string
+  looking_for: string
+}
+
+export type UserUpdate = Partial<Pick<User, 'display_name' | 'bio' | 'faculty' | 'grade' | 'birthday' | 'gender' | 'sexuality' | 'looking_for'>>
 
 export type LoginPayload = { email: string; password: string }
 ```
 
 ## 🧭 ユースケース/フロー
-1) 非ログイン → `/login` 表示 → 認証成功 → 初回なら `/register`、既存なら `/profile` へ遷移
-2) `/register` でプロフィール必須項目を入力（進捗ステップ UI）→ 保存 → `/profile`
-3) `/profile` 表示からタグの追加/削除、`/profile/edit` で詳細編集
+1) 非ログイン → `/auth/login` 表示 → 認証成功 → プロフィール未完了なら `/initial-profile`、完了済みなら `/profile` へ遷移
+2) `/initial-profile` でプロフィール必須項目を入力（画像デザインに基づく）→ 保存 → `/profile`
+3) `/profile` 表示からタグの追加/削除、インライン編集で詳細編集
 
 ガード:
 - 保護ルートはセッション検証（SSR or クライアント）
-- 非ログイン時は `/login` リダイレクト
+- 非ログイン時は `/auth/login` リダイレクト
+- プロフィール未完了時は `/initial-profile` リダイレクト
 
 ## 🧪 バリデーション
 Zod スキーマ例:
@@ -124,13 +139,14 @@ export const profileSchema = z.object({
 - テストカバレッジ > 80%
 
 ## 📋 実装チェックリスト
-- [ ] `/login` 画面/フォーム/エラー表示
-- [ ] 認証API接続・トークン保持
-- [ ] 初回登録ウィザード（`/register`）
-- [ ] `/users/me` 取得・キャッシュ
-- [ ] プロフィール編集（保存/差分UI）
-- [ ] 自己タグ追加/削除UI
-- [ ] 保護ルート/リダイレクト
+- [x] `/auth/login` 画面/フォーム/エラー表示
+- [x] 認証API接続・トークン保持
+- [x] 初回プロフィール入力ページ（`/initial-profile`）- 画像デザインに基づく
+- [x] `/users/me` 取得・キャッシュ
+- [x] プロフィール編集（保存/差分UI）
+- [x] 自己タグ追加/削除UI
+- [x] 保護ルート/リダイレクト
+- [x] プロフィール完了状態チェック
 - [ ] 単体/統合/E2Eテスト
 
 ---

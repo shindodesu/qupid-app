@@ -35,8 +35,8 @@ export const MessageBubble = memo(function MessageBubble({ message, isOwn }: Mes
           className={cn(
             'rounded-2xl px-4 py-2 break-words',
             isOwn
-              ? 'bg-primary-500 text-white rounded-br-sm'
-              : 'bg-neutral-100 text-neutral-900 rounded-bl-sm'
+              ? 'bg-gradient-to-r from-pink-300 to-pink-400 text-white rounded-br-sm'
+              : 'bg-white border border-gray-200 text-neutral-900 rounded-bl-sm'
           )}
         >
           <p className="text-sm whitespace-pre-wrap">{message.content}</p>
@@ -53,12 +53,28 @@ export const MessageBubble = memo(function MessageBubble({ message, isOwn }: Mes
             {new Date(message.created_at).toLocaleTimeString('ja-JP', {
               hour: '2-digit',
               minute: '2-digit',
+              hour12: true,
             })}
           </p>
           {isOwn && (
-            <span className="text-xs text-neutral-400">
-              {message.is_read ? '既読' : '未読'}
-            </span>
+            <div className="flex items-center gap-1">
+              {message.is_read ? (
+                <div className="flex">
+                  <svg className="w-3 h-3 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                  <svg className="w-3 h-3 text-red-500 -ml-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              ) : (
+                <div className="flex">
+                  <svg className="w-3 h-3 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

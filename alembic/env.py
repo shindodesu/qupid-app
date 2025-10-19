@@ -5,6 +5,7 @@ from sqlalchemy import engine_from_config, pool
 # ---- アプリ側の設定/metadata を読み込む ----
 from app.core.config import settings
 from app.db.base import Base
+from app.models.email_verification import EmailVerification
 import app.models  # ← これが超重要：全モデルをimportして Base.metadata に登録させる
 
 # Alembicの設定オブジェクト
