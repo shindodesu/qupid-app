@@ -53,9 +53,22 @@ DATABASE_URL=postgresql+asyncpg://user:password@hostname:5432/mydatabase
 #   → postgresql+asyncpg://user:pass@host:5432/db
 
 SECRET_KEY=your-super-secret-key-change-this
-ENVIRONMENT=production
+APP_ENV=production
 ALLOWED_ORIGINS=https://qupid.vercel.app,http://localhost:3000
+
+# メール送信設定（オプション: 本番環境でメール送信を有効にする場合）
+ENABLE_EMAIL=true  # メール送信を有効化
+SMTP_SERVER=smtp.gmail.com  # SMTPサーバー
+SMTP_PORT=587  # SMTPポート
+SMTP_USERNAME=your-email@gmail.com  # 送信元メールアドレス
+SMTP_PASSWORD=your-app-password  # アプリパスワード
+FROM_EMAIL=noreply@qupid.com  # 送信元として表示されるメールアドレス
 ```
+
+**注意**: 
+- 開発環境では `ENABLE_EMAIL=false` のままにしておくと、認証コードがコンソールに出力されます
+- 本番環境でメール送信を有効にする場合は、Gmail等のSMTPサービスのアプリパスワードを取得してください
+- Gmailの場合: [Googleアカウント](https://myaccount.google.com/) → セキュリティ → 2段階認証プロセス → アプリパスワード
 
 ### 5. デプロイ
 - 「Manual Deploy」→「Deploy latest commit」をクリック
@@ -86,7 +99,12 @@ NEXT_PUBLIC_API_URL=https://qupid-api.onrender.com
 # ↑ RenderでデプロイしたバックエンドのURL
 
 NODE_ENV=production
+# 本番環境に設定すると、開発環境向けのメッセージが非表示になります
 ```
+
+**重要**: 
+- `NODE_ENV=production` に設定すると、メール認証時に「開発環境ではコンソールで確認してください」というメッセージが表示されなくなります
+- 開発環境（localhost）では自動的に開発モードとして動作します
 
 ### 4. デプロイ
 - 「Deploy」ボタンをクリック

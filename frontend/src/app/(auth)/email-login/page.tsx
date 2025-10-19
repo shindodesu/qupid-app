@@ -24,6 +24,10 @@ export default function EmailLoginPage() {
   const [email, setEmail] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
   const [isResending, setIsResending] = useState(false)
+  
+  // 開発環境かどうかを判定
+  const isDevelopment = process.env.NODE_ENV === 'development' || 
+                        process.env.NEXT_PUBLIC_API_URL?.includes('localhost')
 
   const sendCodeMutation = useMutation({
     mutationFn: async (email: string) => {
@@ -43,14 +47,19 @@ export default function EmailLoginPage() {
       return response.json()
     },
     onSuccess: (data) => {
-      console.log('=== 開発環境: 認証コード送信完了 ===')
-      console.log('認証ID:', data.verification_id)
-      console.log('データベースで認証コードを確認してください')
-      console.log('=====================================')
+      // 開発環境の場合のみコンソールログを出力
+      if (isDevelopment) {
+        console.log('=== 開発環境: 認証コード送信完了 ===')
+        console.log('認証ID:', data.verification_id)
+        console.log('データベースで認証コードを確認してください')
+        console.log('=====================================')
+      }
       
       toast({
         title: "認証コードを送信しました",
-        description: "開発環境ではブラウザのコンソールまたはバックエンドのターミナルで認証コードを確認してください",
+        description: isDevelopment 
+          ? "開発環境ではブラウザのコンソールまたはバックエンドのターミナルで認証コードを確認してください"
+          : "メールアドレスに認証コードを送信しました",
         type: "success"
       })
       setStep('verify')
@@ -138,10 +147,19 @@ export default function EmailLoginPage() {
       
       return response.json()
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // 開発環境の場合のみコンソールログを出力
+      if (isDevelopment) {
+        console.log('=== 開発環境: 認証コード再送信完了 ===')
+        console.log('認証ID:', data.verification_id)
+        console.log('=====================================')
+      }
+      
       toast({
         title: "認証コードを再送信しました",
-        description: "メールをご確認ください",
+        description: isDevelopment
+          ? "開発環境ではブラウザのコンソールまたはバックエンドのターミナルで認証コードを確認してください"
+          : "メールをご確認ください",
         type: "success"
       })
     },
@@ -222,8 +240,9 @@ export default function EmailLoginPage() {
           <form onSubmit={handleVerifyCode} className="space-y-6">
             <div className="text-center mb-4">
               <p className="text-gray-600">
-                <strong>{email}</strong> に送信された<br />
-                6桁の認証コードを入力してください
+                <strong>{email}</strong> {isDevelopment ? 'の認証コードを入力してください' : 'に送信された'}<br />
+                {!isDevelopment && '6桁の認証コードを入力してください'}
+                {isDevelopment && '（開発環境: コンソールまたはターミナルで確認）'}
               </p>
             </div>
             

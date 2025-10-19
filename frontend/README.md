@@ -38,15 +38,29 @@ Qupidは、九州大学の学生が安全で快適にマッチングできるWeb
 # 依存関係のインストール
 npm install
 
-# 環境変数の設定
-cp .env.example .env.local
-# .env.localを編集してAPIのURLなどを設定
+# 環境変数の設定（開発環境）
+# .env.local ファイルを作成して以下を追加：
+# NEXT_PUBLIC_API_URL=http://localhost:8000
+# NODE_ENV=development
 
 # 開発サーバーの起動
 npm run dev
 ```
 
 開発サーバーが起動したら、ブラウザで [http://localhost:3000](http://localhost:3000) を開きます。
+
+### 環境変数
+
+フロントエンドでは以下の環境変数を使用します：
+
+| 変数名 | 説明 | 開発環境 | 本番環境 |
+|--------|------|----------|----------|
+| `NEXT_PUBLIC_API_URL` | バックエンドAPIのURL | `http://localhost:8000` | `https://qupid-api.onrender.com` |
+| `NODE_ENV` | 実行環境 | `development` | `production` |
+
+**開発環境と本番環境の違い:**
+- **開発環境** (`NODE_ENV=development`): メール認証コードがブラウザコンソールとバックエンドターミナルに表示されます
+- **本番環境** (`NODE_ENV=production`): 実際のメールが送信されます（`ENABLE_EMAIL=true`の場合）
 
 ### バックエンドの起動
 
