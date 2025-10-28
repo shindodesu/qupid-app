@@ -1,7 +1,5 @@
 import { create } from 'zustand'
-import { persist } from 'zustand/middleware'
-import { immer } from 'zustand/middleware/immer'
-import { authApi } from '@/lib/api/auth'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 // 認証関連の型定義
 export interface User {
@@ -48,22 +46,38 @@ export interface AuthState {
   // アクション
   login: (credentials: LoginCredentials) => Promise<void>
   register: (credentials: RegisterCredentials) => Promise<void>
-  logout: () => void
+  logout: () => Promise<void>
   refreshToken: () => Promise<void>
   updateUser: (userData: Partial<User>) => void
+  setUser: (user: User | null) => void
+  setTokens: (tokens: AuthTokens | null) => void
+  setAuthenticated: (isAuthenticated: boolean) => void
   clearError: () => void
   setLoading: (loading: boolean) => void
+  initialize: () => Promise<void>
+}
+
+// トークンをCookieに保存するヘルパー関数
+const saveTokenToCookie = (token: string) => {
+  if (typeof document !== 'undefined') {
+    const expiresDate = new Date(Date.now() + (24 * 60 * 60 * 1000)) // 24時間
+    document.cookie = `auth-token=${token}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`
+    console.log('[Auth] Token saved to cookie')
+  }
+}
+
+// Cookieからトークンを削除するヘルパー関数
+const removeTokenFromCookie = () => {
+  if (typeof document !== 'undefined') {
+    document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax'
+    console.log('[Auth] Token removed from cookie')
+  }
 }
 
 // 認証ストア
 export const useAuthStore = create<AuthState>()(
   persist(
-    immer((set, get) => ({
-      // デバッグ用初期ログ
-      _debug: (() => {
-        console.log('AuthStore: initializing')
-        return undefined
-      })(),
+    (set, get) => ({
       // 初期状態
       user: null,
       tokens: null,
@@ -73,55 +87,58 @@ export const useAuthStore = create<AuthState>()(
 
       // ログイン
       login: async (credentials: LoginCredentials) => {
-        set((state) => {
-          state.isLoading = true
-          state.error = null
-        })
+        set({ isLoading: true, error: null })
 
         try {
-          const response = await authApi.login(credentials.email, credentials.password)
-          console.log('Login response:', response)
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+          const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          })
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.detail || 'ログインに失敗しました')
+          }
+
+          const data = await response.json()
+          console.log('[Auth] Login successful:', { userId: data.user?.id, hasToken: !!data.token })
           
-          set((state) => {
-            state.user = response.user
-            state.tokens = {
-              accessToken: response.token,
-              refreshToken: response.token, // 簡略化
-              expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24時間
-            }
-            state.isAuthenticated = true
-            state.isLoading = false
-            state.error = null
+          const tokens: AuthTokens = {
+            accessToken: data.token,
+            refreshToken: data.token,
+            expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24時間
+          }
+          
+          // 状態を更新
+          set({
+            user: data.user,
+            tokens,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
           })
           
-          // CookieとLocalStorageにトークンを保存
-          if (typeof document !== 'undefined') {
-            const expiresDate = new Date(Date.now() + (24 * 60 * 60 * 1000))
-            document.cookie = `auth-token=${response.token}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`
-            localStorage.setItem('auth-token', response.token)
-            console.log('Cookie and localStorage set: auth-token')
-          }
-          
-          const authState = get()
-          console.log('Auth state after login:', authState)
-          console.log('Auth state - isAuthenticated:', authState.isAuthenticated)
-          console.log('Auth state - user:', authState.user)
-          console.log('Auth state - tokens:', authState.tokens ? 'exists' : 'null')
-          
-          // LocalStorageに保存されているか確認
-          try {
-            const stored = localStorage.getItem('auth-storage')
-            console.log('LocalStorage auth-storage:', stored ? 'saved' : 'not saved')
-          } catch (e) {
-            console.error('LocalStorage access error:', e)
+          // トークンをCookieとLocalStorageに保存
+          saveTokenToCookie(data.token)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('auth-token', data.token)
+            console.log('[Auth] Token saved to localStorage')
           }
         } catch (error) {
-          set((state) => {
-            state.error = error instanceof Error ? error.message : 'ログインに失敗しました'
-            state.isLoading = false
-            state.isAuthenticated = false
-            state.user = null
-            state.tokens = null
+          console.error('[Auth] Login error:', error)
+          set({
+            error: error instanceof Error ? error.message : 'ログインに失敗しました',
+            isLoading: false,
+            isAuthenticated: false,
+            user: null,
+            tokens: null,
           })
           throw error
         }
@@ -129,47 +146,59 @@ export const useAuthStore = create<AuthState>()(
 
       // ユーザー登録
       register: async (credentials: RegisterCredentials) => {
-        set((state) => {
-          state.isLoading = true
-          state.error = null
-        })
+        set({ isLoading: true, error: null })
 
         try {
-          const response = await authApi.register({
-            email: credentials.email,
-            password: credentials.password,
-            display_name: credentials.display_name,
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+          const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+              display_name: credentials.display_name,
+            }),
           })
-          console.log('Register response:', response)
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}))
+            throw new Error(errorData.detail || 'ユーザー登録に失敗しました')
+          }
+
+          const data = await response.json()
+          console.log('[Auth] Register successful:', { userId: data.user?.id, hasToken: !!data.token })
           
-          set((state) => {
-            state.user = response.user
-            state.tokens = {
-              accessToken: response.token,
-              refreshToken: response.token, // 簡略化
-              expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24時間
-            }
-            state.isAuthenticated = true
-            state.isLoading = false
-            state.error = null
-          })
-          
-          // CookieとLocalStorageにトークンを保存
-          if (typeof document !== 'undefined') {
-            const expiresDate = new Date(Date.now() + (24 * 60 * 60 * 1000))
-            document.cookie = `auth-token=${response.token}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`
-            localStorage.setItem('auth-token', response.token)
-            console.log('Cookie and localStorage set: auth-token')
+          const tokens: AuthTokens = {
+            accessToken: data.token,
+            refreshToken: data.token,
+            expiresAt: Date.now() + (24 * 60 * 60 * 1000), // 24時間
           }
           
-          console.log('Auth state after register:', get())
+          // 状態を更新
+          set({
+            user: data.user,
+            tokens,
+            isAuthenticated: true,
+            isLoading: false,
+            error: null,
+          })
+          
+          // トークンをCookieとLocalStorageに保存
+          saveTokenToCookie(data.token)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('auth-token', data.token)
+            console.log('[Auth] Token saved to localStorage')
+          }
         } catch (error) {
-          set((state) => {
-            state.error = error instanceof Error ? error.message : 'ユーザー登録に失敗しました'
-            state.isLoading = false
-            state.isAuthenticated = false
-            state.user = null
-            state.tokens = null
+          console.error('[Auth] Register error:', error)
+          set({
+            error: error instanceof Error ? error.message : 'ユーザー登録に失敗しました',
+            isLoading: false,
+            isAuthenticated: false,
+            user: null,
+            tokens: null,
           })
           throw error
         }
@@ -177,28 +206,24 @@ export const useAuthStore = create<AuthState>()(
 
       // ログアウト
       logout: async () => {
-        try {
-          await authApi.logout()
-        } catch (error) {
-          // ログアウトエラーは無視
-        }
-
-        set((state) => {
-          state.user = null
-          state.tokens = null
-          state.isAuthenticated = false
-          state.error = null
-          state.isLoading = false
-        })
-
-        // ローカルストレージからも削除
-        localStorage.removeItem('auth-storage')
+        console.log('[Auth] Logging out...')
         
-        // Cookieからも削除（ミドルウェア用）
-        if (typeof document !== 'undefined') {
-          document.cookie = 'auth-token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax'
-          console.log('Cookie removed: auth-token')
+        // トークンを削除
+        removeTokenFromCookie()
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('auth-token')
+          localStorage.removeItem('auth-storage')
+          console.log('[Auth] Tokens and storage cleared')
         }
+        
+        // 状態をクリア（最後に実行）
+        set({
+          user: null,
+          tokens: null,
+          isAuthenticated: false,
+          error: null,
+          isLoading: false,
+        })
       },
 
       // トークンリフレッシュ
@@ -206,70 +231,157 @@ export const useAuthStore = create<AuthState>()(
         const { tokens } = get()
         
         if (!tokens?.refreshToken) {
+          console.log('[Auth] No refresh token available')
           throw new Error('リフレッシュトークンがありません')
         }
 
         try {
-          const response = await authApi.refreshToken()
-          
-          set((state) => {
-            if (state.tokens) {
-              state.tokens.accessToken = response.token
-              state.tokens.expiresAt = Date.now() + (24 * 60 * 60 * 1000) // 24時間
-            }
-          })
+          // 現在のトークンが有効かチェック
+          const now = Date.now()
+          if (now < tokens.expiresAt - (5 * 60 * 1000)) {
+            // 有効期限まで5分以上ある場合はリフレッシュ不要
+            console.log('[Auth] Token still valid, refresh not needed')
+            return
+          }
+
+          // TODO: リフレッシュトークンのAPI実装
+          console.log('[Auth] Token refresh not implemented yet')
         } catch (error) {
+          console.error('[Auth] Token refresh error:', error)
           // リフレッシュに失敗した場合はログアウト
-          get().logout()
+          await get().logout()
           throw error
         }
       },
 
       // ユーザー情報更新
       updateUser: (userData: Partial<User>) => {
-        set((state) => {
-          if (state.user) {
-            Object.assign(state.user, userData)
+        const currentUser = get().user
+        if (currentUser) {
+          set({ user: { ...currentUser, ...userData } })
+          console.log('[Auth] User updated:', userData)
+        }
+      },
+
+      // ユーザー設定
+      setUser: (user: User | null) => {
+        set({ user })
+        console.log('[Auth] User set:', user?.id)
+      },
+
+      // トークン設定
+      setTokens: (tokens: AuthTokens | null) => {
+        set({ tokens })
+        if (tokens) {
+          saveTokenToCookie(tokens.accessToken)
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('auth-token', tokens.accessToken)
           }
-        })
+          console.log('[Auth] Tokens set')
+        }
+      },
+
+      // 認証状態設定
+      setAuthenticated: (isAuthenticated: boolean) => {
+        set({ isAuthenticated })
+        console.log('[Auth] Authentication state set:', isAuthenticated)
       },
 
       // エラークリア
       clearError: () => {
-        set((state) => {
-          state.error = null
-        })
+        set({ error: null })
       },
 
       // ローディング状態設定
       setLoading: (loading: boolean) => {
-        set((state) => {
-          state.isLoading = loading
-        })
+        set({ isLoading: loading })
       },
-    })),
+
+      // 初期化（アプリ起動時に呼び出す）
+      initialize: async () => {
+        console.log('[Auth] Initializing auth state...')
+        set({ isLoading: true })
+        
+        try {
+          const state = get()
+          
+          // 既に認証されている場合
+          if (state.isAuthenticated && state.tokens) {
+            const now = Date.now()
+            
+            // トークンが期限切れかチェック
+            if (now >= state.tokens.expiresAt) {
+              console.log('[Auth] Token expired, logging out')
+              await state.logout()
+              return
+            }
+            
+            // トークンが有効な場合、ユーザー情報を取得
+            try {
+              const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+              const response = await fetch(`${API_URL}/users/me`, {
+                headers: {
+                  'Authorization': `Bearer ${state.tokens.accessToken}`,
+                },
+              })
+              
+              if (response.ok) {
+                const user = await response.json()
+                set({ user, isLoading: false })
+                console.log('[Auth] User data refreshed:', user.id)
+                
+                // Cookieも更新
+                saveTokenToCookie(state.tokens.accessToken)
+              } else {
+                console.log('[Auth] Failed to fetch user data, logging out')
+                await state.logout()
+              }
+            } catch (error) {
+              console.error('[Auth] Failed to refresh user data:', error)
+              await state.logout()
+            }
+          } else {
+            console.log('[Auth] No valid authentication found')
+            set({ isLoading: false })
+          }
+        } catch (error) {
+          console.error('[Auth] Initialization error:', error)
+          set({ isLoading: false })
+        }
+      },
+    }),
     {
       name: 'auth-storage',
+      storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
         tokens: state.tokens,
         isAuthenticated: state.isAuthenticated,
       }),
       onRehydrateStorage: () => {
-        console.log('AuthStore: rehydrating from localStorage')
+        console.log('[Auth] Rehydrating from localStorage...')
         return (state, error) => {
           if (error) {
-            console.error('AuthStore: rehydration error', error)
+            console.error('[Auth] Rehydration error:', error)
           } else if (state && state.isAuthenticated && state.tokens) {
-            console.log('AuthStore: rehydrated successfully')
-            // LocalStorageから復元された認証データをCookieにも保存
-            if (typeof document !== 'undefined') {
-              const expiresDate = new Date(state.tokens.expiresAt)
-              document.cookie = `auth-token=${state.tokens.accessToken}; path=/; expires=${expiresDate.toUTCString()}; SameSite=Lax`
-              console.log('Cookie restored: auth-token')
+            // トークンの有効期限チェック
+            const now = Date.now()
+            if (now >= state.tokens.expiresAt) {
+              console.log('[Auth] Token expired during rehydration, clearing state')
+              state.user = null
+              state.tokens = null
+              state.isAuthenticated = false
+              removeTokenFromCookie()
+              if (typeof window !== 'undefined') {
+                localStorage.removeItem('auth-token')
+              }
+            } else {
+              console.log('[Auth] Rehydrated successfully, restoring cookie')
+              // LocalStorageから復元された認証データをCookieにも保存
+              saveTokenToCookie(state.tokens.accessToken)
             }
           } else {
-            console.log('AuthStore: no authentication data to restore')
+            console.log('[Auth] No authentication data to restore')
           }
         }
       },
@@ -291,6 +403,10 @@ export const useAuthActions = () => useAuthStore((state) => ({
   logout: state.logout,
   refreshToken: state.refreshToken,
   updateUser: state.updateUser,
+  setUser: state.setUser,
+  setTokens: state.setTokens,
+  setAuthenticated: state.setAuthenticated,
   clearError: state.clearError,
   setLoading: state.setLoading,
+  initialize: state.initialize,
 }))

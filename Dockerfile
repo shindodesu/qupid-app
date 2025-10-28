@@ -1,20 +1,31 @@
-FROM python:3.13-slim
-# Set environment variables
+# Python 3.11をベースイメージとして使用
+FROM python:3.11-slim
 
-ENV PYTHONBUFFERED=1
-# おまじない
-
-
+# 作業ディレクトリを設定
 WORKDIR /app
-# localのrequirements.txtをコンテナの/app/にコピー
-COPY requirements.txt /app/
 
-# Install　packages
-RUN pip install -r requirements.txt
+# システムパッケージの更新と必要なパッケージのインストール
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
 
-# Copy the rest of the application
-COPY ./app /app/app
+# 依存関係ファイルをコピー
+COPY requirements.txt .
 
-CMD [ "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Pythonパッケージをインストール
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 8000
+# アプリケーションコードをコピー
+COPY . .
+
+# ポート設定（Renderが$PORTを提供）
+EXPOSE $PORT
+
+# データベースマイグレーションとサーバー起動
+CMD alembic upgrade head && \
+    gunicorn app.main:app \
+    --workers 4 \
+    --worker-class uvicorn.workers.UvicornWorker \
+    --bind 0.0.0.0:$PORT

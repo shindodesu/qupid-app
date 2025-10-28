@@ -34,6 +34,10 @@ AVATAR_DIR.mkdir(exist_ok=True)
 ALLOWED_VOICE_TYPES = ["audio/mpeg", "audio/wav", "audio/ogg", "audio/mp4"]
 ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"]
 
+# 許可される拡張子
+ALLOWED_VOICE_EXTENSIONS = {".mp3", ".wav", ".ogg", ".m4a", ".mp4"}
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+
 # ファイルサイズ制限（10MB）
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
@@ -51,19 +55,41 @@ async def upload_voice_file(
     - 許可形式: MP3, WAV, OGG, MP4
     """
     
-    # ファイルタイプチェック
+    # ファイル名の検証
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ファイル名が不正です"
+        )
+    
+    # ファイル拡張子のチェック
+    file_extension = Path(file.filename).suffix.lower()
+    if file_extension not in ALLOWED_VOICE_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"サポートされていないファイル形式です。許可されている拡張子: {', '.join(ALLOWED_VOICE_EXTENSIONS)}"
+        )
+    
+    # ファイルタイプチェック（MIME type）
     if file.content_type not in ALLOWED_VOICE_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file type. Allowed types: {', '.join(ALLOWED_VOICE_TYPES)}"
+            detail=f"サポートされていないファイルタイプです。許可されているタイプ: {', '.join(ALLOWED_VOICE_TYPES)}"
         )
     
     # ファイルサイズチェック
     file_content = await file.read()
     if len(file_content) > MAX_FILE_SIZE:
         raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"ファイルサイズが大きすぎます。最大サイズ: {MAX_FILE_SIZE // (1024*1024)}MB"
+        )
+    
+    # ファイルが空でないことを確認
+    if len(file_content) == 0:
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB"
+            detail="ファイルが空です"
         )
     
     # ファイル名生成
@@ -96,19 +122,41 @@ async def upload_image_file(
     - 許可形式: JPEG, PNG, GIF, WebP
     """
     
-    # ファイルタイプチェック
+    # ファイル名の検証
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ファイル名が不正です"
+        )
+    
+    # ファイル拡張子のチェック
+    file_extension = Path(file.filename).suffix.lower()
+    if file_extension not in ALLOWED_IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"サポートされていないファイル形式です。許可されている拡張子: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+        )
+    
+    # ファイルタイプチェック（MIME type）
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file type. Allowed types: {', '.join(ALLOWED_IMAGE_TYPES)}"
+            detail=f"サポートされていないファイルタイプです。許可されているタイプ: {', '.join(ALLOWED_IMAGE_TYPES)}"
         )
     
     # ファイルサイズチェック
     file_content = await file.read()
     if len(file_content) > MAX_FILE_SIZE:
         raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"ファイルサイズが大きすぎます。最大サイズ: {MAX_FILE_SIZE // (1024*1024)}MB"
+        )
+    
+    # ファイルが空でないことを確認
+    if len(file_content) == 0:
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB"
+            detail="ファイルが空です"
         )
     
     # ファイル名生成
@@ -143,19 +191,41 @@ async def upload_avatar(
     - 古いアバター画像は自動削除
     """
     
-    # ファイルタイプチェック
+    # ファイル名の検証
+    if not file.filename:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="ファイル名が不正です"
+        )
+    
+    # ファイル拡張子のチェック
+    file_extension = Path(file.filename).suffix.lower()
+    if file_extension not in ALLOWED_IMAGE_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"サポートされていないファイル形式です。許可されている拡張子: {', '.join(ALLOWED_IMAGE_EXTENSIONS)}"
+        )
+    
+    # ファイルタイプチェック（MIME type）
     if file.content_type not in ALLOWED_IMAGE_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported file type. Allowed types: {', '.join(ALLOWED_IMAGE_TYPES)}"
+            detail=f"サポートされていないファイルタイプです。許可されているタイプ: {', '.join(ALLOWED_IMAGE_TYPES)}"
         )
     
     # ファイルサイズチェック
     file_content = await file.read()
     if len(file_content) > MAX_FILE_SIZE:
         raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=f"ファイルサイズが大きすぎます。最大サイズ: {MAX_FILE_SIZE // (1024*1024)}MB"
+        )
+    
+    # ファイルが空でないことを確認
+    if len(file_content) == 0:
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File too large. Maximum size: {MAX_FILE_SIZE // (1024*1024)}MB"
+            detail="ファイルが空です"
         )
     
     # 古いアバター画像を削除

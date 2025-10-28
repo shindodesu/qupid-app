@@ -1,28 +1,37 @@
 'use client'
 
-import { useState, KeyboardEvent, memo, useCallback } from 'react'
+import { useState, KeyboardEvent, memo, useCallback, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/Button'
 
 interface MessageComposerProps {
   onSend: (content: string) => void
+  onTyping?: (isTyping: boolean) => void
   disabled?: boolean
   placeholder?: string
 }
 
 export const MessageComposer = memo(function MessageComposer({
   onSend,
+  onTyping,
   disabled = false,
   placeholder = 'Your message',
 }: MessageComposerProps) {
   const [content, setContent] = useState('')
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const isTypingRef = useRef(false)
 
   const handleSubmit = useCallback((e: React.FormEvent) => {
     e.preventDefault()
     if (content.trim() && !disabled) {
       onSend(content.trim())
       setContent('')
+      // 送信したらタイピング状態を解除
+      if (onTyping && isTypingRef.current) {
+        onTyping(false)
+        isTypingRef.current = false
+      }
     }
-  }, [content, disabled, onSend])
+  }, [content, disabled, onSend, onTyping])
 
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -31,13 +40,50 @@ export const MessageComposer = memo(function MessageComposer({
     }
   }, [handleSubmit])
 
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value)
+    
+    // タイピング通知
+    if (onTyping) {
+      if (!isTypingRef.current && e.target.value.trim()) {
+        onTyping(true)
+        isTypingRef.current = true
+      }
+      
+      // タイピング停止タイマーをリセット
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      
+      // 2秒後にタイピング状態を解除
+      typingTimeoutRef.current = setTimeout(() => {
+        if (isTypingRef.current) {
+          onTyping(false)
+          isTypingRef.current = false
+        }
+      }, 2000)
+    }
+  }, [onTyping])
+
+  // クリーンアップ
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+      }
+      if (onTyping && isTypingRef.current) {
+        onTyping(false)
+      }
+    }
+  }, [onTyping])
+
   return (
     <div className="border-t border-neutral-200 bg-white p-4">
       <div className="flex items-center gap-3">
         <div className="flex-1 relative">
           <textarea
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={handleChange}
             onKeyDown={handleKeyDown}
             disabled={disabled}
             placeholder={placeholder}

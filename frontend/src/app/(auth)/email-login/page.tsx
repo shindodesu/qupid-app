@@ -20,9 +20,11 @@ export default function EmailLoginPage() {
   const { toast, toasts, removeToast } = useToast()
   const { setUser, setTokens, setAuthenticated } = useAuthStore()
   
-  const [step, setStep] = useState<'email' | 'verify'>('email')
+  const [step, setStep] = useState<'email' | 'verify' | 'password'>('email')
   const [email, setEmail] = useState('')
   const [verificationCode, setVerificationCode] = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [isResending, setIsResending] = useState(false)
   
   // 開発環境かどうかを判定
@@ -51,13 +53,20 @@ export default function EmailLoginPage() {
       if (isDevelopment) {
         console.log('=== 開発環境: 認証コード送信完了 ===')
         console.log('認証ID:', data.verification_id)
-        console.log('データベースで認証コードを確認してください')
+        if (data.verification_code) {
+          console.log('🔑 認証コード:', data.verification_code)
+          console.log('↑ こちらの6桁の認証コードを入力してください')
+        } else {
+          console.log('バックエンドのターミナルで認証コードを確認してください')
+        }
         console.log('=====================================')
       }
       
       toast({
         title: "認証コードを送信しました",
-        description: isDevelopment 
+        description: isDevelopment && data.verification_code
+          ? `認証コード: ${data.verification_code}`
+          : isDevelopment
           ? "開発環境ではブラウザのコンソールまたはバックエンドのターミナルで認証コードを確認してください"
           : "メールアドレスに認証コードを送信しました",
         type: "success"
@@ -74,7 +83,7 @@ export default function EmailLoginPage() {
   })
 
   const verifyCodeMutation = useMutation({
-    mutationFn: async (data: EmailLoginData) => {
+    mutationFn: async (data: EmailLoginData & { password?: string }) => {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/email/verify-code`, {
         method: 'POST',
         headers: {
@@ -91,6 +100,18 @@ export default function EmailLoginPage() {
       return response.json()
     },
     onSuccess: (data) => {
+      // 新規ユーザーでパスワードが必要な場合
+      if (data.requires_password) {
+        toast({
+          title: "新規登録",
+          description: "パスワードを設定してください",
+          type: "success"
+        })
+        setStep('password')
+        return
+      }
+      
+      // ログイン成功
       toast({
         title: "ログインしました",
         description: data.is_new_user ? "アカウントを作成しました" : "おかえりなさい！",
@@ -152,12 +173,20 @@ export default function EmailLoginPage() {
       if (isDevelopment) {
         console.log('=== 開発環境: 認証コード再送信完了 ===')
         console.log('認証ID:', data.verification_id)
+        if (data.verification_code) {
+          console.log('🔑 認証コード:', data.verification_code)
+          console.log('↑ こちらの6桁の認証コードを入力してください')
+        } else {
+          console.log('バックエンドのターミナルで認証コードを確認してください')
+        }
         console.log('=====================================')
       }
       
       toast({
         title: "認証コードを再送信しました",
-        description: isDevelopment
+        description: isDevelopment && data.verification_code
+          ? `認証コード: ${data.verification_code}`
+          : isDevelopment
           ? "開発環境ではブラウザのコンソールまたはバックエンドのターミナルで認証コードを確認してください"
           : "メールをご確認ください",
         type: "success"
@@ -198,6 +227,36 @@ export default function EmailLoginPage() {
     verifyCodeMutation.mutate({ email, verification_code: verificationCode })
   }
 
+  const handleSetPassword = (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // パスワードのバリデーション
+    if (!password || password.length < 8) {
+      toast({
+        title: "エラー",
+        description: "パスワードは8文字以上で入力してください",
+        type: "error"
+      })
+      return
+    }
+    
+    if (password !== confirmPassword) {
+      toast({
+        title: "エラー",
+        description: "パスワードが一致しません",
+        type: "error"
+      })
+      return
+    }
+    
+    // パスワード付きで再度認証コードを検証
+    verifyCodeMutation.mutate({ 
+      email, 
+      verification_code: verificationCode,
+      password 
+    })
+  }
+
   const handleResendCode = () => {
     setIsResending(true)
     resendCodeMutation.mutate(email, {
@@ -213,11 +272,13 @@ export default function EmailLoginPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Qupid</h1>
           <p className="text-gray-600">
-            {step === 'email' ? 'メールアドレスを入力してください' : '認証コードを入力してください'}
+            {step === 'email' && 'メールアドレスを入力してください'}
+            {step === 'verify' && '認証コードを入力してください'}
+            {step === 'password' && 'パスワードを設定してください'}
           </p>
         </div>
 
-        {step === 'email' ? (
+        {step === 'email' && (
           <form onSubmit={handleSendCode} className="space-y-6">
             <Input
               label="メールアドレス"
@@ -236,7 +297,9 @@ export default function EmailLoginPage() {
               {sendCodeMutation.isPending ? '送信中...' : '認証コードを送信'}
             </Button>
           </form>
-        ) : (
+        )}
+        
+        {step === 'verify' && (
           <form onSubmit={handleVerifyCode} className="space-y-6">
             <div className="text-center mb-4">
               <p className="text-gray-600">
@@ -284,6 +347,49 @@ export default function EmailLoginPage() {
                 メールアドレスを変更
               </button>
             </div>
+          </form>
+        )}
+        
+        {step === 'password' && (
+          <form onSubmit={handleSetPassword} className="space-y-6">
+            <div className="text-center mb-4">
+              <p className="text-gray-600">
+                安全なパスワードを設定してください
+              </p>
+            </div>
+            
+            <Input
+              label="パスワード"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="8文字以上で入力"
+              minLength={8}
+              required
+            />
+            
+            <Input
+              label="パスワード（確認）"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="もう一度入力してください"
+              minLength={8}
+              required
+            />
+            
+            <div className="text-sm text-gray-500 space-y-1">
+              <p>• パスワードは8文字以上</p>
+              <p>• 数字と英字を組み合わせることを推奨</p>
+            </div>
+            
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={verifyCodeMutation.isPending}
+            >
+              {verifyCodeMutation.isPending ? '登録中...' : 'アカウントを作成'}
+            </Button>
           </form>
         )}
 

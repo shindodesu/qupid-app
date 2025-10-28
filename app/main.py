@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
-from app.routers import health, users, auth, tags, chat, files, email_auth, websocket
+from app.routers import health, users, auth, tags, chat, files, email_auth, ws
 from app.routers.likes import router as likes_router, matches_router
 from app.routers.safety import reports_router, blocks_router, admin_router
 from pathlib import Path
@@ -74,7 +74,7 @@ app.include_router(files.router)
 app.include_router(reports_router)
 app.include_router(blocks_router)
 app.include_router(admin_router)
-app.include_router(websocket.router)
+app.include_router(ws.router)
 
 # 静的ファイル提供（画像など）
 UPLOAD_DIR = Path("uploads")

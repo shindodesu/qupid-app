@@ -22,6 +22,7 @@ SYNC_URL = (
     .replace("+asyncpg", "+psycopg")
     .replace("+aiopg", "+psycopg")
     .replace("+pg8000", "+psycopg")
+    .replace("sqlite+aiosqlite", "sqlite")  # SQLite非同期→同期変換
 )
 config.set_main_option("sqlalchemy.url", SYNC_URL)
 

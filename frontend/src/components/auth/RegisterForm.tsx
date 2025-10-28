@@ -32,7 +32,7 @@ export function RegisterForm({ className, onSuccess }: RegisterFormProps) {
               Qupidへようこそ！
             </p>
             <p className="text-sm text-neutral-500">
-              メールアドレスで簡単に登録できます
+              メール認証とパスワード設定で安全に登録
             </p>
           </div>
           

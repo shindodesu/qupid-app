@@ -1,8 +1,7 @@
 'use client'
 
-import { createContext, useContext, useEffect, ReactNode } from 'react'
-import { useAuthStore, useIsAuthenticated, useAuthTokens } from '@/stores/auth'
-import { authApi } from '@/lib/api/auth'
+import { createContext, useContext, useEffect, ReactNode, useState } from 'react'
+import { useAuthStore, useIsAuthenticated, useAuthError, useAuthLoading } from '@/stores/auth'
 
 interface AuthContextType {
   isAuthenticated: boolean
@@ -17,85 +16,45 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
+  const [initialized, setInitialized] = useState(false)
   const isAuthenticated = useIsAuthenticated()
-  const tokens = useAuthTokens()
-  const { setLoading, clearError, logout } = useAuthStore()
+  const isLoading = useAuthLoading()
+  const error = useAuthError()
 
-  // 初期化時の認証状態確認
+  // 初期化時の認証状態確認（一度だけ実行）
   useEffect(() => {
     const initializeAuth = async () => {
-      if (!isAuthenticated || !tokens) {
-        setLoading(false)
-        return
+      console.log('[AuthProvider] Initializing...')
+      try {
+        // getState()を使用して直接アクセス（依存配列の問題を回避）
+        await useAuthStore.getState().initialize()
+      } catch (error) {
+        console.error('[AuthProvider] Initialization failed:', error)
+      } finally {
+        setInitialized(true)
+        console.log('[AuthProvider] Initialization complete')
       }
-
-      // トークンの有効性チェック
-      const now = Date.now()
-      const tokenExpiry = tokens.expiresAt
-
-      // トークンが期限切れの場合
-      if (now >= tokenExpiry) {
-        try {
-          // リフレッシュトークンで更新を試行
-          await useAuthStore.getState().refreshToken()
-        } catch (error) {
-          // リフレッシュに失敗した場合はログアウト
-          logout()
-        }
-      } else {
-        // トークンが有効な場合、ユーザー情報を取得
-        try {
-          const userData = await authApi.getCurrentUser()
-          console.log('AuthProvider: user data fetched', userData)
-          useAuthStore.getState().updateUser(userData)
-        } catch (error) {
-          console.error('AuthProvider: failed to fetch user data', error)
-          // ユーザー情報取得に失敗した場合はログアウト
-          logout()
-        }
-      }
-
-      setLoading(false)
     }
 
     initializeAuth()
-  }, [isAuthenticated, tokens, setLoading, logout])
+  }, []) // 空の依存配列で一度だけ実行
 
-  // トークン自動リフレッシュ
+  // エラー自動クリア
   useEffect(() => {
-    if (!isAuthenticated || !tokens) return
+    if (!error) return
 
-    const now = Date.now()
-    const tokenExpiry = tokens.expiresAt
-    const refreshThreshold = 5 * 60 * 1000 // 5分前
-
-    // トークンが期限切れに近い場合、自動リフレッシュ
-    if (tokenExpiry - now <= refreshThreshold) {
-      const refreshTimer = setTimeout(async () => {
-        try {
-          await useAuthStore.getState().refreshToken()
-        } catch (error) {
-          logout()
-        }
-      }, tokenExpiry - now - refreshThreshold)
-
-      return () => clearTimeout(refreshTimer)
-    }
-  }, [isAuthenticated, tokens, logout])
-
-  // エラークリア
-  useEffect(() => {
     const timer = setTimeout(() => {
-      clearError()
+      // getState()を使用して直接アクセス
+      useAuthStore.getState().clearError()
     }, 5000) // 5秒後にエラーを自動クリア
 
     return () => clearTimeout(timer)
-  }, [clearError])
+  }, [error]) // errorのみを依存配列に含める
 
   const contextValue: AuthContextType = {
     isAuthenticated,
-    isLoading: useAuthStore((state) => state.isLoading),
-    error: useAuthStore((state) => state.error),
+    isLoading: !initialized || isLoading,
+    error,
   }
 
   return (
@@ -117,7 +76,9 @@ export function useAuth() {
 // 認証が必要なページ用のフック
 export function useRequireAuth() {
   const { isAuthenticated, isLoading } = useAuth()
-  const { login, register, logout } = useAuthStore()
+  const login = useAuthStore((state) => state.login)
+  const register = useAuthStore((state) => state.register)
+  const logout = useAuthStore((state) => state.logout)
 
   return {
     isAuthenticated,
@@ -131,7 +92,9 @@ export function useRequireAuth() {
 // 認証が不要なページ用のフック
 export function useOptionalAuth() {
   const { isAuthenticated, isLoading } = useAuth()
-  const { login, register, logout } = useAuthStore()
+  const login = useAuthStore((state) => state.login)
+  const register = useAuthStore((state) => state.register)
+  const logout = useAuthStore((state) => state.logout)
 
   return {
     isAuthenticated,

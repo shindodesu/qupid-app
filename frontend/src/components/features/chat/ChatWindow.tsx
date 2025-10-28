@@ -8,6 +8,7 @@ import { MessageComposer } from './MessageComposer'
 import { ReportDialog, BlockConfirm } from '@/components/features/safety'
 import { Button } from '@/components/ui/Button'
 import { useUser } from '@/stores/auth'
+import { useWebSocket } from '@/hooks/useWebSocket'
 import type { Message } from '@/types/chat'
 import Link from 'next/link'
 
@@ -25,12 +26,56 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
 
-  // メッセージ履歴取得
+  // WebSocket接続
+  const { isConnected, subscribe, sendTyping } = useWebSocket()
+  const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set())
+  
+  // メッセージ履歴取得（ポーリング削除）
   const { data: messagesData, isLoading, error } = useQuery({
     queryKey: ['messages', conversationId],
     queryFn: () => chatApi.getMessages(conversationId, 100, 0),
-    refetchInterval: 5000, // 5秒ごとに自動更新（簡易的なリアルタイム）
   })
+  
+  // WebSocketで新しいメッセージを受信
+  useEffect(() => {
+    const unsubscribe = subscribe('new_message', (message) => {
+      if (message.conversation_id === conversationId) {
+        // メッセージ履歴を再取得
+        queryClient.invalidateQueries({ queryKey: ['messages', conversationId] })
+        // 会話一覧も更新
+        queryClient.invalidateQueries({ queryKey: ['conversations'] })
+      }
+    })
+    
+    return unsubscribe
+  }, [conversationId, subscribe, queryClient])
+  
+  // タイピングインジケーターを受信
+  useEffect(() => {
+    const unsubscribe = subscribe('typing', (message) => {
+      if (message.conversation_id === conversationId && message.sender_id !== user?.id) {
+        if (message.is_typing) {
+          setTypingUsers(prev => new Set(prev).add(message.sender_id!))
+          // 3秒後に自動的に削除
+          setTimeout(() => {
+            setTypingUsers(prev => {
+              const next = new Set(prev)
+              next.delete(message.sender_id!)
+              return next
+            })
+          }, 3000)
+        } else {
+          setTypingUsers(prev => {
+            const next = new Set(prev)
+            next.delete(message.sender_id!)
+            return next
+          })
+        }
+      }
+    })
+    
+    return unsubscribe
+  }, [conversationId, subscribe, user?.id])
 
   // メッセージ送信
   const sendMutation = useMutation({
@@ -130,6 +175,10 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
 
   const handleSendMessage = (content: string) => {
     sendMutation.mutate(content)
+  }
+  
+  const handleTyping = (isTyping: boolean) => {
+    sendTyping(conversationId, isTyping)
   }
 
   if (error) {
@@ -286,6 +335,23 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                 isOwn={message.sender_id === user?.id}
               />
             ))}
+            
+            {/* タイピングインジケーター */}
+            {typingUsers.size > 0 && (
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-xs">💬</span>
+                </div>
+                <div className="bg-gray-100 rounded-2xl px-4 py-2">
+                  <div className="flex gap-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <div ref={messagesEndRef} />
           </div>
         )}
@@ -307,6 +373,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
       {/* メッセージ入力 */}
       <MessageComposer
         onSend={handleSendMessage}
+        onTyping={handleTyping}
         disabled={sendMutation.isPending}
       />
 

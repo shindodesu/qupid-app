@@ -2,11 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authMiddleware } from './src/middleware/auth'
 
 export function middleware(request: NextRequest) {
-  // 認証ミドルウェアを一時的に無効化
-  return NextResponse.next()
-  
-  // 認証を有効にする場合は以下のコメントを解除
-  // return authMiddleware(request)
+  // 認証ミドルウェアを有効化
+  return authMiddleware(request)
 }
 
 // ミドルウェアを実行するパスの設定
@@ -23,6 +20,6 @@ export const config = {
      * - robots.txt (robots file)
      * - sitemap.xml (sitemap file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|public|manifest.webmanifest|robots.txt|sitemap.xml|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.svg|.*\\.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|public|manifest.webmanifest|manifest.json|robots.txt|sitemap.xml|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.svg|.*\\.ico).*)',
   ],
 }

@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from app.db.session import get_db
-from app.core.security import create_access_token
+from app.core.security import create_access_token, hash_password
+from app.core.config import settings
 from app.models.user import User
 from app.models.email_verification import EmailVerification
 from app.schemas.email_auth import (
@@ -11,18 +12,24 @@ from app.schemas.email_auth import (
     VerifyCodeRequest,
     VerifyCodeResponse,
     ResendCodeRequest,
-    ResendCodeResponse
+    ResendCodeResponse,
+    ResetPasswordRequest,
+    ResetPasswordResponse
 )
 from app.schemas.user import UserRead
 from app.services.email_service import email_service
+from app.middleware.rate_limit import email_rate_limit_middleware
 from datetime import datetime, timezone
+import secrets
 
 router = APIRouter(prefix="/auth/email", tags=["email-auth"])
 
 @router.post("/send-code", response_model=EmailVerificationResponse)
 async def send_verification_code(
     request: EmailVerificationRequest,
-    db: AsyncSession = Depends(get_db)
+    http_request: Request,
+    db: AsyncSession = Depends(get_db),
+    _: int = Depends(lambda req: email_rate_limit_middleware(req, max_emails=10))
 ):
     """認証コードをメールで送信"""
     email = request.email.lower()
@@ -61,19 +68,33 @@ async def send_verification_code(
             detail="メール送信に失敗しました"
         )
     
-    return EmailVerificationResponse(
-        message="認証コードを送信しました",
-        verification_id=verification.id
-    )
+    # 開発環境では認証コードをレスポンスに含める
+    response_data = {
+        "message": "認証コードを送信しました",
+        "verification_id": verification.id
+    }
+    
+    if settings.APP_ENV == "development":
+        response_data["verification_code"] = verification_code
+    
+    return EmailVerificationResponse(**response_data)
 
 @router.post("/verify-code", response_model=VerifyCodeResponse)
 async def verify_code(
     request: VerifyCodeRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    """認証コードを検証してログインまたは新規登録"""
+    """
+    認証コードを検証してログインまたは新規登録（2段階対応）
+    
+    フロー:
+    1. 認証コードのみで呼び出し → 新規ユーザーなら requires_password=True を返す
+    2. パスワード付きで再度呼び出し → ユーザー作成してログイン
+    3. 既存ユーザーなら即座にログイン
+    """
     email = request.email.lower()
     verification_code = request.verification_code
+    password = request.password
     
     # 認証コードを検証
     now = datetime.now(timezone.utc)
@@ -96,10 +117,7 @@ async def verify_code(
             detail="認証コードが無効または期限切れです"
         )
     
-    # 認証コードを有効化
-    verification.is_verified = True
-    
-    # ユーザーを取得または作成
+    # ユーザーを取得
     user_result = await db.execute(
         select(User).where(User.email == email)
     )
@@ -107,10 +125,39 @@ async def verify_code(
     is_new_user = False
     
     if not user:
-        # 新規ユーザー作成
-        user = User(email=email, display_name="Anonymous")
+        # 新規ユーザーの場合
+        if not password:
+            # パスワードが提供されていない場合、パスワード設定を要求
+            return VerifyCodeResponse(
+                message="パスワードの設定が必要です",
+                token=None,
+                user=None,
+                is_new_user=True,
+                requires_password=True
+            )
+        
+        # パスワード検証
+        if len(password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="パスワードは8文字以上である必要があります"
+            )
+        
+        # 新規ユーザー作成（パスワードあり）
+        hashed_password = hash_password(password)
+        user = User(
+            email=email,
+            hashed_password=hashed_password,
+            display_name="Anonymous"
+        )
         db.add(user)
         is_new_user = True
+        
+        # 認証コードを有効化
+        verification.is_verified = True
+    else:
+        # 既存ユーザーの場合、即座にログイン
+        verification.is_verified = True
     
     # 認証コードとユーザーを紐付け
     verification.user_id = user.id if user.id else None
@@ -132,13 +179,16 @@ async def verify_code(
         message="認証が完了しました",
         token=token,
         user=user_data.model_dump(),
-        is_new_user=is_new_user
+        is_new_user=is_new_user,
+        requires_password=False
     )
 
 @router.post("/resend-code", response_model=ResendCodeResponse)
 async def resend_code(
     request: ResendCodeRequest,
-    db: AsyncSession = Depends(get_db)
+    http_request: Request,
+    db: AsyncSession = Depends(get_db),
+    _: int = Depends(lambda req: email_rate_limit_middleware(req, max_emails=10))
 ):
     """認証コードを再送信"""
     email = request.email.lower()
@@ -175,7 +225,78 @@ async def resend_code(
             detail="メール送信に失敗しました"
         )
     
-    return ResendCodeResponse(
-        message="認証コードを再送信しました",
-        verification_id=verification.id
+    # 開発環境では認証コードをレスポンスに含める
+    response_data = {
+        "message": "認証コードを再送信しました",
+        "verification_id": verification.id
+    }
+    
+    if settings.APP_ENV == "development":
+        response_data["verification_code"] = verification_code
+    
+    return ResendCodeResponse(**response_data)
+
+@router.post("/reset-password", response_model=ResetPasswordResponse)
+async def reset_password(
+    request: ResetPasswordRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """パスワードをリセット"""
+    email = request.email.lower()
+    verification_code = request.verification_code
+    new_password = request.new_password
+    
+    # 認証コードを検証
+    now = datetime.now(timezone.utc)
+    result = await db.execute(
+        select(EmailVerification)
+        .where(
+            and_(
+                EmailVerification.email == email,
+                EmailVerification.verification_code == verification_code,
+                EmailVerification.is_verified == False,
+                EmailVerification.expires_at > now
+            )
+        )
+    )
+    verification = result.scalar_one_or_none()
+    
+    if not verification:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="認証コードが無効または期限切れです"
+        )
+    
+    # ユーザーを取得
+    user_result = await db.execute(
+        select(User).where(User.email == email)
+    )
+    user = user_result.scalar_one_or_none()
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="ユーザーが見つかりません"
+        )
+    
+    # パスワード検証
+    if len(new_password) < 8:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="パスワードは8文字以上である必要があります"
+        )
+    
+    # パスワードを更新
+    user.hashed_password = hash_password(new_password)
+    
+    # 認証コードを有効化
+    verification.is_verified = True
+    verification.user_id = user.id
+    
+    # コミット
+    await db.commit()
+    
+    return ResetPasswordResponse(
+        message="パスワードをリセットしました",
+        success=True
     )

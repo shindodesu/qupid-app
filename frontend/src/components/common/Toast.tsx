@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning'
@@ -39,11 +40,14 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Toas
   }
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 50, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 20, scale: 0.9 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
       className={cn(
-        'fixed bottom-4 right-4 z-toast px-4 py-3 rounded-lg shadow-lg transition-all duration-300 max-w-sm',
-        typeStyles[type],
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+        'fixed bottom-4 right-4 z-toast px-4 py-3 rounded-lg shadow-lg max-w-sm',
+        typeStyles[type]
       )}
       role="alert"
       aria-live="polite"
@@ -56,13 +60,13 @@ export function Toast({ message, type = 'info', duration = 3000, onClose }: Toas
             setIsVisible(false)
             setTimeout(() => onClose?.(), 300)
           }}
-          className="ml-auto hover:opacity-80"
+          className="ml-auto hover:opacity-80 transition-opacity"
           aria-label="閉じる"
         >
           ✕
         </button>
       </div>
-    </div>
+    </motion.div>
   )
 }
 
@@ -113,19 +117,24 @@ export function ToastContainer() {
   }, [])
 
   return (
-    <>
-      {toasts.map((t) => (
-        <Toast
+    <AnimatePresence mode="sync">
+      {toasts.map((t, index) => (
+        <motion.div
           key={t.id}
-          message={t.message}
-          type={t.type}
-          onClose={() => {
-            toastQueue = toastQueue.filter((toast) => toast.id !== t.id)
-            setToasts(toastQueue)
-          }}
-        />
+          style={{ bottom: `${4 + index * 5}rem` }}
+          className="fixed right-4 z-toast"
+        >
+          <Toast
+            message={t.message}
+            type={t.type}
+            onClose={() => {
+              toastQueue = toastQueue.filter((toast) => toast.id !== t.id)
+              setToasts(toastQueue)
+            }}
+          />
+        </motion.div>
       ))}
-    </>
+    </AnimatePresence>
   )
 }
 

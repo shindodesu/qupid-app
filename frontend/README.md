@@ -136,23 +136,31 @@ npm run type-check
 
 詳細な実装ドキュメントは以下を参照してください：
 
-- [検索・マッチング機能](./README_SEARCH.md)
-- [チャット機能](./README_CHAT.md)
-- [セーフティ機能](./README_SAFETY.md)
-- [統合・最適化](./README_INTEGRATION.md)
+- [検索・マッチング機能](../docs/implementation-plans/debug/README_SEARCH.md)
+- [チャット機能](../docs/implementation-plans/debug/README_CHAT.md)
+- [セーフティ機能](../docs/implementation-plans/debug/README_SAFETY.md)
+- [統合・最適化](../docs/implementation-plans/debug/README_INTEGRATION.md)
 
-## 🧪 テスト（将来実装）
+## 🧪 テスト（✅実装済み）
 
 ```bash
 # 単体テスト
-npm run test
+npm test
 
-# E2Eテスト
-npm run test:e2e
+# ウォッチモード
+npm run test:watch
 
 # カバレッジ
 npm run test:coverage
 ```
+
+**実装済みテスト**:
+- `src/components/ui/__tests__/Button.test.tsx` - 7テスト
+- `src/components/ui/__tests__/Input.test.tsx` - 8テスト
+- `src/components/ui/__tests__/Skeleton.test.tsx` - 8テスト
+- `src/components/auth/__tests__/LoginForm.test.tsx` - 5テスト
+
+**合計**: 28テスト
 
 ## 🔒 セキュリティ
 

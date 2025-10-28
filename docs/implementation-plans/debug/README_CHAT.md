@@ -134,11 +134,14 @@ import { ChatWindow } from '@/components/features/chat'
 
 ### 1. リアルタイム更新
 
-現在は **ポーリング方式** を採用しています：
-- 会話一覧: 10秒ごとに自動更新
-- メッセージ: 5秒ごとに自動更新
+✅ **WebSocket方式** を採用しています：
+- 即座のメッセージ配信
+- タイピングインジケーター
+- 自動再接続機能（指数バックオフ）
+- Ping-Pongキープアライブ
 
-将来的には WebSocket でリアルタイム通信を実装予定です。
+**接続URL**: `ws://localhost:8000/ws?token=<JWT_TOKEN>`  
+**本番環境**: `wss://api.yourdomain.com/ws?token=<JWT_TOKEN>`
 
 ### 2. 楽観的更新
 
