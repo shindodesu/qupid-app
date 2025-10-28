@@ -1,13 +1,7 @@
 // カスタムService Worker for PWA
-const CACHE_NAME = 'qupid-pwa-v1'
+const CACHE_NAME = 'qupid-pwa-v2'
 const urlsToCache = [
   '/',
-  '/home',
-  '/matches',
-  '/chat',
-  '/profile',
-  '/safety',
-  '/manifest.json',
   '/icon.png',
   '/apple-icon.png'
 ]
@@ -52,8 +46,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   console.log('Service Worker: Fetching:', event.request.url)
   
-  // 同じオリジンのリクエストのみ処理
-  if (!event.request.url.startsWith(self.location.origin)) {
+  // APIリクエスト（localhost:8000など）はService Workerでインターセプトせず、直接fetchする
+  if (event.request.url.includes('/auth/') || 
+      event.request.url.includes('localhost:8000') ||
+      !event.request.url.startsWith(self.location.origin)) {
+    console.log('Service Worker: API request, bypassing cache:', event.request.url)
+    // 直接fetchして返す
+    event.respondWith(fetch(event.request))
     return
   }
 
@@ -75,12 +74,14 @@ self.addEventListener('fetch', (event) => {
               return response
             }
 
-            // レスポンスをクローンしてキャッシュに保存
-            const responseToCache = response.clone()
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache)
-              })
+            // GETリクエストのみキャッシュに保存（POSTなどはキャッシュできない）
+            if (event.request.method === 'GET') {
+              const responseToCache = response.clone()
+              caches.open(CACHE_NAME)
+                .then((cache) => {
+                  cache.put(event.request, responseToCache)
+                })
+            }
 
             return response
           })
