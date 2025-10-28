@@ -59,4 +59,4 @@ class Settings(BaseSettings):
                 )
 
 settings = Settings()
-print(f"✅ Loaded settings: APP_NAME={settings.APP_NAME}, APP_ENV={settings.APP_ENV}, ALLOWED_EMAIL_DOMAIN={settings.ALLOWED_EMAIL_DOMAIN}")
+print(f"✅ Loaded settings: APP_NAME={settings.APP_NAME}, APP_ENV={settings.APP_ENV}, ENABLE_EMAIL={settings.ENABLE_EMAIL}, SMTP_SERVER={settings.SMTP_SERVER}, SMTP_USERNAME={settings.SMTP_USERNAME}, ALLOWED_EMAIL_DOMAIN={settings.ALLOWED_EMAIL_DOMAIN}")
