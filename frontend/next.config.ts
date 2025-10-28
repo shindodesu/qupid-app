@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 import withPWA from 'next-pwa';
-import { withSentryConfig } from "@sentry/nextjs";
+
+// Sentryを条件付きでインポート（モジュールが存在する場合のみ）
+let withSentryConfig: any
+try {
+  const sentryModule = require("@sentry/nextjs")
+  withSentryConfig = sentryModule.withSentryConfig
+} catch (e) {
+  console.log('[Config] Sentry module not found, skipping Sentry integration')
+  withSentryConfig = (config: any) => config // パススルー関数
+}
 
 const nextConfig: NextConfig = {
   // デプロイ時の設定
