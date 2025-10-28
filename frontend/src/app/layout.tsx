@@ -24,7 +24,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Qupid - マッチングアプリ",
-  description: "Qupidは、タグベースのマッチングシステムを採用した新しいマッチングアプリです。",
+  description: "Qupidは、九州大学のLGBTQ当事者学生のためのマッチングアプリです。",
   keywords: ["マッチング", "デート", "恋愛", "タグ", "マッチングアプリ"],
   authors: [{ name: "Qupid Team" }],
   creator: "Qupid",
@@ -35,7 +35,6 @@ export const metadata: Metadata = {
     telephone: false,
   },
   metadataBase: new URL("https://qupid.app"),
-  manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -97,7 +96,6 @@ export default function RootLayout({
   return (
     <html lang="ja" suppressHydrationWarning>
       <head>
-        <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

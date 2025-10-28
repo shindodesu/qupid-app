@@ -8,7 +8,6 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: '/home',
     scope: '/',
     display: 'standalone',
-    display_override: ['standalone', 'fullscreen', 'minimal-ui'],
     background_color: '#ffffff',
     theme_color: '#E94057',
     orientation: 'portrait',
@@ -17,48 +16,20 @@ export default function manifest(): MetadataRoute.Manifest {
         src: '/icon.png',
         sizes: '192x192',
         type: 'image/png',
-        purpose: 'any'
+        purpose: 'any',
       },
       {
         src: '/icon.png',
         sizes: '512x512',
         type: 'image/png',
-        purpose: 'any'
+        purpose: 'any',
       },
       {
         src: '/apple-icon.png',
         sizes: '180x180',
         type: 'image/png',
-        purpose: 'maskable'
-      }
+        purpose: 'maskable',
+      },
     ],
-    categories: ['social', 'lifestyle'],
-    lang: 'ja',
-    dir: 'ltr',
-    prefer_related_applications: false,
-    shortcuts: [
-      {
-        name: '探す',
-        short_name: '探す',
-        description: '新しい人を探す',
-        url: '/home',
-        icons: [{ src: '/icon.png', sizes: '96x96' }]
-      },
-      {
-        name: 'マッチ',
-        short_name: 'マッチ',
-        description: 'マッチした人を見る',
-        url: '/matches',
-        icons: [{ src: '/icon.png', sizes: '96x96' }]
-      },
-      {
-        name: 'チャット',
-        short_name: 'チャット',
-        description: 'メッセージを見る',
-        url: '/chat',
-        icons: [{ src: '/icon.png', sizes: '96x96' }]
-      }
-    ]
   }
 }
-
