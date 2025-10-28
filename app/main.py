@@ -42,24 +42,24 @@ app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
 # CORS設定
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:3001",
-        "http://127.0.0.1:3001",
-        # Vercel本番環境
-        "https://frontend-795trryv0-shindodesus-projects.vercel.app",
-        "https://frontend-seven-psi-84.vercel.app",
-        # すべてのVercelプレビュー環境を許可
-        "https://*.vercel.app",
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    allow_origin_regex=r"https://.*\.vercel\.app",
-)
+# 開発環境では全てのオリジンを許可、本番環境ではVercelのみ許可
+if settings.APP_ENV == "development":
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    # 本番環境：正規表現でVercelドメインのみ許可
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=r"https://.*\.vercel\.app",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
 # Include routers for different endpoints
 app.include_router(health.router)
