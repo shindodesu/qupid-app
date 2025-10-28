@@ -28,20 +28,7 @@ if settings.APP_ENV == "production" and hasattr(settings, 'SENTRY_DSN') and sett
 
 app = FastAPI(title=settings.APP_NAME)
 
-# エラーハンドラーを登録
-from fastapi.exceptions import RequestValidationError
-from starlette.exceptions import HTTPException as StarletteHTTPException
-from app.middleware.error_handler import (
-    validation_exception_handler,
-    http_exception_handler,
-    unhandled_exception_handler,
-)
-
-app.add_exception_handler(RequestValidationError, validation_exception_handler)
-app.add_exception_handler(StarletteHTTPException, http_exception_handler)
-app.add_exception_handler(Exception, unhandled_exception_handler)
-
-# CORS設定
+# CORS設定（最初に追加して、すべてのレスポンスに適用されるようにする）
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -56,6 +43,19 @@ app.add_middleware(
     expose_headers=["*"],
     max_age=600,
 )
+
+# エラーハンドラーを登録
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.middleware.error_handler import (
+    validation_exception_handler,
+    http_exception_handler,
+    unhandled_exception_handler,
+)
+
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(Exception, unhandled_exception_handler)
 
 # Include routers for different endpoints
 app.include_router(health.router)
