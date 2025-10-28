@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -10,13 +11,16 @@ import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useUser, useAuthStore } from '@/stores/auth'
+import { getAvatarUrl } from '@/lib/utils/image'
 
 export default function ProfilePage() {
+  const router = useRouter()
   const user = useUser()
   const { updateUser } = useAuthStore()
   const queryClient = useQueryClient()
 
   const [isEditing, setIsEditing] = useState(false)
+  const [avatarLoadError, setAvatarLoadError] = useState(false)
   const [formData, setFormData] = useState({
     display_name: '',
     bio: '',
@@ -47,6 +51,8 @@ export default function ProfilePage() {
         sexuality: userData.sexuality || '',
         looking_for: userData.looking_for || '',
       })
+      // アバターURLが変わったらエラー状態をリセット
+      setAvatarLoadError(false)
     }
   }, [userData])
 
@@ -93,8 +99,16 @@ export default function ProfilePage() {
     updateMutation.mutate(formData)
   }
 
-  const handleLogout = () => {
-    useAuthStore.getState().logout()
+  const handleLogout = async () => {
+    console.log('[ProfilePage] Logging out...')
+    try {
+      await useAuthStore.getState().logout()
+      console.log('[ProfilePage] Logout successful, redirecting to login')
+      // ログアウト後、ログインページに強制リダイレクト（完全なページリロード）
+      window.location.href = '/auth/login'
+    } catch (error) {
+      console.error('[ProfilePage] Logout error:', error)
+    }
   }
 
   // アバター画像アップロード
@@ -163,11 +177,15 @@ export default function ProfilePage() {
         <CardContent>
           <div className="flex items-center gap-6">
             <div className="relative">
-              {userData?.avatar_url ? (
+              {userData?.avatar_url && !avatarLoadError ? (
                 <img
-                  src={userData.avatar_url}
-                  alt={userData.display_name}
+                  src={getAvatarUrl(userData.avatar_url) || ''}
+                  alt="プロフィール画像"
                   className="w-24 h-24 rounded-full object-cover"
+                  onError={() => {
+                    // 画像の読み込みに失敗した場合はエラー状態を設定
+                    setAvatarLoadError(true)
+                  }}
                 />
               ) : (
                 <div className="w-24 h-24 rounded-full bg-neutral-200 flex items-center justify-center">

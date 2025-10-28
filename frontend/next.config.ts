@@ -1,5 +1,6 @@
 import type { NextConfig } from "next";
 import withPWA from 'next-pwa';
+import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   // デプロイ時の設定
@@ -12,7 +13,19 @@ const nextConfig: NextConfig = {
 
   // 画像最適化
   images: {
-    domains: ['localhost', 'api.qupid.app'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '8000',
+        pathname: '/uploads/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'api.qupid.app',
+        pathname: '/uploads/**',
+      },
+    ],
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -31,7 +44,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' http://localhost:8000 https://api.qupid.app https://qupid-api.onrender.com;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: http://localhost:8000 https: blob:; connect-src 'self' http://localhost:8000 https://api.qupid.app https://qupid-api.onrender.com https://fonts.googleapis.com https://fonts.gstatic.com;",
           },
           {
             key: 'X-DNS-Prefetch-Control',
@@ -151,4 +164,20 @@ const pwaConfig = withPWA({
   publicExcludes: ['!noprecache/**/*']
 });
 
-export default pwaConfig(nextConfig);
+// Sentry設定を適用
+const sentryWebpackPluginOptions = {
+  // Sentryにソースマップをアップロードするかどうか
+  silent: true,
+  
+  // 組織とプロジェクト名（本番環境でのみ有効）
+  // org: "your-org",
+  // project: "qupid-frontend",
+  
+  // ソースマップのアップロードを無効化（開発環境）
+  hideSourceMaps: false,
+  
+  // デバッグログを無効化
+  disableLogger: true,
+};
+
+export default withSentryConfig(pwaConfig(nextConfig), sentryWebpackPluginOptions);

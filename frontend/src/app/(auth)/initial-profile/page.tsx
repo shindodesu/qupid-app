@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation } from '@tanstack/react-query'
 import { apiClient } from '@/lib/api'
@@ -9,10 +9,22 @@ import { Input } from '@/components/ui/Input'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/common/ToastContainer'
 import { InitialProfileData } from '@/types/user'
+import { useAuthStore, useUser, useAuthLoading } from '@/stores/auth'
 
 export default function InitialProfilePage() {
   const router = useRouter()
   const { toast, toasts, removeToast } = useToast()
+  const user = useUser()
+  const isLoading = useAuthLoading()
+  const { updateUser } = useAuthStore()
+
+  // プロフィールが既に完了している場合はホームへリダイレクト
+  useEffect(() => {
+    if (!isLoading && user?.profile_completed === true) {
+      console.log('[InitialProfile] Profile already completed, redirecting to home')
+      router.push('/home')
+    }
+  }, [user, isLoading, router])
   
   const [formData, setFormData] = useState<InitialProfileData>({
     display_name: '',
@@ -31,11 +43,22 @@ export default function InitialProfilePage() {
 
   const completeProfileMutation = useMutation({
     mutationFn: async (data: InitialProfileData) => {
+      console.log('[InitialProfile] Submitting profile data:', JSON.stringify(data, null, 2))
+      console.log('[InitialProfile] Data types:', {
+        display_name: typeof data.display_name,
+        birthday: typeof data.birthday,
+        gender: typeof data.gender,
+        sexuality: typeof data.sexuality,
+        looking_for: typeof data.looking_for
+      })
+      
       // プロフィール情報を登録
       const profileResult = await apiClient.completeInitialProfile(data)
+      console.log('[InitialProfile] Profile registration successful:', profileResult)
       
       // アバター画像がある場合はアップロード
       if (avatarFile) {
+        console.log('[InitialProfile] Uploading avatar...')
         const formData = new FormData()
         formData.append('file', avatarFile)
         
@@ -49,21 +72,54 @@ export default function InitialProfilePage() {
         })
         
         if (!response.ok) {
+          console.error('[InitialProfile] Avatar upload failed')
           throw new Error('アバター画像のアップロードに失敗しました')
         }
+        
+        console.log('[InitialProfile] Avatar upload successful')
       }
       
       return profileResult
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('[InitialProfile] Complete profile success, user data:', data)
+      
+      // Zustandストアのユーザー情報を更新（プロフィール完了フラグを確実に設定）
+      updateUser({
+        ...data,
+        profile_completed: true
+      })
+      
+      console.log('[InitialProfile] User store updated')
+      
       toast({
         title: "プロフィールを登録しました",
         description: "Qupidを始めましょう！",
         type: "success"
       })
-      router.push('/home')
+      
+      // 状態更新後にリダイレクト
+      setTimeout(() => {
+        console.log('[InitialProfile] Redirecting to home...')
+        router.push('/home')
+      }, 300)
     },
     onError: (error: any) => {
+      console.error('[InitialProfile] Profile registration error:', error)
+      
+      // 既にプロフィール完了済みの場合はホームへリダイレクト
+      if (error.message?.includes('Profile already completed')) {
+        toast({
+          title: "プロフィールは既に登録済みです",
+          description: "ホームに移動します",
+          type: "info"
+        })
+        setTimeout(() => {
+          router.push('/home')
+        }, 1000)
+        return
+      }
+      
       toast({
         title: "エラーが発生しました",
         description: error.message || "プロフィールの登録に失敗しました",

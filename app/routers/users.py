@@ -101,14 +101,20 @@ async def complete_initial_profile(
     """
     初回プロフィール登録（必須項目の設定）
     """
+    print(f"[InitialProfile API] Received request from user: {current_user.id}")
+    print(f"[InitialProfile API] Current profile_completed status: {current_user.profile_completed}")
+    print(f"[InitialProfile API] Payload: {payload}")
+    
     # 既にプロフィールが完了している場合はエラー
     if current_user.profile_completed:
+        print(f"[InitialProfile API] Profile already completed for user {current_user.id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Profile already completed"
         )
     
     # プロフィール情報を設定
+    print(f"[InitialProfile API] Setting profile data...")
     current_user.display_name = payload.display_name
     current_user.birthday = payload.birthday
     current_user.gender = payload.gender
@@ -116,8 +122,10 @@ async def complete_initial_profile(
     current_user.looking_for = payload.looking_for
     current_user.profile_completed = True
     
+    print(f"[InitialProfile API] Committing to database...")
     await db.commit()
     await db.refresh(current_user)
+    print(f"[InitialProfile API] Profile completed successfully for user {current_user.id}")
     return current_user
 
 

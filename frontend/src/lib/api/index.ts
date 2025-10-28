@@ -32,6 +32,12 @@ class ApiClient {
 
     const response = await fetch(`${this.baseURL}${endpoint}`, config)
 
+    console.log('API Response:', {
+      status: response.status,
+      statusText: response.statusText,
+      ok: response.ok
+    })
+
     if (!response.ok) {
       if (response.status === 401) {
         // 認証エラーの場合、トークンを削除
@@ -40,7 +46,41 @@ class ApiClient {
         }
         throw new Error('認証が必要です')
       }
-      throw new Error(`API Error: ${response.status}`)
+      
+      // エラーレスポンスの詳細を取得
+      let errorMessage = `API Error: ${response.status}`
+      try {
+        const responseText = await response.text()
+        console.error('[API] Error response text:', responseText)
+        
+        let errorData
+        try {
+          errorData = JSON.parse(responseText)
+        } catch (jsonError) {
+          console.error('[API] Failed to parse error response as JSON:', jsonError)
+          throw new Error(`${errorMessage} - ${responseText}`)
+        }
+        
+        console.error('[API] Error data:', errorData)
+        
+        if (errorData.detail) {
+          if (typeof errorData.detail === 'string') {
+            errorMessage = errorData.detail
+          } else if (Array.isArray(errorData.detail)) {
+            // Pydanticのバリデーションエラー形式
+            const validationErrors = errorData.detail.map((err: any) => 
+              `${err.loc?.join('.') || 'field'}: ${err.msg}`
+            ).join(', ')
+            console.error('[API] Validation errors:', validationErrors)
+            errorMessage = validationErrors
+          }
+        }
+      } catch (e) {
+        console.error('[API] Error processing error response:', e)
+        // エラー処理中のエラーは、既に投げられているか、デフォルトメッセージを使用
+      }
+      
+      throw new Error(errorMessage)
     }
 
     return response.json()
