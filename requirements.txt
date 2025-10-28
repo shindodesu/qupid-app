@@ -1,6 +1,7 @@
 # pydanticは型間違うとすぐエラーを出してくれる
 fastapi
 uvicorn[standard]
+gunicorn
 pydantic[email]
 pydantic-settings
 SQLAlchemy>=2.0
@@ -10,3 +11,21 @@ psycopg2-binary
 psycopg[binary]
 alembic
 PyJWT
+passlib[bcrypt]
+bcrypt==4.2.1
+aiosqlite
+
+# テスト
+pytest
+pytest-asyncio
+pytest-cov
+httpx
+faker
+
+# エラー監視
+sentry-sdk[fastapi]
+
+# WebSocket (FastAPI already includes websockets)
+python-socketio
+aiofiles
+python-multipart
