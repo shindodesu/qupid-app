@@ -1,32 +1,53 @@
-# Render Blueprint for Qupid Backend
-
 services:
-  # PostgreSQL Database
-  - type: pserv
-    name: qupid-db
-    plan: free
-    region: singapore
-    databaseName: mydatabase
-    databaseUser: user
-
-  # FastAPI Backend
+  # バックエンドAPI
   - type: web
     name: qupid-api
-    runtime: docker
+    env: python
+    region: oregon
     plan: free
-    region: singapore
-    branch: main
-    healthCheckPath: /health
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt && alembic upgrade head
+    startCommand: gunicorn app.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:$PORT
     envVars:
+      - key: APP_NAME
+        value: Qupid API
+      - key: APP_ENV
+        value: production
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: 10080
+      - key: ALLOWED_EMAIL_DOMAIN
+        value: s.kyushu-u.ac.jp
+      - key: ENABLE_EMAIL
+        value: true
+      - key: SMTP_SERVER
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_USERNAME
+        value: qudai.qupid@gmail.com
+      - key: SMTP_PASSWORD
+        sync: false  # 手動で設定（機密情報）
+      - key: FROM_EMAIL
+        value: qudai.qupid@gmail.com
+      - key: EMAIL_MAX_RETRIES
+        value: 3
+      - key: EMAIL_RETRY_DELAY
+        value: 2
+      - key: EMAIL_RATE_LIMIT_PER_HOUR
+        value: 10
+      - key: API_RATE_LIMIT_PER_MINUTE
+        value: 100
       - key: DATABASE_URL
         fromDatabase:
           name: qupid-db
           property: connectionString
-      - key: SECRET_KEY
-        generateValue: true
-      - key: ENVIRONMENT
-        value: production
-      - key: ALLOWED_ORIGINS
-        value: https://qupid.vercel.app,http://localhost:3000
-    buildCommand: alembic upgrade head
 
+databases:
+  - name: qupid-db
+    databaseName: qupid
+    user: qupid_user
+    plan: free
+    region: oregon
