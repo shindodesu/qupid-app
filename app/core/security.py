@@ -94,4 +94,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         パスワードが一致する場合はTrue、それ以外はFalse
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return pwd_context.verify(plain_password, hashed_password)
+    except Exception as e:
+        # bcryptエラーなどの予期しないエラーをキャッチ
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Password verification error: {e}", exc_info=True)
+        return False
