@@ -29,14 +29,32 @@ if settings.APP_ENV == "production" and hasattr(settings, 'SENTRY_DSN') and sett
 app = FastAPI(title=settings.APP_NAME)
 
 # CORS設定（最初に追加して、すべてのレスポンスに適用されるようにする）
+def get_cors_origins():
+    """CORS設定を環境変数から読み込み、VercelのプレビューURLにも対応"""
+    origins = []
+    
+    # 環境変数から読み込む
+    if hasattr(settings, 'CORS_ORIGINS') and settings.CORS_ORIGINS:
+        origins.extend([origin.strip() for origin in settings.CORS_ORIGINS.split(',') if origin.strip()])
+    
+    # デフォルトの開発環境URL
+    if settings.APP_ENV == "development":
+        origins.extend([
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+        ])
+    
+    # 重複を削除
+    origins = list(set(origins))
+    return origins
+
+# CORS設定を適用
+cors_origins_list = get_cors_origins()
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://frontend-seven-psi-84.vercel.app",
-        "https://frontend-795trryv0-shindodesus-projects.vercel.app",
-    ],
+    allow_origins=cors_origins_list,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # VercelのプレビューURLを正規表現で許可
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["Content-Type", "Authorization", "Accept", "Origin", "X-Requested-With"],

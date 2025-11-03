@@ -15,19 +15,21 @@ from app.templates.email_templates import (
     get_password_reset_email_html,
     get_password_reset_email_text
 )
+from app.core.config import settings as app_settings
 
 # ロガーの設定
 logger = logging.getLogger(__name__)
 
 class EmailService:
     def __init__(self):
-        # SMTP設定
+        # SMTP設定（settingsから動的に取得）
         self.smtp_server = getattr(settings, 'SMTP_SERVER', 'smtp.gmail.com')
         self.smtp_port = getattr(settings, 'SMTP_PORT', 587)
         self.smtp_username = getattr(settings, 'SMTP_USERNAME', '')
         self.smtp_password = getattr(settings, 'SMTP_PASSWORD', '')
         self.from_email = getattr(settings, 'FROM_EMAIL', 'noreply@qupid.com')
-        self.enable_email = getattr(settings, 'ENABLE_EMAIL', False)
+        # enable_emailは常にsettingsから動的に取得
+        self._settings = settings
         
         # リトライ設定
         self.max_retries = getattr(settings, 'EMAIL_MAX_RETRIES', 3)
@@ -35,6 +37,11 @@ class EmailService:
         
         # アプリケーション名
         self.app_name = getattr(settings, 'APP_NAME', 'Qupid')
+    
+    @property
+    def enable_email(self):
+        """メール送信が有効かどうかを動的に取得"""
+        return getattr(self._settings, 'ENABLE_EMAIL', False)
 
     def generate_verification_code(self) -> str:
         """6桁の認証コードを生成"""
@@ -112,12 +119,23 @@ class EmailService:
         Returns:
             送信成功したかどうか
         """
-        if not self.enable_email:
+        # 開発環境の場合は必ずスキップ（ENABLE_EMAILの値に関わらず）
+        is_development = (
+            app_settings.APP_ENV == "development" or 
+            app_settings.APP_ENV.lower() == "development" or
+            str(app_settings.APP_ENV).lower() == "development"
+        )
+        
+        # 開発環境またはメール送信が無効な場合はコンソールに出力
+        if is_development or not self.enable_email:
             # 開発環境ではコンソールに出力
-            logger.info("=== メール認証コード ===")
+            logger.info("=== メール認証コード (開発環境モード) ===")
+            logger.info(f"ENABLE_EMAIL: {self.enable_email}")
+            logger.info(f"APP_ENV: {app_settings.APP_ENV}")
+            logger.info(f"is_development: {is_development}")
             logger.info(f"宛先: {email}")
             logger.info(f"認証コード: {verification_code}")
-            logger.info("======================")
+            logger.info("========================================")
             return True
 
         try:

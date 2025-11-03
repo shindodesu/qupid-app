@@ -7,7 +7,7 @@ from app.db.session import get_db
 from app.core.config import settings
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
-from app.schemas.auth import LoginRequest, Token
+from app.schemas.auth import LoginRequest, RegisterRequest, Token
 from app.schemas.user import UserRead
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -63,7 +63,7 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     }
 
 @router.post("/register")
-async def register(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
+async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)):
     """新規登録 - パスワード認証"""
     # パスワードが提供されていない場合はエラー
     if not payload.password:

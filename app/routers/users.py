@@ -58,6 +58,7 @@ from datetime import date
 class UserUpdate(BaseModel):
     display_name: str | None = None
     bio: str | None = None
+    campus: str | None = None
     faculty: str | None = None
     grade: str | None = None
     birthday: date | None = None
@@ -75,6 +76,8 @@ async def update_me(
         current_user.display_name = payload.display_name
     if payload.bio is not None:
         current_user.bio = payload.bio
+    if payload.campus is not None:
+        current_user.campus = payload.campus
     if payload.faculty is not None:
         current_user.faculty = payload.faculty
     if payload.grade is not None:

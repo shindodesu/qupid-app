@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     
     # Sentry設定（エラー監視）
     SENTRY_DSN: str = ""  # 本番環境で設定
+    
+    # CORS設定
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"  # カンマ区切り
 
     class Config:
         env_file = ".env"

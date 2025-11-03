@@ -19,6 +19,7 @@ class UserRead(BaseModel):
     display_name: str
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
+    campus: Optional[str] = None
     faculty: Optional[str] = None
     grade: Optional[str] = None
     birthday: Optional[date] = None

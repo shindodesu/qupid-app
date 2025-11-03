@@ -11,6 +11,8 @@ services:
       - .:/app
     environment: # 環境変数の設定
       - DATABASE_URL=postgresql+asyncpg://user:password@db:5432/mydatabase
+      - APP_ENV=development
+      - ENABLE_EMAIL=false
     depends_on: # dbコンテナが起動してからapiコンテナを起動
       - db
 

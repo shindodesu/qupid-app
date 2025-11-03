@@ -14,6 +14,26 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+def add_cors_headers(response: JSONResponse, request: Request) -> JSONResponse:
+    """CORSヘッダーをレスポンスに追加"""
+    origin = request.headers.get("origin")
+    allowed_origins = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://frontend-seven-psi-84.vercel.app",
+        "https://frontend-795trryv0-shindodesus-projects.vercel.app",
+    ]
+    
+    if origin in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
+        response.headers["Access-Control-Expose-Headers"] = "*"
+    
+    return response
+
+
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
     Pydanticバリデーションエラーのカスタムハンドラー
@@ -25,16 +45,25 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         field = " -> ".join([str(loc) for loc in error["loc"]])
         message = error["msg"]
         errors.append(f"{field}: {message}")
+        # 詳細なログを出力
+        logger.warning(f"Validation error detail: {error}")
+    
+    # リクエスト情報をログ出力
+    logger.warning(f"Request URL: {request.url}")
+    logger.warning(f"Request method: {request.method}")
+    logger.warning(f"Request headers: {dict(request.headers)}")
+    # リクエストボディは既に読み取られている可能性があるため、エラー情報から推測
     
     logger.warning(f"Validation error: {errors}")
     
-    return JSONResponse(
+    response = JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
             "detail": "入力データが不正です",
             "errors": errors,
         },
     )
+    return add_cors_headers(response, request)
 
 
 async def http_exception_handler(request: Request, exc: StarletteHTTPException):
@@ -48,10 +77,11 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException):
         logger.error(f"HTTP {exc.status_code}: {exc.detail}", exc_info=True)
         # Sentryが自動的にキャッチ
     
-    return JSONResponse(
+    response = JSONResponse(
         status_code=exc.status_code,
         content={"detail": exc.detail},
     )
+    return add_cors_headers(response, request)
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception):
@@ -63,12 +93,15 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.exception(f"Unhandled exception: {str(exc)}")
     # Sentryが自動的にキャッチ
     
-    return JSONResponse(
+    response = JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "detail": "サーバー内部エラーが発生しました。しばらくしてから再試行してください。",
         },
     )
+    return add_cors_headers(response, request)
+
+
 
 
 

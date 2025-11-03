@@ -24,28 +24,52 @@ import secrets
 
 router = APIRouter(prefix="/auth/email", tags=["email-auth"])
 
+# レート制限用の依存関数
+async def check_email_rate_limit(request: Request) -> int:
+    """メール送信レート制限をチェック"""
+    try:
+        return await email_rate_limit_middleware(request, max_emails=10)
+    except HTTPException as e:
+        # HTTPExceptionもそのまま伝播させる
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Rate limit check failed: {e.status_code} - {e.detail}")
+        raise
+
 @router.post("/send-code", response_model=EmailVerificationResponse)
 async def send_verification_code(
-    request: EmailVerificationRequest,
-    http_request: Request,
+    payload: EmailVerificationRequest,
     db: AsyncSession = Depends(get_db),
-    _: int = Depends(lambda req: email_rate_limit_middleware(req, max_emails=10))
 ):
     """認証コードをメールで送信"""
-    email = request.email.lower()
+    import logging
+    logger = logging.getLogger(__name__)
     
-    # 既存の未使用認証コードを無効化
-    now = datetime.now(timezone.utc)
-    await db.execute(
-        select(EmailVerification)
-        .where(
-            and_(
-                EmailVerification.email == email,
-                EmailVerification.is_verified == False,
-                EmailVerification.expires_at > now
+    # レート制限チェックを一時的に無効化（デバッグ用）
+    # try:
+    #     await check_email_rate_limit(http_request)
+    # except HTTPException:
+    #     raise
+    
+    logger.info(f"Received send-code request: email={payload.email}")
+    try:
+        email = payload.email.lower()
+        
+        # 既存の未使用認証コードを無効化
+        now = datetime.now(timezone.utc)
+        await db.execute(
+            select(EmailVerification)
+            .where(
+                and_(
+                    EmailVerification.email == email,
+                    EmailVerification.is_verified == False,
+                    EmailVerification.expires_at > now
+                )
             )
         )
-    )
+    except Exception as e:
+        logger.error(f"Error in send-code endpoint: {e}", exc_info=True)
+        raise
     
     # 新しい認証コードを生成
     verification_code = email_service.generate_verification_code()
@@ -60,13 +84,26 @@ async def send_verification_code(
     await db.refresh(verification)
     
     # メール送信
-    email_sent = await email_service.send_verification_email(email, verification_code)
-    
-    if not email_sent:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="メール送信に失敗しました"
-        )
+    try:
+        email_sent = await email_service.send_verification_email(email, verification_code)
+        logger.info(f"Email send result: {email_sent}")
+        
+        # 開発環境ではメール送信が無効でも処理を続行
+        if not email_sent and settings.APP_ENV != "development":
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="メール送信に失敗しました"
+            )
+    except Exception as e:
+        logger.error(f"Error sending email: {e}", exc_info=True)
+        # 開発環境ではエラーでも続行
+        if settings.APP_ENV != "development":
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="メール送信に失敗しました"
+            )
+        else:
+            logger.warning(f"Email sending error in development mode, but continuing: {e}")
     
     # 開発環境では認証コードをレスポンスに含める
     response_data = {
@@ -188,9 +225,14 @@ async def resend_code(
     request: ResendCodeRequest,
     http_request: Request,
     db: AsyncSession = Depends(get_db),
-    _: int = Depends(lambda req: email_rate_limit_middleware(req, max_emails=10))
 ):
     """認証コードを再送信"""
+    # レート制限チェックを直接実行
+    try:
+        await check_email_rate_limit(http_request)
+    except HTTPException:
+        raise
+    
     email = request.email.lower()
     
     # 既存の未使用認証コードを無効化

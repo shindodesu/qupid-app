@@ -21,6 +21,7 @@ class User(Base, TimestampMixin):
     is_admin: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # 学内属性（必要に応じて調整）
+    campus: Mapped[str | None] = mapped_column(String(100), nullable=True)
     faculty: Mapped[str | None] = mapped_column(String(100), nullable=True)
     grade: Mapped[str | None] = mapped_column(String(50), nullable=True)
 
