@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
@@ -107,49 +107,6 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 @app.get("/")
 async def root():
     return {"name": settings.APP_NAME, "env": settings.APP_ENV}
-
-# OPTIONSリクエストを明示的に処理（プリフライトリクエスト用）
-@app.options("/{full_path:path}")
-async def options_handler(full_path: str, request: Request):
-    """プリフライトリクエスト（OPTIONS）を明示的に処理"""
-    import logging
-    logger = logging.getLogger(__name__)
-    
-    origin = request.headers.get("origin")
-    logger.info(f"OPTIONS request - origin: {origin}, path: {full_path}, headers: {dict(request.headers)}")
-    
-    # CORS設定を確認
-    from app.middleware.error_handler import is_origin_allowed
-    
-    if origin and is_origin_allowed(origin):
-        from fastapi.responses import Response
-        response = Response()
-        response.headers["Access-Control-Allow-Origin"] = origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
-        response.headers["Access-Control-Max-Age"] = "600"
-        logger.info(f"OPTIONS allowed for origin: {origin}")
-        return response
-    
-    # OriginがNoneの場合は、環境変数から許可されたオリジンをすべて許可
-    if not origin:
-        logger.warning(f"OPTIONS request without origin header - path: {full_path}")
-        # Originヘッダーがない場合は、環境変数で設定されたオリジンを許可
-        from fastapi.responses import Response
-        response = Response()
-        # 環境変数から読み込んだオリジンを許可（複数ある場合は最初のものを使用）
-        allowed_origin = cors_origins_list[0] if cors_origins_list else "https://frontend-seven-psi-84.vercel.app"
-        response.headers["Access-Control-Allow-Origin"] = allowed_origin
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
-        response.headers["Access-Control-Max-Age"] = "600"
-        return response
-    
-    logger.warning(f"OPTIONS rejected for origin: {origin}")
-    from fastapi.responses import Response
-    return Response(status_code=403)
 
 # 初期テーブル作成（超簡易版。Alembic導入後はこの自動createは削除）
 from app.db.session import engine
