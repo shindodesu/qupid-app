@@ -9,27 +9,49 @@ from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.core.config import settings
 import logging
+import re
 
 logger = logging.getLogger(__name__)
+
+
+def is_origin_allowed(origin: str) -> bool:
+    """オリジンが許可されているかチェック（環境変数と正規表現に対応）"""
+    if not origin:
+        return False
+    
+    # 環境変数から読み込む
+    if hasattr(settings, 'CORS_ORIGINS') and settings.CORS_ORIGINS:
+        allowed_origins = [o.strip() for o in settings.CORS_ORIGINS.split(',') if o.strip()]
+        if origin in allowed_origins:
+            return True
+    
+    # 開発環境のデフォルトURL
+    if settings.APP_ENV == "development":
+        if origin in ["http://localhost:3000", "http://127.0.0.1:3000"]:
+            return True
+    
+    # VercelのプレビューURLパターン（正規表現でチェック）
+    if re.match(r"https://.*\.vercel\.app$", origin):
+        return True
+    
+    return False
 
 
 def add_cors_headers(response: JSONResponse, request: Request) -> JSONResponse:
     """CORSヘッダーをレスポンスに追加"""
     origin = request.headers.get("origin")
-    allowed_origins = [
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "https://frontend-seven-psi-84.vercel.app",
-        "https://frontend-795trryv0-shindodesus-projects.vercel.app",
-    ]
     
-    if origin in allowed_origins:
+    if is_origin_allowed(origin):
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
         response.headers["Access-Control-Expose-Headers"] = "*"
+    else:
+        # デバッグ用: 許可されていないオリジンをログに記録
+        logger.warning(f"CORS: Origin not allowed - {origin}")
     
     return response
 
