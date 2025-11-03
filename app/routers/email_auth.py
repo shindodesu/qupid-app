@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_
 from app.db.session import get_db
@@ -39,6 +39,7 @@ async def check_email_rate_limit(request: Request) -> int:
 @router.post("/send-code", response_model=EmailVerificationResponse)
 async def send_verification_code(
     payload: EmailVerificationRequest,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """認証コードをメールで送信"""
@@ -83,27 +84,21 @@ async def send_verification_code(
     await db.commit()
     await db.refresh(verification)
     
-    # メール送信
-    try:
-        email_sent = await email_service.send_verification_email(email, verification_code)
-        logger.info(f"Email send result: {email_sent}")
-        
-        # 開発環境ではメール送信が無効でも処理を続行
-        if not email_sent and settings.APP_ENV != "development":
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="メール送信に失敗しました"
-            )
-    except Exception as e:
-        logger.error(f"Error sending email: {e}", exc_info=True)
-        # 開発環境ではエラーでも続行
-        if settings.APP_ENV != "development":
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="メール送信に失敗しました"
-            )
-        else:
-            logger.warning(f"Email sending error in development mode, but continuing: {e}")
+    # メール送信をバックグラウンドタスクとして実行（リクエストをブロックしない）
+    # これにより、SMTP接続がタイムアウトしてもリクエストは成功を返す
+    async def send_email_task(email: str, code: str):
+        """バックグラウンドでメール送信を実行"""
+        try:
+            email_sent = await email_service.send_verification_email(email, code)
+            logger.info(f"Background email send result: {email_sent}")
+            if not email_sent:
+                logger.error(f"メール送信に失敗しました: {email}")
+        except Exception as e:
+            logger.error(f"Background email sending error: {e}", exc_info=True)
+    
+    # バックグラウンドタスクとしてメール送信を追加
+    background_tasks.add_task(send_email_task, email, verification_code)
+    logger.info(f"メール送信タスクをバックグラウンドに追加: {email}")
     
     # 開発環境では認証コードをレスポンスに含める
     response_data = {
@@ -114,6 +109,7 @@ async def send_verification_code(
     if settings.APP_ENV == "development":
         response_data["verification_code"] = verification_code
     
+    # メール送信の成功を待たずに即座にレスポンスを返す
     return EmailVerificationResponse(**response_data)
 
 @router.post("/verify-code", response_model=VerifyCodeResponse)
@@ -224,9 +220,13 @@ async def verify_code(
 async def resend_code(
     request: ResendCodeRequest,
     http_request: Request,
+    background_tasks: BackgroundTasks,
     db: AsyncSession = Depends(get_db),
 ):
     """認証コードを再送信"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     # レート制限チェックを直接実行
     try:
         await check_email_rate_limit(http_request)
@@ -258,14 +258,19 @@ async def resend_code(
     await db.commit()
     await db.refresh(verification)
     
-    # メール送信
-    email_sent = await email_service.send_verification_email(email, verification_code)
+    # メール送信をバックグラウンドタスクとして実行
+    async def send_email_task(email: str, code: str):
+        """バックグラウンドでメール送信を実行"""
+        try:
+            email_sent = await email_service.send_verification_email(email, code)
+            logger.info(f"Background resend email send result: {email_sent}")
+            if not email_sent:
+                logger.error(f"メール再送信に失敗しました: {email}")
+        except Exception as e:
+            logger.error(f"Background resend email sending error: {e}", exc_info=True)
     
-    if not email_sent:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="メール送信に失敗しました"
-        )
+    background_tasks.add_task(send_email_task, email, verification_code)
+    logger.info(f"メール再送信タスクをバックグラウンドに追加: {email}")
     
     # 開発環境では認証コードをレスポンスに含める
     response_data = {
