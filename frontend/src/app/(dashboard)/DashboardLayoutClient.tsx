@@ -19,16 +19,22 @@ export default function DashboardLayoutClient({
 
   // 認証チェック（ローディング完了後のみ、リダイレクト防止機能付き）
   useEffect(() => {
+    // ローディング中または既にリダイレクト中は何もしない
     if (isLoading || redirectingRef.current) {
       return
     }
     
+    // 未認証の場合はログインページへ
     if (!isAuthenticated) {
       redirectingRef.current = true
-      router.push('/auth/login')
-    } else if (user && user.profile_completed === false) {
+      router.replace('/auth/login')
+      return
+    }
+    
+    // プロフィール未完了の場合は初期プロフィール設定へ
+    if (user && user.profile_completed === false) {
       redirectingRef.current = true
-      router.push('/initial-profile')
+      router.replace('/initial-profile')
     }
   }, [isLoading, isAuthenticated, user, router])
 

@@ -43,6 +43,17 @@ export function authMiddleware(request: NextRequest) {
   
   console.log(`[Middleware] Auth status: ${isAuthenticated ? 'authenticated' : 'not authenticated'}`)
 
+  // ルートパス（/）の特別処理
+  if (pathname === '/') {
+    if (isAuthenticated) {
+      console.log(`[Middleware] Root path, authenticated, redirecting to home`)
+      return NextResponse.redirect(new URL('/home', request.url))
+    } else {
+      console.log(`[Middleware] Root path, not authenticated, redirecting to login`)
+      return NextResponse.redirect(new URL('/auth/login', request.url))
+    }
+  }
+
   // 認証ページ（ログイン・登録）へのアクセス
   if (AUTH_ROUTES.some(route => pathname.startsWith(route))) {
     console.log(`[Middleware] Auth route detected: ${pathname}`)

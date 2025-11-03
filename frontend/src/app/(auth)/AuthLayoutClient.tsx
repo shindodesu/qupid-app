@@ -17,6 +17,7 @@ export default function AuthLayoutClient({
 
   // 認証済みユーザーはホームにリダイレクト（initial-profileページを除く）
   useEffect(() => {
+    // ローディング中または既にリダイレクト中は何もしない
     if (isLoading || redirectingRef.current) {
       return
     }
@@ -26,9 +27,10 @@ export default function AuthLayoutClient({
       return
     }
     
+    // 認証済みの場合はホームへ
     if (isAuthenticated) {
       redirectingRef.current = true
-      router.push('/home')
+      router.replace('/home')
     }
   }, [isLoading, isAuthenticated, pathname, router])
 

@@ -326,46 +326,92 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true })
         
         try {
-          const state = get()
+          // Cookieからトークンを取得（PWA対応）
+          let tokenFromCookie: string | null = null
+          if (typeof document !== 'undefined') {
+            const cookies = document.cookie.split(';')
+            const authCookie = cookies.find(cookie => cookie.trim().startsWith('auth-token='))
+            if (authCookie) {
+              tokenFromCookie = authCookie.split('=')[1]?.trim() || null
+            }
+          }
           
-          // 既に認証されている場合
-          if (state.isAuthenticated && state.tokens) {
-            const now = Date.now()
+          // LocalStorageからトークンを取得
+          let tokenFromStorage: string | null = null
+          if (typeof window !== 'undefined') {
+            tokenFromStorage = localStorage.getItem('auth-token')
+          }
+          
+          // CookieとLocalStorageのトークンを同期
+          const token = tokenFromCookie || tokenFromStorage
+          if (token) {
+            // トークンが見つかった場合、両方に保存して同期
+            if (tokenFromCookie && !tokenFromStorage) {
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('auth-token', tokenFromCookie)
+              }
+            }
+            if (tokenFromStorage && !tokenFromCookie) {
+              saveTokenToCookie(tokenFromStorage)
+            }
+            
+            // 既存の状態をチェック
+            const state = get()
+            const tokens: AuthTokens = {
+              accessToken: token,
+              refreshToken: token,
+              expiresAt: state.tokens?.expiresAt || (Date.now() + (24 * 60 * 60 * 1000)), // 24時間
+            }
             
             // トークンが期限切れかチェック
-            if (now >= state.tokens.expiresAt) {
+            const now = Date.now()
+            if (now >= tokens.expiresAt) {
               console.log('[Auth] Token expired, logging out')
               await state.logout()
               return
             }
             
-            // トークンが有効な場合、ユーザー情報を取得
+            // トークンが有効な場合、ユーザー情報を取得して状態を更新
             try {
               const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
               const response = await fetch(`${API_URL}/users/me`, {
                 headers: {
-                  'Authorization': `Bearer ${state.tokens.accessToken}`,
+                  'Authorization': `Bearer ${token}`,
                 },
               })
               
               if (response.ok) {
                 const user = await response.json()
-                set({ user, isLoading: false })
+                set({ 
+                  user, 
+                  tokens,
+                  isAuthenticated: true,
+                  isLoading: false 
+                })
                 console.log('[Auth] User data refreshed:', user.id)
                 
-                // Cookieも更新
-                saveTokenToCookie(state.tokens.accessToken)
+                // Cookieも確実に更新
+                saveTokenToCookie(token)
               } else {
-                console.log('[Auth] Failed to fetch user data, logging out')
+                console.log('[Auth] Failed to fetch user data, clearing auth state')
                 await state.logout()
               }
             } catch (error) {
               console.error('[Auth] Failed to refresh user data:', error)
-              await state.logout()
+              // ネットワークエラーの場合も状態をクリアしない（オフライン対応）
+              set({ isLoading: false })
             }
           } else {
-            console.log('[Auth] No valid authentication found')
-            set({ isLoading: false })
+            // トークンが見つからない場合
+            const state = get()
+            if (state.isAuthenticated || state.tokens) {
+              // 状態と実際のトークンが不一致の場合はクリア
+              console.log('[Auth] Token mismatch, clearing state')
+              await state.logout()
+            } else {
+              console.log('[Auth] No valid authentication found')
+              set({ isLoading: false })
+            }
           }
         } catch (error) {
           console.error('[Auth] Initialization error:', error)

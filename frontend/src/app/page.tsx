@@ -1,20 +1,29 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useIsAuthenticated } from '@/stores/auth'
+import { useIsAuthenticated, useAuthLoading } from '@/stores/auth'
 
 export default function HomePage() {
   const router = useRouter()
   const isAuthenticated = useIsAuthenticated()
+  const isLoading = useAuthLoading()
+  const hasRedirected = useRef(false)
 
   useEffect(() => {
+    // ローディング中はリダイレクトしない
+    if (isLoading || hasRedirected.current) {
+      return
+    }
+
+    // 認証状態が確定したらリダイレクト
+    hasRedirected.current = true
     if (isAuthenticated) {
       router.replace('/home')
     } else {
       router.replace('/auth/login')
     }
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, isLoading, router])
 
   return (
     <div className="flex items-center justify-center min-h-screen">
