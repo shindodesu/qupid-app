@@ -59,9 +59,13 @@ print(f"🌐 CORS allowed origins: {cors_origins_list}")
 print(f"🔍 DEBUG - settings.CORS_ORIGINS: {settings.CORS_ORIGINS}", file=sys.stderr)
 print(f"🔍 DEBUG - settings.APP_ENV: {settings.APP_ENV}", file=sys.stderr)
 
+# CORS設定を適用（詳細ログ付き）
+print(f"🔧 Configuring CORS with origins: {cors_origins_list}", file=sys.stderr)
+print(f"🔧 CORS regex pattern: https://.*\.vercel\.app", file=sys.stderr)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins_list if cors_origins_list else ["*"],  # 空の場合はすべて許可（開発用）
+    allow_origins=cors_origins_list,  # 環境変数から読み込んだオリジン
     allow_origin_regex=r"https://.*\.vercel\.app",  # VercelのプレビューURLを正規表現で許可
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],

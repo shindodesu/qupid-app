@@ -43,15 +43,40 @@ def add_cors_headers(response: JSONResponse, request: Request) -> JSONResponse:
     """CORSヘッダーをレスポンスに追加"""
     origin = request.headers.get("origin")
     
-    if is_origin_allowed(origin):
+    # Originが提供されている場合は、それをチェック
+    if origin and is_origin_allowed(origin):
         response.headers["Access-Control-Allow-Origin"] = origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
         response.headers["Access-Control-Expose-Headers"] = "*"
-    else:
-        # デバッグ用: 許可されていないオリジンをログに記録
+    elif origin:
+        # 許可されていないOriginの場合、デバッグログを出力
         logger.warning(f"CORS: Origin not allowed - {origin}")
+        # それでもCORSヘッダーを追加（ブラウザがエラーを表示するため）
+        # 環境変数から許可されたオリジンを使用
+        if hasattr(settings, 'CORS_ORIGINS') and settings.CORS_ORIGINS:
+            allowed_origins = [o.strip() for o in settings.CORS_ORIGINS.split(',') if o.strip()]
+            if allowed_origins:
+                response.headers["Access-Control-Allow-Origin"] = allowed_origins[0]
+        # VercelのプレビューURLパターンも許可
+        elif re.match(r"https://.*\.vercel\.app$", origin):
+            response.headers["Access-Control-Allow-Origin"] = origin
+        
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
+    else:
+        # OriginがNoneの場合（一部のリクエスト、特にエラー時）
+        # 環境変数から許可されたオリジンをデフォルトとして使用
+        logger.debug(f"CORS: No origin header in request - {request.method} {request.url.path}")
+        if hasattr(settings, 'CORS_ORIGINS') and settings.CORS_ORIGINS:
+            allowed_origins = [o.strip() for o in settings.CORS_ORIGINS.split(',') if o.strip()]
+            if allowed_origins:
+                response.headers["Access-Control-Allow-Origin"] = allowed_origins[0]
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+                response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
     
     return response
 
