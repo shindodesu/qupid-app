@@ -28,6 +28,28 @@ if settings.APP_ENV == "production" and hasattr(settings, 'SENTRY_DSN') and sett
 
 app = FastAPI(title=settings.APP_NAME)
 
+# リクエストログミドルウェア（CORS設定の前に追加）
+from starlette.middleware.base import BaseHTTPMiddleware
+import logging
+
+request_logger = logging.getLogger("requests")
+
+class RequestLoggingMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        origin = request.headers.get("origin")
+        method = request.method
+        path = request.url.path
+        request_logger.info(f"📥 Request: {method} {path}, Origin: {origin}, Headers: {dict(request.headers)}")
+        
+        response = await call_next(request)
+        
+        cors_header = response.headers.get("Access-Control-Allow-Origin")
+        request_logger.info(f"📤 Response: {method} {path}, Status: {response.status_code}, CORS-Allow-Origin: {cors_header}")
+        
+        return response
+
+app.add_middleware(RequestLoggingMiddleware)
+
 # CORS設定（最初に追加して、すべてのレスポンスに適用されるようにする）
 def get_cors_origins():
     """CORS設定を環境変数から読み込み、VercelのプレビューURLにも対応"""
