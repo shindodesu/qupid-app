@@ -132,13 +132,15 @@ async def options_handler(full_path: str, request: Request):
         logger.info(f"OPTIONS allowed for origin: {origin}")
         return response
     
-    # OriginがNoneの場合でも、VercelのプレビューURLパターンを許可
+    # OriginがNoneの場合は、環境変数から許可されたオリジンをすべて許可
     if not origin:
         logger.warning(f"OPTIONS request without origin header - path: {full_path}")
-        # Originヘッダーがない場合でも、すべてのVercelプレビューURLを許可
+        # Originヘッダーがない場合は、環境変数で設定されたオリジンを許可
         from fastapi.responses import Response
         response = Response()
-        response.headers["Access-Control-Allow-Origin"] = "*"
+        # 環境変数から読み込んだオリジンを許可（複数ある場合は最初のものを使用）
+        allowed_origin = cors_origins_list[0] if cors_origins_list else "https://frontend-seven-psi-84.vercel.app"
+        response.headers["Access-Control-Allow-Origin"] = allowed_origin
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
