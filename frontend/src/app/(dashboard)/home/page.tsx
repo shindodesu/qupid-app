@@ -5,6 +5,8 @@ import { useState } from 'react'
 import { searchApi } from '@/lib/api/search'
 import { DiscoverUserCard } from '@/components/features/DiscoverUserCard'
 import { DiscoverFilters } from '@/components/features/DiscoverFilters'
+import { PWADownloadModal } from '@/components/features/PWADownloadModal'
+import { InAppPWAInstallPrompt } from '@/components/features/InAppPWAInstallPrompt'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/common/ToastContainer'
 import { DiscoverFilters as DiscoverFiltersType } from '@/types/search'
@@ -12,6 +14,7 @@ import { DiscoverFilters as DiscoverFiltersType } from '@/types/search'
 export default function DiscoverPage() {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [showFilters, setShowFilters] = useState(false)
+  const [showDownloadModal, setShowDownloadModal] = useState(false)
   const [filters, setFilters] = useState<DiscoverFiltersType>({})
   const { toast, toasts, removeToast } = useToast()
 
@@ -93,20 +96,36 @@ export default function DiscoverPage() {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-neutral-900">探す</h1>
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className="p-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </button>
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => setShowDownloadModal(true)}
+                className="p-2 rounded-lg bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:from-pink-600 hover:to-purple-600 transition-all shadow-lg"
+                title="アプリをダウンロード"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+              </button>
+              <button 
+                onClick={() => setShowFilters(!showFilters)}
+                className="p-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* メインコンテンツ */}
       <div className="container mx-auto px-4 py-8">
+        {/* インストールプロンプトバナー */}
+        <div className="max-w-sm mx-auto mb-6">
+          <InAppPWAInstallPrompt />
+        </div>
+        
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[60vh]">
             <div className="text-center">
@@ -163,6 +182,12 @@ export default function DiscoverPage() {
 
       {/* Toast Container */}
       <ToastContainer toasts={toasts} onRemove={removeToast} />
+
+      {/* ダウンロードモーダル */}
+      <PWADownloadModal 
+        isOpen={showDownloadModal} 
+        onClose={() => setShowDownloadModal(false)} 
+      />
     </div>
   )
 }

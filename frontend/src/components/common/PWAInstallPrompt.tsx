@@ -31,22 +31,22 @@ export function PWAInstallPrompt() {
       return
     }
 
-    // 以前に閉じられたかどうかをチェック
+    // 以前に閉じられたかどうかをチェック（より短い間隔に変更）
     const dismissed = localStorage.getItem('pwa-install-dismissed')
     const dismissedTime = dismissed ? parseInt(dismissed) : 0
     const now = Date.now()
-    const dayInMs = 24 * 60 * 60 * 1000
+    const hoursInMs = 6 * 60 * 60 * 1000 // 6時間に短縮
 
-    // 1日以内に閉じられた場合は表示しない
-    if (now - dismissedTime < dayInMs) {
+    // 6時間以内に閉じられた場合は表示しない（以前は24時間）
+    if (now - dismissedTime < hoursInMs) {
       return
     }
 
     if (iOS) {
-      // iOS: 3秒後に案内を表示
+      // iOS: 1.5秒後に案内を表示（以前は3秒）
       const timer = setTimeout(() => {
         setShowPrompt(true)
-      }, 3000)
+      }, 1500)
 
       return () => clearTimeout(timer)
     } else {
