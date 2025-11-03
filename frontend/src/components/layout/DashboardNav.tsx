@@ -126,8 +126,8 @@ export function DashboardNav() {
       </div>
 
       {/* モバイルナビゲーション */}
-      <div className="md:hidden fixed bottom-2 left-0 right-0 bg-white border-t border-neutral-200 z-50 safe-area-bottom shadow-lg rounded-t-2xl">
-        <div className="flex items-center justify-around py-3 px-2">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-neutral-200 z-50">
+        <div className="flex items-center justify-around py-2">
           {navItems.map((item) => {
             const isActive = pathname?.startsWith(item.href)
             return (
