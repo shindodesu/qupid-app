@@ -3,11 +3,15 @@
 import { useEffect, useState } from 'react'
 import { X, Download, Sparkles } from 'lucide-react'
 
+interface InAppPWAInstallPromptProps {
+  onOpenModal?: () => void
+}
+
 /**
  * ホーム画面内に表示するPWAインストールプロンプト
  * より目立つデザインで積極的にインストールを促す
  */
-export function InAppPWAInstallPrompt() {
+export function InAppPWAInstallPrompt({ onOpenModal }: InAppPWAInstallPromptProps = {}) {
   const [showPrompt, setShowPrompt] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
   const [isStandalone, setIsStandalone] = useState(false)
@@ -122,10 +126,14 @@ export function InAppPWAInstallPrompt() {
             ) : (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => window.location.reload()}
+                  onClick={() => {
+                    if (onOpenModal) {
+                      onOpenModal()
+                    }
+                  }}
                   className="flex-1 bg-white text-pink-600 py-2.5 px-4 rounded-xl font-semibold hover:bg-neutral-50 transition-all shadow-lg"
                 >
-                  チェックする
+                  手順を見る
                 </button>
               </div>
             )}

@@ -123,7 +123,7 @@ export default function DiscoverPage() {
       <div className="container mx-auto px-4 py-8">
         {/* インストールプロンプトバナー */}
         <div className="max-w-sm mx-auto mb-6">
-          <InAppPWAInstallPrompt />
+          <InAppPWAInstallPrompt onOpenModal={() => setShowDownloadModal(true)} />
         </div>
         
         {isLoading ? (
