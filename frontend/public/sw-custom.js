@@ -46,9 +46,13 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   console.log('Service Worker: Fetching:', event.request.url)
   
+  const url = new URL(event.request.url)
+  
   // APIリクエスト（localhost:8000など）はService Workerでインターセプトせず、直接fetchする
   if (event.request.url.includes('/auth/') || 
       event.request.url.includes('localhost:8000') ||
+      event.request.url.includes('/api/') ||
+      event.request.url.includes('/users/') ||
       !event.request.url.startsWith(self.location.origin)) {
     console.log('Service Worker: API request, bypassing cache:', event.request.url)
     // 直接fetchして返す
@@ -56,6 +60,32 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // HTMLドキュメント（ページ）は常にネットワークから取得（キャッシュしない）
+  if (event.request.destination === 'document' || 
+      event.request.headers.get('accept')?.includes('text/html')) {
+    console.log('Service Worker: HTML document, bypassing cache:', event.request.url)
+    event.respondWith(
+      fetch(event.request, {
+        cache: 'no-store',
+      }).catch(() => {
+        // ネットワークエラーの場合のみオフラインページを返す
+        return caches.match('/offline')
+      })
+    )
+    return
+  }
+
+  // Next.jsの内部アセット（_next/static, _next/image, _next/data）もキャッシュしない
+  if (url.pathname.includes('/_next/') || 
+      url.pathname.includes('/_next/static/') ||
+      url.pathname.includes('/_next/image') ||
+      url.pathname.includes('/_next/data')) {
+    console.log('Service Worker: Next.js asset, bypassing cache:', event.request.url)
+    event.respondWith(fetch(event.request, { cache: 'no-store' }))
+    return
+  }
+
+  // その他のリクエスト（静的リソースのみ）をキャッシュ
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
@@ -74,8 +104,13 @@ self.addEventListener('fetch', (event) => {
               return response
             }
 
-            // GETリクエストのみキャッシュに保存（POSTなどはキャッシュできない）
-            if (event.request.method === 'GET') {
+            // 静的リソース（画像、フォントなど）のみキャッシュに保存
+            const contentType = response.headers.get('content-type') || ''
+            if (event.request.method === 'GET' && 
+                (contentType.startsWith('image/') || 
+                 contentType.startsWith('font/') ||
+                 contentType.includes('font') ||
+                 contentType.startsWith('application/font'))) {
               const responseToCache = response.clone()
               caches.open(CACHE_NAME)
                 .then((cache) => {
@@ -87,10 +122,12 @@ self.addEventListener('fetch', (event) => {
           })
       })
       .catch(() => {
-        // ネットワークエラーの場合はオフラインページを返す
+        // ネットワークエラーの場合はオフラインページを返す（ドキュメントの場合のみ）
         if (event.request.destination === 'document') {
           return caches.match('/offline')
         }
+        // その他の場合はエラーを返す
+        return new Response('Network error', { status: 408 })
       })
   )
 })

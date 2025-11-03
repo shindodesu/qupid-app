@@ -15,12 +15,12 @@ class ApiClient {
       null
 
     const config: RequestInit = {
+      ...options,
       headers: {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
+        ...(options.headers || {}),
       },
-      ...options,
     }
 
     console.log('API Request:', {

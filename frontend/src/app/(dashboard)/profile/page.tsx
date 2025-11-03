@@ -24,6 +24,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     display_name: '',
     bio: '',
+    campus: '',
     faculty: '',
     grade: '',
     birthday: '',
@@ -32,11 +33,20 @@ export default function ProfilePage() {
     looking_for: '',
   })
 
-  // 自分の情報取得
+  // 自分の情報取得（キャッシュを無効化して常に最新データを取得）
   const { data: userData } = useQuery({
     queryKey: ['user', 'me'],
     queryFn: () => apiClient.getCurrentUser(),
+    staleTime: 0, // 常にstaleとして扱う
+    gcTime: 0, // キャッシュを保持しない（React Query v5）
+    refetchOnMount: 'always', // マウント時は常に再取得
+    refetchOnWindowFocus: true, // ウィンドウフォーカス時にも再取得
   })
+
+  // ページマウント時にクエリキャッシュを無効化
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ['user', 'me'] })
+  }, [queryClient])
 
   // userDataが取得されたら、formDataを初期化
   useEffect(() => {
@@ -44,6 +54,7 @@ export default function ProfilePage() {
       setFormData({
         display_name: userData.display_name || '',
         bio: userData.bio || '',
+        campus: userData.campus || '',
         faculty: userData.faculty || '',
         grade: userData.grade || '',
         birthday: userData.birthday || '',
@@ -263,6 +274,54 @@ export default function ProfilePage() {
                 />
               </div>
               <Select
+                label="セクシュアリティ"
+                value={formData.sexuality}
+                onChange={(e) =>
+                  setFormData({ ...formData, sexuality: e.target.value })
+                }
+                options={[
+                  { value: '', label: '選択してください' },
+                  { value: 'ストレート', label: 'ストレート' },
+                  { value: 'ゲイ', label: 'ゲイ' },
+                  { value: 'レズビアン', label: 'レズビアン' },
+                  { value: 'バイセクシュアル', label: 'バイセクシュアル' },
+                  { value: 'パンセクシュアル', label: 'パンセクシュアル' },
+                  { value: 'アセクシュアル', label: 'アセクシュアル' },
+                  { value: 'その他', label: 'その他' },
+                  { value: '回答しない', label: '回答しない' },
+                ]}
+              />
+              <Select
+                label="探している関係"
+                value={formData.looking_for}
+                onChange={(e) =>
+                  setFormData({ ...formData, looking_for: e.target.value })
+                }
+                options={[
+                  { value: '', label: '選択してください' },
+                  { value: '恋愛関係', label: '恋愛関係' },
+                  { value: '友達', label: '友達' },
+                  { value: 'カジュアルな関係', label: 'カジュアルな関係' },
+                  { value: '長期的な関係', label: '長期的な関係' },
+                  { value: 'その他', label: 'その他' },
+                ]}
+              />
+              <Select
+                label="キャンパス"
+                value={formData.campus}
+                onChange={(e) =>
+                  setFormData({ ...formData, campus: e.target.value })
+                }
+                options={[
+                  { value: '', label: '選択してください' },
+                  { value: '伊都キャンパス', label: '伊都キャンパス' },
+                  { value: '箱崎キャンパス', label: '箱崎キャンパス' },
+                  { value: '病院キャンパス', label: '病院キャンパス' },
+                  { value: '大橋キャンパス', label: '大橋キャンパス' },
+                  { value: 'その他', label: 'その他' },
+                ]}
+              />
+              <Select
                 label="学部"
                 value={formData.faculty}
                 onChange={(e) =>
@@ -326,39 +385,6 @@ export default function ProfilePage() {
                   { value: '回答しない', label: '回答しない' },
                 ]}
               />
-              <Select
-                label="セクシュアリティ"
-                value={formData.sexuality}
-                onChange={(e) =>
-                  setFormData({ ...formData, sexuality: e.target.value })
-                }
-                options={[
-                  { value: '', label: '選択してください' },
-                  { value: 'ストレート', label: 'ストレート' },
-                  { value: 'ゲイ', label: 'ゲイ' },
-                  { value: 'レズビアン', label: 'レズビアン' },
-                  { value: 'バイセクシュアル', label: 'バイセクシュアル' },
-                  { value: 'パンセクシュアル', label: 'パンセクシュアル' },
-                  { value: 'アセクシュアル', label: 'アセクシュアル' },
-                  { value: 'その他', label: 'その他' },
-                  { value: '回答しない', label: '回答しない' },
-                ]}
-              />
-              <Select
-                label="探している関係"
-                value={formData.looking_for}
-                onChange={(e) =>
-                  setFormData({ ...formData, looking_for: e.target.value })
-                }
-                options={[
-                  { value: '', label: '選択してください' },
-                  { value: '恋愛関係', label: '恋愛関係' },
-                  { value: '友達', label: '友達' },
-                  { value: 'カジュアルな関係', label: 'カジュアルな関係' },
-                  { value: '長期的な関係', label: '長期的な関係' },
-                  { value: 'その他', label: 'その他' },
-                ]}
-              />
               <Button type="submit" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? '保存中...' : '保存'}
               </Button>
@@ -385,6 +411,32 @@ export default function ProfilePage() {
                 </label>
                 <p className="text-neutral-900">
                   {userData?.bio || '未設定'}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-neutral-500">
+                    セクシュアリティ
+                  </label>
+                  <p className="text-neutral-900">
+                    {userData?.sexuality || '未設定'}
+                  </p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-neutral-500">
+                    探している関係
+                  </label>
+                  <p className="text-neutral-900">
+                    {userData?.looking_for || '未設定'}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-neutral-500">
+                  キャンパス
+                </label>
+                <p className="text-neutral-900">
+                  {userData?.campus || '未設定'}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -423,26 +475,20 @@ export default function ProfilePage() {
                   </p>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-neutral-500">
-                    セクシュアリティ
-                  </label>
-                  <p className="text-neutral-900">
-                    {userData?.sexuality || '未設定'}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-neutral-500">
-                    探している関係
-                  </label>
-                  <p className="text-neutral-900">
-                    {userData?.looking_for || '未設定'}
-                  </p>
-                </div>
-              </div>
             </div>
           )}
+          
+          {/* プライバシー設定ボタン */}
+          <div className="mt-6 pt-6 border-t border-neutral-200">
+            <Link href="/privacy-settings">
+              <Button variant="outline" className="w-full">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                プライバシー設定
+              </Button>
+            </Link>
+          </div>
         </CardContent>
       </Card>
 
@@ -550,15 +596,6 @@ export default function ProfilePage() {
           <CardTitle>アカウント設定</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Link href="/privacy-settings">
-            <Button variant="outline" className="w-full">
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              プライバシー設定
-            </Button>
-          </Link>
-          
           <Button variant="destructive" className="w-full" onClick={handleLogout}>
             ログアウト
           </Button>

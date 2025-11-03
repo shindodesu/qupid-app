@@ -7,6 +7,7 @@ export interface User {
   email: string
   display_name: string
   bio?: string
+  campus?: string
   faculty?: string
   grade?: string
   birthday?: string
@@ -103,8 +104,30 @@ export const useAuthStore = create<AuthState>()(
           })
 
           if (!response.ok) {
-            const errorData = await response.json().catch(() => ({}))
-            throw new Error(errorData.detail || 'ログインに失敗しました')
+            let errorMessage = 'ログインに失敗しました'
+            try {
+              const errorData = await response.json()
+              console.error('[Auth] Login error response:', errorData)
+              
+              if (errorData.detail) {
+                if (typeof errorData.detail === 'string') {
+                  errorMessage = errorData.detail
+                } else if (Array.isArray(errorData.detail)) {
+                  // Pydanticのバリデーションエラー形式
+                  const validationErrors = errorData.detail.map((err: any) => {
+                    const field = err.loc?.slice(1).join('.') || 'field'
+                    const msg = err.msg || '入力データが不正です'
+                    return `${field}: ${msg}`
+                  }).join(', ')
+                  errorMessage = validationErrors || '入力データが不正です'
+                }
+              }
+            } catch (parseError) {
+              console.error('[Auth] Failed to parse error response:', parseError)
+              const responseText = await response.text().catch(() => '')
+              errorMessage = responseText || `HTTP ${response.status}: ${response.statusText}`
+            }
+            throw new Error(errorMessage)
           }
 
           const data = await response.json()

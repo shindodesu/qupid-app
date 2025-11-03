@@ -4,6 +4,7 @@ export type User = {
   display_name: string
   bio?: string
   avatar_url?: string
+  campus?: string
   faculty?: string
   grade?: string
   birthday?: string
@@ -35,7 +36,7 @@ export type InitialProfileData = {
   looking_for: string
 }
 
-export type UserUpdate = Partial<Pick<User, 'display_name' | 'bio' | 'faculty' | 'grade' | 'birthday' | 'gender' | 'sexuality' | 'looking_for'>>
+export type UserUpdate = Partial<Pick<User, 'display_name' | 'bio' | 'campus' | 'faculty' | 'grade' | 'birthday' | 'gender' | 'sexuality' | 'looking_for'>>
 
 export type LoginPayload = { 
   email: string

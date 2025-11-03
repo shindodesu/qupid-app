@@ -36,8 +36,8 @@ export function LoginForm({ className, onSuccess }: LoginFormProps) {
     
     if (!formData.password) {
       errors.password = 'パスワードは必須です'
-    } else if (formData.password.length < 6) {
-      errors.password = 'パスワードは6文字以上で入力してください'
+    } else if (formData.password.length < 8) {
+      errors.password = 'パスワードは8文字以上で入力してください'
     }
     
     setValidationErrors(errors)

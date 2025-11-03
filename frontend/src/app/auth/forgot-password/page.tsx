@@ -24,17 +24,57 @@ export default function ForgotPasswordPage() {
 
   const sendCodeMutation = useMutation({
     mutationFn: async (email: string) => {
+      const requestBody = { email }
+      console.log('[ForgotPassword] Sending request:', requestBody)
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/auth/email/send-code`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify(requestBody),
       })
       
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.detail || '認証コードの送信に失敗しました')
+        let errorMessage = '認証コードの送信に失敗しました'
+        try {
+          const errorData = await response.json()
+          console.error('[ForgotPassword] Error response:', errorData)
+          console.error('[ForgotPassword] Errors array:', errorData.errors)
+          console.error('[ForgotPassword] Full error details:', JSON.stringify(errorData, null, 2))
+          
+          // errors配列がある場合はそれを優先（文字列の配列の場合）
+          if (errorData.errors && Array.isArray(errorData.errors) && errorData.errors.length > 0) {
+            // エラーハンドラーから返される文字列の配列の場合
+            if (typeof errorData.errors[0] === 'string') {
+              errorMessage = errorData.errors.join(', ')
+            } else {
+              // オブジェクトの配列の場合（Pydanticの標準形式）
+              const validationErrors = errorData.errors.map((err: any) => {
+                const field = err.loc?.slice(1).join('.') || 'field'
+                const msg = err.msg || err.message || '入力データが不正です'
+                return `${field}: ${msg}`
+              }).join(', ')
+              errorMessage = validationErrors
+            }
+          } else if (errorData.detail) {
+            if (typeof errorData.detail === 'string') {
+              errorMessage = errorData.detail
+            } else if (Array.isArray(errorData.detail)) {
+              // Pydanticのバリデーションエラー形式
+              const validationErrors = errorData.detail.map((err: any) => {
+                const field = err.loc?.slice(1).join('.') || 'field'
+                const msg = err.msg || err.message || '入力データが不正です'
+                return `${field}: ${msg}`
+              }).join(', ')
+              errorMessage = validationErrors || '入力データが不正です'
+            }
+          }
+        } catch (parseError) {
+          console.error('[ForgotPassword] Failed to parse error response:', parseError)
+          const responseText = await response.text().catch(() => '')
+          errorMessage = responseText || `HTTP ${response.status}: ${response.statusText}`
+        }
+        throw new Error(errorMessage)
       }
       
       return response.json()
@@ -287,6 +327,8 @@ export default function ForgotPasswordPage() {
     </div>
   )
 }
+
+
 
 
 
