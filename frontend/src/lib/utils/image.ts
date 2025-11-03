@@ -2,7 +2,15 @@
  * 画像URLを構築するヘルパー関数
  */
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+// 実行時に環境変数を取得（クライアント側でのみ有効）
+function getApiUrl(): string {
+  if (typeof window !== 'undefined') {
+    // クライアント側では環境変数またはカスタムメタタグから取得
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  }
+  // サーバー側では環境変数から取得
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+}
 
 /**
  * アバター画像のURLを取得
@@ -26,7 +34,9 @@ export function getAvatarUrl(avatarUrl: string | null | undefined): string | nul
   // 相対パスの場合、APIのベースURLを追加
   // 先頭のスラッシュを削除して結合
   const cleanPath = avatarUrl.startsWith('/') ? avatarUrl.slice(1) : avatarUrl
-  const fullUrl = `${API_URL}/${cleanPath}`
+  const apiUrl = getApiUrl()
+  const fullUrl = `${apiUrl}/${cleanPath}`
+  console.log('[getAvatarUrl] API URL:', apiUrl)
   console.log('[getAvatarUrl] Constructed URL:', fullUrl)
   return fullUrl
 }
@@ -46,6 +56,7 @@ export function getImageUrl(filePath: string | null | undefined): string | null 
   
   // 相対パスの場合、APIのベースURLを追加
   const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath
-  return `${API_URL}/${cleanPath}`
+  const apiUrl = getApiUrl()
+  return `${apiUrl}/${cleanPath}`
 }
 
