@@ -58,7 +58,7 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: http://localhost:8000 https: blob:; connect-src 'self' http://localhost:8000 https://api.qupid.app https://qupid-api.onrender.com https://fonts.googleapis.com https://fonts.gstatic.com;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: http://localhost:8000 https: blob:; connect-src 'self' http://localhost:8000 https://api.qupid.app https://qupid-api.onrender.com https://qupid-app.onrender.com https://fonts.googleapis.com https://fonts.gstatic.com;",
           },
           {
             key: 'X-DNS-Prefetch-Control',
