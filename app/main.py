@@ -61,7 +61,7 @@ print(f"🔍 DEBUG - settings.APP_ENV: {settings.APP_ENV}", file=sys.stderr)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins_list,
+    allow_origins=cors_origins_list if cors_origins_list else ["*"],  # 空の場合はすべて許可（開発用）
     allow_origin_regex=r"https://.*\.vercel\.app",  # VercelのプレビューURLを正規表現で許可
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
@@ -107,6 +107,28 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 @app.get("/")
 async def root():
     return {"name": settings.APP_NAME, "env": settings.APP_ENV}
+
+# OPTIONSリクエストを明示的に処理（プリフライトリクエスト用）
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str, request: Request):
+    """プリフライトリクエスト（OPTIONS）を明示的に処理"""
+    origin = request.headers.get("origin")
+    
+    # CORS設定を確認
+    from app.middleware.error_handler import is_origin_allowed
+    
+    if is_origin_allowed(origin):
+        from fastapi.responses import Response
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
+        response.headers["Access-Control-Max-Age"] = "600"
+        return response
+    
+    from fastapi.responses import Response
+    return Response(status_code=403)
 
 # 初期テーブル作成（超簡易版。Alembic導入後はこの自動createは削除）
 from app.db.session import engine
