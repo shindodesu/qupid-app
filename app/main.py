@@ -112,12 +112,16 @@ async def root():
 @app.options("/{full_path:path}")
 async def options_handler(full_path: str, request: Request):
     """プリフライトリクエスト（OPTIONS）を明示的に処理"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     origin = request.headers.get("origin")
+    logger.info(f"OPTIONS request - origin: {origin}, path: {full_path}, headers: {dict(request.headers)}")
     
     # CORS設定を確認
     from app.middleware.error_handler import is_origin_allowed
     
-    if is_origin_allowed(origin):
+    if origin and is_origin_allowed(origin):
         from fastapi.responses import Response
         response = Response()
         response.headers["Access-Control-Allow-Origin"] = origin
@@ -125,8 +129,23 @@ async def options_handler(full_path: str, request: Request):
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
         response.headers["Access-Control-Max-Age"] = "600"
+        logger.info(f"OPTIONS allowed for origin: {origin}")
         return response
     
+    # OriginがNoneの場合でも、VercelのプレビューURLパターンを許可
+    if not origin:
+        logger.warning(f"OPTIONS request without origin header - path: {full_path}")
+        # Originヘッダーがない場合でも、すべてのVercelプレビューURLを許可
+        from fastapi.responses import Response
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, Accept, Origin, X-Requested-With"
+        response.headers["Access-Control-Max-Age"] = "600"
+        return response
+    
+    logger.warning(f"OPTIONS rejected for origin: {origin}")
     from fastapi.responses import Response
     return Response(status_code=403)
 
