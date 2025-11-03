@@ -97,7 +97,7 @@ export default function PrivacySettingsPage() {
     { key: 'show_grade' as keyof PrivacySettings, label: '学年', description: 'あなたの学年を表示します' },
     { key: 'show_birthday' as keyof PrivacySettings, label: '誕生日', description: '生年月日を表示します（通常は非公開推奨）' },
     { key: 'show_age' as keyof PrivacySettings, label: '年齢', description: 'あなたの年齢を表示します' },
-    { key: 'show_gender' as keyof PrivacySettings, label: '性別', description: 'あなたの性別を表示します' },
+    { key: 'show_gender' as keyof PrivacySettings, label: '体の性別', description: 'あなたの体の性別を表示します' },
     { key: 'show_sexuality' as keyof PrivacySettings, label: 'セクシュアリティ', description: 'あなたのセクシュアリティを表示します' },
     { key: 'show_looking_for' as keyof PrivacySettings, label: '探している関係', description: 'あなたが探している関係を表示します' },
     { key: 'show_bio' as keyof PrivacySettings, label: '自己紹介', description: 'あなたの自己紹介文を表示します' },
@@ -187,7 +187,7 @@ export default function PrivacySettingsPage() {
               <h3 className="text-sm font-medium text-yellow-900 mb-1">注意事項</h3>
               <ul className="text-sm text-yellow-800 space-y-1">
                 <li>• 非公開にした情報は、他のユーザーのプロフィール閲覧時や検索結果に表示されません</li>
-                <li>• 一部の情報（性別、セクシュアリティなど）は、マッチングの精度向上のため公開を推奨します</li>
+                <li>• 一部の情報（体の性別、セクシュアリティなど）は、マッチングの精度向上のため公開を推奨します</li>
                 <li>• メールアドレスは常に非公開です</li>
               </ul>
             </div>

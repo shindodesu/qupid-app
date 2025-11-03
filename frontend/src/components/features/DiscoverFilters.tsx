@@ -19,8 +19,8 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
   const sexualityOptions: { value: Sexuality; label: string }[] = [
     { value: 'lesbian', label: 'レズビアン' },
     { value: 'bisexual', label: 'バイセクシュアル' },
+    { value: 'transgender', label: 'トランスジェンダー' },
     { value: 'gay', label: 'ゲイ' },
-    { value: 'straight', label: 'ストレート' },
     { value: 'asexual', label: 'アセクシュアル' },
     { value: 'pansexual', label: 'パンセクシュアル' },
     { value: 'other', label: 'その他' },
@@ -152,7 +152,7 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
 
         {/* 性別フィルター */}
         <div>
-          <label className="block text-sm text-neutral-900 mb-3">性別</label>
+          <label className="block text-sm text-neutral-900 mb-3">体の性別</label>
           <div className="grid grid-cols-3 gap-3">
             {sexOptions.map((option) => (
               <button

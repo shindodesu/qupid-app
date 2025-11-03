@@ -21,6 +21,16 @@ export default function ProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false)
   const [avatarLoadError, setAvatarLoadError] = useState(false)
+  const [showSexualityModal, setShowSexualityModal] = useState(false)
+  const [showGenderModal, setShowGenderModal] = useState(false)
+  const [showLookingForModal, setShowLookingForModal] = useState(false)
+  const [selectedSexualities, setSelectedSexualities] = useState<string[]>([])
+  const [isMultipleSexualityMode, setIsMultipleSexualityMode] = useState(false)
+  
+  // 「その他」の自由記述用の状態
+  const [otherGenderText, setOtherGenderText] = useState('')
+  const [otherSexualityText, setOtherSexualityText] = useState('')
+  const [otherLookingForText, setOtherLookingForText] = useState('')
   const [formData, setFormData] = useState({
     display_name: '',
     bio: '',
@@ -33,39 +43,78 @@ export default function ProfilePage() {
     looking_for: '',
   })
 
-  // 自分の情報取得（キャッシュを無効化して常に最新データを取得）
-  const { data: userData } = useQuery({
+  // 自分の情報取得（キャッシュを適切に保持しつつ、最新データを取得）
+  const { 
+    data: userData, 
+    isLoading: isLoadingUserData,
+    isError: isErrorUserData,
+    error: userDataError,
+    refetch: refetchUserData
+  } = useQuery({
     queryKey: ['user', 'me'],
     queryFn: () => apiClient.getCurrentUser(),
-    staleTime: 0, // 常にstaleとして扱う
-    gcTime: 0, // キャッシュを保持しない（React Query v5）
+    staleTime: 30 * 1000, // 30秒間はstaleでない
+    gcTime: 5 * 60 * 1000, // キャッシュを5分間保持（React Query v5）
     refetchOnMount: 'always', // マウント時は常に再取得
     refetchOnWindowFocus: true, // ウィンドウフォーカス時にも再取得
+    retry: 2, // エラー時に2回再試行
+    retryDelay: 1000, // 再試行の間隔は1秒
   })
 
-  // ページマウント時にクエリキャッシュを無効化
+  // userDataまたはuserストアからデータを取得（フォールバック対応）
+  const displayUserData = userData || user
+
+  // ページマウント時にクエリキャッシュを無効化（必要に応じて）
   useEffect(() => {
-    queryClient.invalidateQueries({ queryKey: ['user', 'me'] })
+    // 初回マウント時のみ無効化（過度な再取得を防ぐ）
+    const timer = setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ['user', 'me'] })
+    }, 100)
+    return () => clearTimeout(timer)
   }, [queryClient])
 
-  // userDataが取得されたら、formDataを初期化
+  // userDataまたはuserストアが更新されたら、formDataを初期化
   useEffect(() => {
-    if (userData) {
+    const sourceData = userData || user
+    if (sourceData) {
+      const gender = sourceData.gender || ''
+      const sexuality = sourceData.sexuality || ''
+      const looking_for = sourceData.looking_for || ''
+      
+      // 「その他:」で始まる値を抽出
+      if (gender.startsWith('その他:')) {
+        setOtherGenderText(gender.replace('その他: ', ''))
+      } else {
+        setOtherGenderText('')
+      }
+      
+      if (sexuality.startsWith('その他:')) {
+        setOtherSexualityText(sexuality.replace('その他: ', ''))
+      } else {
+        setOtherSexualityText('')
+      }
+      
+      if (looking_for.startsWith('その他:')) {
+        setOtherLookingForText(looking_for.replace('その他: ', ''))
+      } else {
+        setOtherLookingForText('')
+      }
+      
       setFormData({
-        display_name: userData.display_name || '',
-        bio: userData.bio || '',
-        campus: userData.campus || '',
-        faculty: userData.faculty || '',
-        grade: userData.grade || '',
-        birthday: userData.birthday || '',
-        gender: userData.gender || '',
-        sexuality: userData.sexuality || '',
-        looking_for: userData.looking_for || '',
+        display_name: sourceData.display_name || '',
+        bio: sourceData.bio || '',
+        campus: sourceData.campus || '',
+        faculty: sourceData.faculty || '',
+        grade: sourceData.grade || '',
+        birthday: sourceData.birthday || '',
+        gender: gender,
+        sexuality: sexuality,
+        looking_for: looking_for,
       })
       // アバターURLが変わったらエラー状態をリセット
       setAvatarLoadError(false)
     }
-  }, [userData])
+  }, [userData, user])
 
   // 自分のタグ取得
   const { data: tagsData } = useQuery({
@@ -168,6 +217,50 @@ export default function ProfilePage() {
     }
   }
 
+  // ローディング状態の表示
+  if (isLoadingUserData && !displayUserData) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+            <p className="text-neutral-600">プロフィール情報を読み込み中...</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // エラー状態の表示
+  if (isErrorUserData && !displayUserData) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+            プロフィール
+          </h1>
+        </div>
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="text-center py-8">
+              <p className="text-red-500 mb-4">
+                プロフィール情報の読み込みに失敗しました
+              </p>
+              {userDataError && (
+                <p className="text-sm text-neutral-500 mb-4">
+                  {userDataError instanceof Error ? userDataError.message : 'エラーが発生しました'}
+                </p>
+              )}
+              <Button onClick={() => refetchUserData()}>
+                再試行
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       {/* ヘッダー */}
@@ -188,9 +281,9 @@ export default function ProfilePage() {
         <CardContent>
           <div className="flex items-center gap-6">
             <div className="relative">
-              {userData?.avatar_url && !avatarLoadError ? (
+              {displayUserData?.avatar_url && !avatarLoadError ? (
                 <img
-                  src={getAvatarUrl(userData.avatar_url) || ''}
+                  src={getAvatarUrl(displayUserData.avatar_url) || ''}
                   alt="プロフィール画像"
                   className="w-24 h-24 rounded-full object-cover"
                   onError={() => {
@@ -273,39 +366,60 @@ export default function ProfilePage() {
                   placeholder="あなたについて教えてください..."
                 />
               </div>
-              <Select
-                label="セクシュアリティ"
-                value={formData.sexuality}
-                onChange={(e) =>
-                  setFormData({ ...formData, sexuality: e.target.value })
-                }
-                options={[
-                  { value: '', label: '選択してください' },
-                  { value: 'ストレート', label: 'ストレート' },
-                  { value: 'ゲイ', label: 'ゲイ' },
-                  { value: 'レズビアン', label: 'レズビアン' },
-                  { value: 'バイセクシュアル', label: 'バイセクシュアル' },
-                  { value: 'パンセクシュアル', label: 'パンセクシュアル' },
-                  { value: 'アセクシュアル', label: 'アセクシュアル' },
-                  { value: 'その他', label: 'その他' },
-                  { value: '回答しない', label: '回答しない' },
-                ]}
-              />
-              <Select
-                label="探している関係"
-                value={formData.looking_for}
-                onChange={(e) =>
-                  setFormData({ ...formData, looking_for: e.target.value })
-                }
-                options={[
-                  { value: '', label: '選択してください' },
-                  { value: '恋愛関係', label: '恋愛関係' },
-                  { value: '友達', label: '友達' },
-                  { value: 'カジュアルな関係', label: 'カジュアルな関係' },
-                  { value: '長期的な関係', label: '長期的な関係' },
-                  { value: 'その他', label: 'その他' },
-                ]}
-              />
+              <div>
+                <label className="block text-sm font-medium text-neutral-900 mb-2">
+                  セクシュアリティ
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // トランスジェンダーを選択している場合、複数選択モードにする
+                    const isTransgender = formData.sexuality === 'トランスジェンダー' || 
+                      (formData.sexuality && formData.sexuality.includes('トランスジェンダー'))
+                    setIsMultipleSexualityMode(isTransgender)
+                    if (isTransgender && formData.sexuality) {
+                      setSelectedSexualities(formData.sexuality.split(', ').filter(s => s))
+                    } else {
+                      setSelectedSexualities([])
+                    }
+                    // 「その他:」で始まる値を抽出
+                    if (formData.sexuality?.startsWith('その他:')) {
+                      setOtherSexualityText(formData.sexuality.replace('その他: ', ''))
+                    } else if (formData.sexuality?.includes(', ') && formData.sexuality.split(', ').some(s => s.startsWith('その他:'))) {
+                      const otherItem = formData.sexuality.split(', ').find(s => s.startsWith('その他:'))
+                      if (otherItem) {
+                        setOtherSexualityText(otherItem.replace('その他: ', ''))
+                      }
+                    } else {
+                      setOtherSexualityText('')
+                    }
+                    setShowSexualityModal(true)
+                  }}
+                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-left hover:bg-neutral-50"
+                >
+                  {formData.sexuality || '選択してください'}
+                </button>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-900 mb-2">
+                  探している関係
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // 既に「その他:」で始まる値が設定されている場合、テキストを抽出
+                    if (formData.looking_for?.startsWith('その他:')) {
+                      setOtherLookingForText(formData.looking_for.replace('その他: ', ''))
+                    } else {
+                      setOtherLookingForText('')
+                    }
+                    setShowLookingForModal(true)
+                  }}
+                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-left hover:bg-neutral-50"
+                >
+                  {formData.looking_for || '選択してください'}
+                </button>
+              </div>
               <Select
                 label="キャンパス"
                 value={formData.campus}
@@ -370,21 +484,26 @@ export default function ProfilePage() {
                   setFormData({ ...formData, birthday: e.target.value })
                 }
               />
-              <Select
-                label="性別"
-                value={formData.gender}
-                onChange={(e) =>
-                  setFormData({ ...formData, gender: e.target.value })
-                }
-                options={[
-                  { value: '', label: '選択してください' },
-                  { value: '男性', label: '男性' },
-                  { value: '女性', label: '女性' },
-                  { value: 'ノンバイナリー', label: 'ノンバイナリー' },
-                  { value: 'その他', label: 'その他' },
-                  { value: '回答しない', label: '回答しない' },
-                ]}
-              />
+              <div>
+                <label className="block text-sm font-medium text-neutral-900 mb-2">
+                  体の性別
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    // 既に「その他:」で始まる値が設定されている場合、テキストを抽出
+                    if (formData.gender?.startsWith('その他:')) {
+                      setOtherGenderText(formData.gender.replace('その他: ', ''))
+                    } else {
+                      setOtherGenderText('')
+                    }
+                    setShowGenderModal(true)
+                  }}
+                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-left hover:bg-neutral-50"
+                >
+                  {formData.gender || '選択してください'}
+                </button>
+              </div>
               <Button type="submit" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? '保存中...' : '保存'}
               </Button>
@@ -396,21 +515,21 @@ export default function ProfilePage() {
                   表示名
                 </label>
                 <p className="text-neutral-900">
-                  {userData?.display_name || '未設定'}
+                  {displayUserData?.display_name || '未設定'}
                 </p>
               </div>
               <div>
                 <label className="text-sm font-medium text-neutral-500">
                   メールアドレス
                 </label>
-                <p className="text-neutral-900">{userData?.email}</p>
+                <p className="text-neutral-900">{displayUserData?.email}</p>
               </div>
               <div>
                 <label className="text-sm font-medium text-neutral-500">
                   自己紹介
                 </label>
                 <p className="text-neutral-900">
-                  {userData?.bio || '未設定'}
+                  {displayUserData?.bio || '未設定'}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -419,7 +538,7 @@ export default function ProfilePage() {
                     セクシュアリティ
                   </label>
                   <p className="text-neutral-900">
-                    {userData?.sexuality || '未設定'}
+                    {displayUserData?.sexuality || '未設定'}
                   </p>
                 </div>
                 <div>
@@ -427,7 +546,7 @@ export default function ProfilePage() {
                     探している関係
                   </label>
                   <p className="text-neutral-900">
-                    {userData?.looking_for || '未設定'}
+                    {displayUserData?.looking_for || '未設定'}
                   </p>
                 </div>
               </div>
@@ -436,7 +555,7 @@ export default function ProfilePage() {
                   キャンパス
                 </label>
                 <p className="text-neutral-900">
-                  {userData?.campus || '未設定'}
+                  {displayUserData?.campus || '未設定'}
                 </p>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -445,7 +564,7 @@ export default function ProfilePage() {
                     学部
                   </label>
                   <p className="text-neutral-900">
-                    {userData?.faculty || '未設定'}
+                    {displayUserData?.faculty || '未設定'}
                   </p>
                 </div>
                 <div>
@@ -453,7 +572,7 @@ export default function ProfilePage() {
                     学年
                   </label>
                   <p className="text-neutral-900">
-                    {userData?.grade || '未設定'}
+                    {displayUserData?.grade || '未設定'}
                   </p>
                 </div>
               </div>
@@ -463,15 +582,15 @@ export default function ProfilePage() {
                     生年月日
                   </label>
                   <p className="text-neutral-900">
-                    {userData?.birthday ? new Date(userData.birthday).toLocaleDateString('ja-JP') : '未設定'}
+                    {displayUserData?.birthday ? new Date(displayUserData.birthday).toLocaleDateString('ja-JP') : '未設定'}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-neutral-500">
-                    性別
+                    体の性別
                   </label>
                   <p className="text-neutral-900">
-                    {userData?.gender || '未設定'}
+                    {displayUserData?.gender || '未設定'}
                   </p>
                 </div>
               </div>
@@ -601,6 +720,313 @@ export default function ProfilePage() {
           </Button>
         </CardContent>
       </Card>
+
+      {/* セクシュアリティ選択モーダル */}
+      {showSexualityModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
+          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4 text-neutral-900">
+              {isMultipleSexualityMode ? 'セクシュアリティを選択（複数可）' : 'セクシュアリティを選択'}
+            </h3>
+            <div className="space-y-2">
+              {[
+                'ゲイ', 'レズビアン', 'バイセクシュアル', 'トランスジェンダー', 
+                'パンセクシュアル', 'アセクシュアル', 'その他', '回答しない'
+              ].map((option) => {
+                const isSelected = isMultipleSexualityMode 
+                  ? selectedSexualities.includes(option) || selectedSexualities.some(s => s.startsWith('その他'))
+                  : formData.sexuality === option || formData.sexuality?.startsWith('その他')
+                
+                return (
+                  <button
+                    key={option}
+                    onClick={() => {
+                      if (option === 'その他') {
+                        // 「その他」の場合は入力欄を表示するため、モーダルを開いたままにする
+                        if (isMultipleSexualityMode) {
+                          if (!selectedSexualities.some(s => s === 'その他' || s.startsWith('その他'))) {
+                            setSelectedSexualities([...selectedSexualities, 'その他'])
+                          }
+                        } else {
+                          setFormData({ ...formData, sexuality: 'その他' })
+                          setOtherSexualityText('')
+                        }
+                      } else if (isMultipleSexualityMode) {
+                        const newSelection = isSelected
+                          ? selectedSexualities.filter(s => s !== option && s !== 'その他' && !s.startsWith('その他'))
+                          : [...selectedSexualities.filter(s => s !== 'その他' && !s.startsWith('その他')), option]
+                        setSelectedSexualities(newSelection)
+                        setFormData({ ...formData, sexuality: newSelection.join(', ') })
+                        setOtherSexualityText('')
+                      } else {
+                        // トランスジェンダーを選択した場合は複数選択モードに切り替える
+                        if (option === 'トランスジェンダー') {
+                          setSelectedSexualities(['トランスジェンダー'])
+                          setIsMultipleSexualityMode(true)
+                          setFormData({ ...formData, sexuality: 'トランスジェンダー' })
+                        } else {
+                          setFormData({ ...formData, sexuality: option })
+                          setOtherSexualityText('')
+                          setShowSexualityModal(false)
+                          setIsMultipleSexualityMode(false)
+                          setSelectedSexualities([])
+                        }
+                      }
+                    }}
+                    className={`w-full p-3 text-left hover:bg-neutral-50 rounded-lg ${
+                      isSelected && option !== 'その他' && !formData.sexuality?.startsWith('その他') ? 'bg-primary-50 text-primary-600 font-medium' : 'text-neutral-900'
+                    }`}
+                  >
+                    {isMultipleSexualityMode && option !== 'その他' && (
+                      <span className="mr-2">{isSelected ? '✓' : '○'}</span>
+                    )}
+                    {option}
+                  </button>
+                )
+              })}
+            </div>
+            {(formData.sexuality === 'その他' || selectedSexualities.some(s => s === 'その他' || s.startsWith('その他'))) && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-neutral-900 mb-2">
+                  具体的に入力してください
+                </label>
+                <input
+                  type="text"
+                  value={otherSexualityText}
+                  onChange={(e) => {
+                    setOtherSexualityText(e.target.value)
+                    const otherText = e.target.value ? `その他: ${e.target.value}` : 'その他'
+                    if (isMultipleSexualityMode) {
+                      const otherIndex = selectedSexualities.findIndex(s => s === 'その他' || s.startsWith('その他'))
+                      const newSelection = otherIndex >= 0
+                        ? [...selectedSexualities.filter((_, i) => i !== otherIndex), otherText]
+                        : [...selectedSexualities, otherText]
+                      setSelectedSexualities(newSelection)
+                      setFormData({ ...formData, sexuality: newSelection.join(', ') })
+                    } else {
+                      setFormData({ ...formData, sexuality: otherText })
+                    }
+                  }}
+                  placeholder="例: クエスチョニングなど"
+                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm"
+                  autoFocus
+                />
+              </div>
+            )}
+            {isMultipleSexualityMode && (
+              <div className="mt-4 text-sm text-neutral-600">
+                選択中: {selectedSexualities.length > 0 ? selectedSexualities.map(s => s.startsWith('その他') ? 'その他' : s).join(', ') : 'なし'}
+              </div>
+            )}
+            <div className="flex gap-2 mt-4">
+              {isMultipleSexualityMode && (
+                <Button
+                  onClick={() => {
+                    if (selectedSexualities.some(s => s === 'その他' || s.startsWith('その他')) && !otherSexualityText.trim()) {
+                      // 「その他」が選択されているが入力がない場合は確定できない
+                      return
+                    }
+                    setFormData({ ...formData, sexuality: selectedSexualities.join(', ') })
+                    setShowSexualityModal(false)
+                    setIsMultipleSexualityMode(false)
+                    setSelectedSexualities([])
+                    setOtherSexualityText('')
+                  }}
+                  className="flex-1 bg-primary-500 text-white"
+                  disabled={selectedSexualities.some(s => s === 'その他' || s.startsWith('その他')) && !otherSexualityText.trim()}
+                >
+                  確定
+                </Button>
+              )}
+              {(formData.sexuality === 'その他' || selectedSexualities.some(s => s === 'その他' || s.startsWith('その他'))) && !isMultipleSexualityMode && (
+                <Button
+                  onClick={() => {
+                    if (otherSexualityText.trim()) {
+                      setShowSexualityModal(false)
+                    }
+                  }}
+                  className="flex-1 bg-primary-500 text-white"
+                  disabled={!otherSexualityText.trim()}
+                >
+                  確定
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  setShowSexualityModal(false)
+                  setIsMultipleSexualityMode(false)
+                  setSelectedSexualities([])
+                  if ((formData.sexuality === 'その他' || selectedSexualities.some(s => s === 'その他' || s.startsWith('その他'))) && !otherSexualityText.trim()) {
+                    setFormData({ ...formData, sexuality: '' })
+                  }
+                  setOtherSexualityText('')
+                }}
+                className={`${(formData.sexuality === 'その他' || selectedSexualities.some(s => s === 'その他' || s.startsWith('その他'))) || isMultipleSexualityMode ? 'flex-1' : 'w-full'} bg-neutral-200 text-neutral-900`}
+              >
+                キャンセル
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 体の性別選択モーダル */}
+      {showGenderModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
+          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4 text-neutral-900">体の性別を選択</h3>
+            <div className="space-y-2">
+              {['男性', '女性', 'ノンバイナリー', 'その他', '回答しない'].map((option) => (
+                <button
+                  key={option}
+                  onClick={() => {
+                    if (option === 'その他') {
+                      setFormData({ ...formData, gender: 'その他' })
+                    } else {
+                      setFormData({ ...formData, gender: option })
+                      setOtherGenderText('')
+                      setShowGenderModal(false)
+                    }
+                  }}
+                  className={`w-full p-3 text-left hover:bg-neutral-50 rounded-lg ${
+                    (formData.gender === option || (option === 'その他' && formData.gender?.startsWith('その他'))) && option !== 'その他'
+                      ? 'bg-primary-50 text-primary-600 font-medium'
+                      : 'text-neutral-900'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            {(formData.gender === 'その他' || formData.gender?.startsWith('その他')) && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-neutral-900 mb-2">
+                  具体的に入力してください
+                </label>
+                <input
+                  type="text"
+                  value={otherGenderText}
+                  onChange={(e) => {
+                    setOtherGenderText(e.target.value)
+                    setFormData({ 
+                      ...formData, 
+                      gender: e.target.value ? `その他: ${e.target.value}` : 'その他'
+                    })
+                  }}
+                  placeholder="例: 両性具有など"
+                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm"
+                  autoFocus
+                />
+              </div>
+            )}
+            <div className="flex gap-2 mt-4">
+              {(formData.gender === 'その他' || formData.gender?.startsWith('その他')) && (
+                <Button
+                  onClick={() => {
+                    if (otherGenderText.trim()) {
+                      setShowGenderModal(false)
+                    }
+                  }}
+                  className="flex-1 bg-primary-500 text-white"
+                  disabled={!otherGenderText.trim()}
+                >
+                  確定
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  setShowGenderModal(false)
+                  if ((formData.gender === 'その他' || formData.gender?.startsWith('その他')) && !otherGenderText.trim()) {
+                    setFormData({ ...formData, gender: '' })
+                  }
+                }}
+                className={`${(formData.gender === 'その他' || formData.gender?.startsWith('その他')) ? 'flex-1' : 'w-full'} bg-neutral-200 text-neutral-900`}
+              >
+                キャンセル
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 探している関係選択モーダル */}
+      {showLookingForModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
+          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4 text-neutral-900">探している関係を選択</h3>
+            <div className="space-y-2">
+              {['恋愛関係', '友達', 'カジュアルな関係', '長期的な関係', 'その他'].map((option) => (
+                <button
+                  key={option}
+                  onClick={() => {
+                    if (option === 'その他') {
+                      setFormData({ ...formData, looking_for: 'その他' })
+                    } else {
+                      setFormData({ ...formData, looking_for: option })
+                      setOtherLookingForText('')
+                      setShowLookingForModal(false)
+                    }
+                  }}
+                  className={`w-full p-3 text-left hover:bg-neutral-50 rounded-lg ${
+                    (formData.looking_for === option || (option === 'その他' && formData.looking_for?.startsWith('その他'))) && option !== 'その他'
+                      ? 'bg-primary-50 text-primary-600 font-medium'
+                      : 'text-neutral-900'
+                  }`}
+                >
+                  {option}
+                </button>
+              ))}
+            </div>
+            {(formData.looking_for === 'その他' || formData.looking_for?.startsWith('その他')) && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-neutral-900 mb-2">
+                  具体的に入力してください
+                </label>
+                <input
+                  type="text"
+                  value={otherLookingForText}
+                  onChange={(e) => {
+                    setOtherLookingForText(e.target.value)
+                    setFormData({ 
+                      ...formData, 
+                      looking_for: e.target.value ? `その他: ${e.target.value}` : 'その他'
+                    })
+                  }}
+                  placeholder="例: ビジネスパートナーなど"
+                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm"
+                  autoFocus
+                />
+              </div>
+            )}
+            <div className="flex gap-2 mt-4">
+              {(formData.looking_for === 'その他' || formData.looking_for?.startsWith('その他')) && (
+                <Button
+                  onClick={() => {
+                    if (otherLookingForText.trim()) {
+                      setShowLookingForModal(false)
+                    }
+                  }}
+                  className="flex-1 bg-primary-500 text-white"
+                  disabled={!otherLookingForText.trim()}
+                >
+                  確定
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  setShowLookingForModal(false)
+                  if ((formData.looking_for === 'その他' || formData.looking_for?.startsWith('その他')) && !otherLookingForText.trim()) {
+                    setFormData({ ...formData, looking_for: '' })
+                  }
+                }}
+                className={`${(formData.looking_for === 'その他' || formData.looking_for?.startsWith('その他')) ? 'flex-1' : 'w-full'} bg-neutral-200 text-neutral-900`}
+              >
+                キャンセル
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

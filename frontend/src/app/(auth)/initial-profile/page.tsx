@@ -34,12 +34,20 @@ export default function InitialProfilePage() {
     looking_for: ''
   })
   
+  const [selectedSexualities, setSelectedSexualities] = useState<string[]>([])
+  const [isMultipleSexualityMode, setIsMultipleSexualityMode] = useState(false)
+  
   const [avatarFile, setAvatarFile] = useState<File | null>(null)
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
 
   const [showGenderModal, setShowGenderModal] = useState(false)
   const [showSexualityModal, setShowSexualityModal] = useState(false)
   const [showLookingForModal, setShowLookingForModal] = useState(false)
+  
+  // 「その他」の自由記述用の状態
+  const [otherGenderText, setOtherGenderText] = useState('')
+  const [otherSexualityText, setOtherSexualityText] = useState('')
+  const [otherLookingForText, setOtherLookingForText] = useState('')
 
   const completeProfileMutation = useMutation({
     mutationFn: async (data: InitialProfileData) => {
@@ -98,10 +106,10 @@ export default function InitialProfilePage() {
         type: "success"
       })
       
-      // 状態更新後にリダイレクト
+      // 状態更新後に心理的安全性の説明ページにリダイレクト
       setTimeout(() => {
-        console.log('[InitialProfile] Redirecting to home...')
-        router.push('/home')
+        console.log('[InitialProfile] Redirecting to safety intro...')
+        router.push('/safety-intro')
       }, 300)
     },
     onError: (error: any) => {
@@ -187,7 +195,7 @@ export default function InitialProfilePage() {
   ]
 
   const sexualityOptions = [
-    'ストレート', 'ゲイ', 'レズビアン', 'バイセクシュアル', 'パンセクシュアル', 'アセクシュアル', 'その他', '回答しない'
+    'ゲイ', 'レズビアン', 'バイセクシュアル', 'トランスジェンダー', 'パンセクシュアル', 'アセクシュアル', 'その他', '回答しない'
   ]
 
   const lookingForOptions = [
@@ -255,7 +263,7 @@ export default function InitialProfilePage() {
               type="text"
               value={formData.display_name}
               onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
-              placeholder="Grace"
+              placeholder="Qupid"
               className="w-full"
               required
             />
@@ -288,7 +296,7 @@ export default function InitialProfilePage() {
             />
           </div>
 
-          {/* 性別 */}
+          {/* 体の性別 */}
           <div>
             <button
               type="button"
@@ -308,7 +316,18 @@ export default function InitialProfilePage() {
           <div>
             <button
               type="button"
-              onClick={() => setShowSexualityModal(true)}
+              onClick={() => {
+                // セクシャリティとしてトランスジェンダーを選択している場合、複数選択モードにする
+                const isTransgender = formData.sexuality === 'トランスジェンダー' || 
+                  (formData.sexuality && formData.sexuality.includes('トランスジェンダー'))
+                setIsMultipleSexualityMode(isTransgender)
+                if (isTransgender && formData.sexuality) {
+                  setSelectedSexualities(formData.sexuality.split(', ').filter(s => s))
+                } else {
+                  setSelectedSexualities([])
+                }
+                setShowSexualityModal(true)
+              }}
               className="w-full p-4 bg-pink-100 rounded-lg text-left flex items-center gap-3"
             >
               <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -347,31 +366,80 @@ export default function InitialProfilePage() {
         </form>
       </div>
 
-      {/* 性別選択モーダル */}
+      {/* 体の性別選択モーダル */}
       {showGenderModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="w-full bg-white rounded-t-2xl p-4">
-            <h3 className="text-lg font-bold mb-4 text-gray-900">性別を選択</h3>
+          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4 text-gray-900">体の性別を選択</h3>
             <div className="space-y-2">
               {genderOptions.map((option) => (
                 <button
                   key={option}
                   onClick={() => {
-                    setFormData({ ...formData, gender: option })
-                    setShowGenderModal(false)
+                    if (option === 'その他') {
+                      // 「その他」の場合は入力欄を表示するため、モーダルを開いたままにする
+                      setFormData({ ...formData, gender: 'その他' })
+                    } else {
+                      setFormData({ ...formData, gender: option })
+                      setOtherGenderText('')
+                      setShowGenderModal(false)
+                    }
                   }}
-                  className="w-full p-3 text-left hover:bg-gray-100 rounded-lg text-gray-900"
+                  className={`w-full p-3 text-left hover:bg-gray-100 rounded-lg text-gray-900 ${
+                    formData.gender === option && option !== 'その他' ? 'bg-pink-100 text-red-500 font-medium' : ''
+                  }`}
                 >
                   {option}
                 </button>
               ))}
             </div>
-            <Button
-              onClick={() => setShowGenderModal(false)}
-              className="w-full mt-4 bg-gray-200 text-gray-900"
-            >
-              キャンセル
-            </Button>
+            {formData.gender === 'その他' && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  具体的に入力してください
+                </label>
+                <Input
+                  type="text"
+                  value={otherGenderText}
+                  onChange={(e) => {
+                    setOtherGenderText(e.target.value)
+                    setFormData({ 
+                      ...formData, 
+                      gender: e.target.value ? `その他: ${e.target.value}` : 'その他'
+                    })
+                  }}
+                  placeholder="例: 両性具有など"
+                  className="w-full"
+                  autoFocus
+                />
+              </div>
+            )}
+            <div className="flex gap-2 mt-4">
+              {formData.gender === 'その他' && (
+                <Button
+                  onClick={() => {
+                    if (otherGenderText.trim()) {
+                      setShowGenderModal(false)
+                    }
+                  }}
+                  className="flex-1 bg-red-500 text-white"
+                  disabled={!otherGenderText.trim()}
+                >
+                  確定
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  setShowGenderModal(false)
+                  if (formData.gender === 'その他' && !otherGenderText.trim()) {
+                    setFormData({ ...formData, gender: '' })
+                  }
+                }}
+                className={`${formData.gender === 'その他' ? 'flex-1' : 'w-full'} bg-gray-200 text-gray-900`}
+              >
+                キャンセル
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -379,28 +447,143 @@ export default function InitialProfilePage() {
       {/* セクシュアリティ選択モーダル */}
       {showSexualityModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="w-full bg-white rounded-t-2xl p-4">
-            <h3 className="text-lg font-bold mb-4 text-gray-900">セクシュアリティを選択</h3>
+          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-bold mb-4 text-gray-900">
+              {isMultipleSexualityMode ? 'セクシュアリティを選択（複数可）' : 'セクシュアリティを選択'}
+            </h3>
             <div className="space-y-2">
-              {sexualityOptions.map((option) => (
-                <button
-                  key={option}
-                  onClick={() => {
-                    setFormData({ ...formData, sexuality: option })
-                    setShowSexualityModal(false)
-                  }}
-                  className="w-full p-3 text-left hover:bg-gray-100 rounded-lg text-gray-900"
-                >
-                  {option}
-                </button>
-              ))}
+              {sexualityOptions.map((option) => {
+                const isSelected = isMultipleSexualityMode 
+                  ? selectedSexualities.includes(option)
+                  : formData.sexuality === option || formData.sexuality?.startsWith('その他')
+                
+                return (
+                  <button
+                    key={option}
+                    onClick={() => {
+                      if (option === 'その他') {
+                        // 「その他」の場合は入力欄を表示するため、モーダルを開いたままにする
+                        if (isMultipleSexualityMode) {
+                          if (!selectedSexualities.includes('その他')) {
+                            setSelectedSexualities([...selectedSexualities, 'その他'])
+                          }
+                        } else {
+                          setFormData({ ...formData, sexuality: 'その他' })
+                          setOtherSexualityText('')
+                        }
+                      } else if (isMultipleSexualityMode) {
+                        const newSelection = isSelected
+                          ? selectedSexualities.filter(s => s !== option && s !== 'その他' && !s.startsWith('その他'))
+                          : [...selectedSexualities.filter(s => s !== 'その他' && !s.startsWith('その他')), option]
+                        setSelectedSexualities(newSelection)
+                        setFormData({ ...formData, sexuality: newSelection.join(', ') })
+                        setOtherSexualityText('')
+                      } else {
+                        // トランスジェンダーを選択した場合は複数選択モードに切り替える
+                        if (option === 'トランスジェンダー') {
+                          setSelectedSexualities(['トランスジェンダー'])
+                          setIsMultipleSexualityMode(true)
+                          setFormData({ ...formData, sexuality: 'トランスジェンダー' })
+                        } else {
+                          setFormData({ ...formData, sexuality: option })
+                          setOtherSexualityText('')
+                          setShowSexualityModal(false)
+                        }
+                      }
+                    }}
+                    className={`w-full p-3 text-left hover:bg-gray-100 rounded-lg ${
+                      isSelected && option !== 'その他' && !formData.sexuality?.startsWith('その他') ? 'bg-pink-100 text-red-500 font-medium' : 'text-gray-900'
+                    }`}
+                  >
+                    {isMultipleSexualityMode && option !== 'その他' && (
+                      <span className="mr-2">{isSelected ? '✓' : '○'}</span>
+                    )}
+                    {option}
+                  </button>
+                )
+              })}
             </div>
-            <Button
-              onClick={() => setShowSexualityModal(false)}
-              className="w-full mt-4 bg-gray-200 text-gray-900"
-            >
-              キャンセル
-            </Button>
+            {(formData.sexuality === 'その他' || selectedSexualities.includes('その他')) && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  具体的に入力してください
+                </label>
+                <Input
+                  type="text"
+                  value={otherSexualityText}
+                  onChange={(e) => {
+                    setOtherSexualityText(e.target.value)
+                    const otherText = e.target.value ? `その他: ${e.target.value}` : 'その他'
+                    if (isMultipleSexualityMode) {
+                      const otherIndex = selectedSexualities.findIndex(s => s === 'その他' || s.startsWith('その他'))
+                      const newSelection = otherIndex >= 0
+                        ? [...selectedSexualities.filter((_, i) => i !== otherIndex), otherText]
+                        : [...selectedSexualities, otherText]
+                      setSelectedSexualities(newSelection)
+                      setFormData({ ...formData, sexuality: newSelection.join(', ') })
+                    } else {
+                      setFormData({ ...formData, sexuality: otherText })
+                    }
+                  }}
+                  placeholder="例: クエスチョニングなど"
+                  className="w-full"
+                  autoFocus
+                />
+              </div>
+            )}
+            {isMultipleSexualityMode && (
+              <div className="mt-4 text-sm text-gray-600">
+                選択中: {selectedSexualities.length > 0 ? selectedSexualities.map(s => s.startsWith('その他') ? 'その他' : s).join(', ') : 'なし'}
+              </div>
+            )}
+            <div className="flex gap-2 mt-4">
+              {isMultipleSexualityMode && (
+                <Button
+                  onClick={() => {
+                    if (selectedSexualities.includes('その他') && !otherSexualityText.trim()) {
+                      // 「その他」が選択されているが入力がない場合は確定できない
+                      return
+                    }
+                    setFormData({ ...formData, sexuality: selectedSexualities.join(', ') })
+                    setShowSexualityModal(false)
+                    setIsMultipleSexualityMode(false)
+                    setSelectedSexualities([])
+                    setOtherSexualityText('')
+                  }}
+                  className="flex-1 bg-red-500 text-white"
+                  disabled={selectedSexualities.includes('その他') && !otherSexualityText.trim()}
+                >
+                  確定
+                </Button>
+              )}
+              {(formData.sexuality === 'その他' || selectedSexualities.includes('その他')) && !isMultipleSexualityMode && (
+                <Button
+                  onClick={() => {
+                    if (otherSexualityText.trim()) {
+                      setShowSexualityModal(false)
+                    }
+                  }}
+                  className="flex-1 bg-red-500 text-white"
+                  disabled={!otherSexualityText.trim()}
+                >
+                  確定
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  setShowSexualityModal(false)
+                  setIsMultipleSexualityMode(false)
+                  setSelectedSexualities([])
+                  if ((formData.sexuality === 'その他' || selectedSexualities.includes('その他')) && !otherSexualityText.trim()) {
+                    setFormData({ ...formData, sexuality: '' })
+                  }
+                  setOtherSexualityText('')
+                }}
+                className={`${(formData.sexuality === 'その他' || selectedSexualities.includes('その他')) || isMultipleSexualityMode ? 'flex-1' : 'w-full'} bg-gray-200 text-gray-900`}
+              >
+                キャンセル
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -408,28 +591,77 @@ export default function InitialProfilePage() {
       {/* 探している関係選択モーダル */}
       {showLookingForModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="w-full bg-white rounded-t-2xl p-4">
+          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold mb-4 text-gray-900">探している関係を選択</h3>
             <div className="space-y-2">
               {lookingForOptions.map((option) => (
                 <button
                   key={option}
                   onClick={() => {
-                    setFormData({ ...formData, looking_for: option })
-                    setShowLookingForModal(false)
+                    if (option === 'その他') {
+                      // 「その他」の場合は入力欄を表示するため、モーダルを開いたままにする
+                      setFormData({ ...formData, looking_for: 'その他' })
+                    } else {
+                      setFormData({ ...formData, looking_for: option })
+                      setOtherLookingForText('')
+                      setShowLookingForModal(false)
+                    }
                   }}
-                  className="w-full p-3 text-left hover:bg-gray-100 rounded-lg text-gray-900"
+                  className={`w-full p-3 text-left hover:bg-gray-100 rounded-lg text-gray-900 ${
+                    formData.looking_for === option && option !== 'その他' ? 'bg-pink-100 text-red-500 font-medium' : ''
+                  }`}
                 >
                   {option}
                 </button>
               ))}
             </div>
-            <Button
-              onClick={() => setShowLookingForModal(false)}
-              className="w-full mt-4 bg-gray-200 text-gray-900"
-            >
-              キャンセル
-            </Button>
+            {formData.looking_for === 'その他' && (
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  具体的に入力してください
+                </label>
+                <Input
+                  type="text"
+                  value={otherLookingForText}
+                  onChange={(e) => {
+                    setOtherLookingForText(e.target.value)
+                    setFormData({ 
+                      ...formData, 
+                      looking_for: e.target.value ? `その他: ${e.target.value}` : 'その他'
+                    })
+                  }}
+                  placeholder="例: ビジネスパートナーなど"
+                  className="w-full"
+                  autoFocus
+                />
+              </div>
+            )}
+            <div className="flex gap-2 mt-4">
+              {formData.looking_for === 'その他' && (
+                <Button
+                  onClick={() => {
+                    if (otherLookingForText.trim()) {
+                      setShowLookingForModal(false)
+                    }
+                  }}
+                  className="flex-1 bg-red-500 text-white"
+                  disabled={!otherLookingForText.trim()}
+                >
+                  確定
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  setShowLookingForModal(false)
+                  if (formData.looking_for === 'その他' && !otherLookingForText.trim()) {
+                    setFormData({ ...formData, looking_for: '' })
+                  }
+                }}
+                className={`${formData.looking_for === 'その他' ? 'flex-1' : 'w-full'} bg-gray-200 text-gray-900`}
+              >
+                キャンセル
+              </Button>
+            </div>
           </div>
         </div>
       )}

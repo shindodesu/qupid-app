@@ -21,7 +21,7 @@ export default function PrivacyPage() {
             <ul className="list-disc pl-6 space-y-2 text-gray-700">
               <li>
                 <strong>登録情報：</strong>
-                メールアドレス、ニックネーム、生年月日、性別、セクシュアリティ、探している関係、プロフィール写真など
+                メールアドレス、ニックネーム、生年月日、体の性別、セクシュアリティ、探している関係、プロフィール写真など
               </li>
               <li>
                 <strong>サービス利用情報：</strong>

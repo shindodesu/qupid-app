@@ -60,7 +60,7 @@ export interface UserSuggestionsResponse {
 export type SortOrder = 'recent' | 'popular' | 'alphabetical'
 
 // フィルター関連の型定義
-export type Sexuality = 'lesbian' | 'bisexual' | 'gay' | 'straight' | 'asexual' | 'pansexual' | 'other'
+export type Sexuality = 'lesbian' | 'bisexual' | 'transgender' | 'gay' | 'asexual' | 'pansexual' | 'other'
 export type Gender = 'man' | 'woman' | 'non-binary' | 'transgender' | 'other'
 export type RelationshipGoal = 'friends' | 'dating' | 'all'
 export type Sex = 'male' | 'female' | 'other'

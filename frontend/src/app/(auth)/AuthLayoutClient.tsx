@@ -22,8 +22,8 @@ export default function AuthLayoutClient({
       return
     }
     
-    // initial-profileページは認証済みユーザーもアクセス可能
-    if (pathname === '/initial-profile') {
+    // initial-profileとsafety-introページは認証済みユーザーもアクセス可能
+    if (pathname === '/initial-profile' || pathname === '/safety-intro') {
       return
     }
     
@@ -46,8 +46,8 @@ export default function AuthLayoutClient({
     )
   }
 
-  // 認証済みかつinitial-profileページでない場合はリダイレクト画面を表示
-  if (isAuthenticated && pathname !== '/initial-profile') {
+  // 認証済みかつinitial-profile/safety-introページでない場合はリダイレクト画面を表示
+  if (isAuthenticated && pathname !== '/initial-profile' && pathname !== '/safety-intro') {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center">
