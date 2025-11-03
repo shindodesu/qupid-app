@@ -50,7 +50,14 @@ def get_cors_origins():
 
 # CORS設定を適用
 cors_origins_list = get_cors_origins()
+# ログ出力（stderrにも出力して確実に表示されるようにする）
+import sys
+print(f"🌐 CORS allowed origins: {cors_origins_list}", file=sys.stderr)
 print(f"🌐 CORS allowed origins: {cors_origins_list}")
+
+# デバッグ: 環境変数が正しく読み込まれているか確認
+print(f"🔍 DEBUG - settings.CORS_ORIGINS: {settings.CORS_ORIGINS}", file=sys.stderr)
+print(f"🔍 DEBUG - settings.APP_ENV: {settings.APP_ENV}", file=sys.stderr)
 
 app.add_middleware(
     CORSMiddleware,
