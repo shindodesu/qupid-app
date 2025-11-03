@@ -50,6 +50,7 @@ def get_cors_origins():
 
 # CORS設定を適用
 cors_origins_list = get_cors_origins()
+print(f"🌐 CORS allowed origins: {cors_origins_list}")
 
 app.add_middleware(
     CORSMiddleware,
