@@ -20,6 +20,8 @@ const PUBLIC_RESOURCES = [
   '/favicon.ico',
   '/icon.png',
   '/apple-icon.png',
+  '/sw-custom.js',
+  '/sw.js',
 ]
 
 export function authMiddleware(request: NextRequest) {

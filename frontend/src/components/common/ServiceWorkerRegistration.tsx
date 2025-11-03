@@ -14,7 +14,8 @@ export function ServiceWorkerRegistration() {
           console.log('Registering Service Worker...')
           
           // カスタムService Workerを登録
-          const registration = await navigator.serviceWorker.register('/sw-custom.js', {
+          const swUrl = '/sw-custom.js'
+          const registration = await navigator.serviceWorker.register(swUrl, {
             scope: '/'
           })
 

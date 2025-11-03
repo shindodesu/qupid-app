@@ -113,13 +113,13 @@ const nextConfig: NextConfig = {
 // PWA設定
 const pwaConfig = withPWA({
   dest: 'public',
-  register: true,
+  register: false, // 手動で登録するため自動登録を無効化
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development', // 開発環境では無効化
   scope: '/',
   sw: 'sw.js',
   reloadOnOnline: true,
-  buildExcludes: [/middleware-manifest\.json$/],
+  buildExcludes: [/middleware-manifest\.json$/, /sw-custom\.js$/], // カスタムService Workerを除外
   fallbacks: {
     document: '/offline',
   },

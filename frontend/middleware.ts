@@ -20,6 +20,6 @@ export const config = {
      * - robots.txt (robots file)
      * - sitemap.xml (sitemap file)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|public|manifest.webmanifest|manifest.json|robots.txt|sitemap.xml|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.svg|.*\\.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|public|manifest.webmanifest|manifest.json|robots.txt|sitemap.xml|sw-custom.js|sw.js|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.svg|.*\\.ico).*)',
   ],
 }
