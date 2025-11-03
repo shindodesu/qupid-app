@@ -48,15 +48,23 @@ self.addEventListener('fetch', (event) => {
   
   const url = new URL(event.request.url)
   
-  // APIリクエスト（localhost:8000など）はService Workerでインターセプトせず、直接fetchする
-  if (event.request.url.includes('/auth/') || 
-      event.request.url.includes('localhost:8000') ||
-      event.request.url.includes('/api/') ||
-      event.request.url.includes('/users/') ||
-      !event.request.url.startsWith(self.location.origin)) {
-    console.log('Service Worker: API request, bypassing cache:', event.request.url)
-    // 直接fetchして返す
-    event.respondWith(fetch(event.request))
+  // APIリクエストはService Workerでインターセプトしない（CSP違反を防ぐため）
+  // 異なるオリジンへのリクエスト（APIサーバーなど）をチェック
+  const requestUrl = new URL(event.request.url)
+  const isApiRequest = 
+    requestUrl.origin !== self.location.origin || // 異なるオリジンへのリクエスト
+    event.request.url.includes('/auth/') ||
+    event.request.url.includes('/users/') ||
+    event.request.url.includes('/api/') ||
+    event.request.url.includes('localhost:8000') ||
+    event.request.url.includes('qupid-app.onrender.com') ||
+    event.request.url.includes('qupid-api.onrender.com') ||
+    event.request.url.includes('api.qupid.app')
+  
+  if (isApiRequest) {
+    console.log('Service Worker: API request detected, not intercepting:', event.request.url)
+    // event.respondWithを呼ばないことで、リクエストをそのまま通過させる
+    // これにより、Service Workerのコンテキストではなく、元のコンテキストでfetchが実行される
     return
   }
 
