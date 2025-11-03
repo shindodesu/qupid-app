@@ -37,6 +37,9 @@ class EmailService:
         
         # アプリケーション名
         self.app_name = getattr(settings, 'APP_NAME', 'Qupid')
+        
+        # 初期化時に設定をログ出力
+        logger.info(f"EmailService初期化: ENABLE_EMAIL={self.enable_email}, SMTP_SERVER={self.smtp_server}, SMTP_PORT={self.smtp_port}, SMTP_USERNAME={self.smtp_username}, SMTP_PASSWORD設定済み={bool(self.smtp_password)}")
     
     @property
     def enable_email(self):
@@ -80,28 +83,52 @@ class EmailService:
                 msg.attach(part1)
                 msg.attach(part2)
                 
-                # SMTP経由で送信
-                with smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=10) as server:
+                # SMTP設定のログ出力（デバッグ用、パスワードは除外）
+                logger.info(f"SMTP接続試行: server={self.smtp_server}, port={self.smtp_port}, username={self.smtp_username}, password_set={bool(self.smtp_password)}")
+                
+                # SMTP経由で送信（タイムアウトを30秒に延長）
+                with smtplib.SMTP(self.smtp_server, self.smtp_port, timeout=30) as server:
+                    logger.info(f"SMTP接続成功: {self.smtp_server}:{self.smtp_port}")
                     server.starttls()
+                    logger.info("STARTTLS成功")
+                    
                     if self.smtp_username and self.smtp_password:
                         server.login(self.smtp_username, self.smtp_password)
+                        logger.info("SMTP認証成功")
+                    else:
+                        logger.warning("SMTP_USERNAMEまたはSMTP_PASSWORDが設定されていません")
+                    
                     server.send_message(msg)
+                    logger.info(f"メール送信成功: {to_email} (件名: {subject})")
                 
-                logger.info(f"メール送信成功: {to_email} (件名: {subject})")
                 return True
                 
             except smtplib.SMTPAuthenticationError as e:
                 logger.error(f"SMTP認証エラー: {e}")
+                logger.error(f"SMTP_USERNAME: {self.smtp_username}, SMTP_PASSWORD設定済み: {bool(self.smtp_password)}")
                 # 認証エラーはリトライしても無駄なので即座に失敗
                 return False
                 
+            except (ConnectionError, OSError) as e:
+                error_code = getattr(e, 'errno', None)
+                error_msg = str(e)
+                logger.error(f"ネットワーク接続エラー (試行 {attempt + 1}/{self.max_retries}): {error_msg} (errno={error_code})")
+                logger.error(f"SMTP設定: server={self.smtp_server}, port={self.smtp_port}")
+                # ネットワークエラーはリトライ可能
+                if attempt < self.max_retries - 1:
+                    await asyncio.sleep(self.retry_delay * (attempt + 1))
+                else:
+                    logger.error("最大リトライ回数に達しました。Renderのネットワーク設定を確認してください。")
+                    
             except smtplib.SMTPException as e:
-                logger.warning(f"メール送信失敗 (試行 {attempt + 1}/{self.max_retries}): {e}")
+                logger.warning(f"SMTPエラー (試行 {attempt + 1}/{self.max_retries}): {e}")
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(self.retry_delay * (attempt + 1))  # 指数バックオフ
                     
             except Exception as e:
-                logger.error(f"予期しないエラー (試行 {attempt + 1}/{self.max_retries}): {e}")
+                error_type = type(e).__name__
+                logger.error(f"予期しないエラー (試行 {attempt + 1}/{self.max_retries}): {error_type}: {e}")
+                logger.error(f"エラー詳細: {repr(e)}")
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(self.retry_delay * (attempt + 1))
         
