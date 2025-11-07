@@ -70,7 +70,7 @@ export function RegisterForm({ className, onSuccess }: RegisterFormProps) {
             <button
               type="button"
               className="text-primary-500 hover:text-primary-600"
-              onClick={() => router.push('/email-login')}
+              onClick={() => router.push('/auth/login')}
             >
               ログイン
             </button>

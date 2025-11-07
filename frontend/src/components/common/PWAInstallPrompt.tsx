@@ -100,7 +100,7 @@ export function PWAInstallPrompt() {
   }
 
   return (
-    <div className="fixed bottom-20 md:bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 animate-slide-up">
+    <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-96 z-50 animate-slide-up max-h-[calc(100vh-2rem)] overflow-y-auto">
       <div className="bg-white rounded-lg shadow-xl border border-neutral-200 p-4">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
@@ -112,7 +112,7 @@ export function PWAInstallPrompt() {
             </h3>
             {isIOS ? (
               <div className="text-xs text-neutral-600 space-y-2">
-                <p>Qupidをホーム画面に追加して、アプリのように使用できます。</p>
+                <p>Qupidをホーム画面に追加して、簡単にアクセスできます。</p>
                 <div className="flex items-center gap-2 p-2 bg-neutral-50 rounded">
                   <span className="text-lg">⬆️</span>
                   <span>共有ボタンをタップ</span>

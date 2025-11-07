@@ -34,7 +34,7 @@ export function PWADownloadModal({ isOpen, onClose }: PWADownloadModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-slide-up">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto animate-slide-up">
         {/* ヘッダー */}
         <div className="bg-gradient-to-r from-pink-500 to-purple-500 p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
@@ -194,15 +194,11 @@ export function PWADownloadModal({ isOpen, onClose }: PWADownloadModalProps) {
               </div>
               <div className="bg-purple-50 rounded-lg p-3 text-center">
                 <div className="text-2xl mb-1">📱</div>
-                <p className="text-xs text-neutral-700">アプリ感覚</p>
+                <p className="text-xs text-neutral-700">簡単にアクセス</p>
               </div>
               <div className="bg-blue-50 rounded-lg p-3 text-center">
                 <div className="text-2xl mb-1">🔔</div>
                 <p className="text-xs text-neutral-700">通知受信</p>
-              </div>
-              <div className="bg-green-50 rounded-lg p-3 text-center">
-                <div className="text-2xl mb-1">💾</div>
-                <p className="text-xs text-neutral-700">オフライン対応</p>
               </div>
             </div>
           </div>

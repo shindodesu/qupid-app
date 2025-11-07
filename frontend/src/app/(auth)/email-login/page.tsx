@@ -307,6 +307,11 @@ export default function EmailLoginPage() {
                 {!isDevelopment && '6桁の認証コードを入力してください'}
                 {isDevelopment && '（開発環境: コンソールまたはターミナルで確認）'}
               </p>
+              {!isDevelopment && (
+                <p className="text-sm text-gray-500 mt-2">
+                  メールが届かない場合は、迷惑メールフォルダもご確認ください。
+                </p>
+              )}
             </div>
             
             <Input
@@ -392,12 +397,6 @@ export default function EmailLoginPage() {
             </Button>
           </form>
         )}
-
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-500">
-            開発環境では認証コードがコンソールに表示されます
-          </p>
-        </div>
       </div>
 
       <ToastContainer toasts={toasts} onRemove={removeToast} />
