@@ -98,11 +98,6 @@ export const searchApi = {
           params.append('sex', filters.sex.join(','))
         }
         
-        if (filters.gender_range) {
-          params.append('gender_min', String(filters.gender_range.min))
-          params.append('gender_max', String(filters.gender_range.max))
-        }
-        
         if (filters.age_min !== undefined) {
           params.append('age_min', String(filters.age_min))
         }

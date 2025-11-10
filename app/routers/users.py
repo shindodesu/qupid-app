@@ -521,43 +521,105 @@ async def get_user_suggestions(
         select(UserTag.tag_id).where(UserTag.user_id == current_user.id)
     )
     my_tag_ids = [row[0] for row in my_tags_query.all()]
-    
-    if not my_tag_ids:
-        # タグがない場合は空のリストを返す
-        return UserSuggestionsResponse(
-            users=[],
-            total=0,
-            limit=limit,
-        )
-    
+
     # ブロックユーザーを除外
     blocked_users_query = select(Block.blocked_id).where(Block.blocker_id == current_user.id)
     blocking_users_query = select(Block.blocker_id).where(Block.blocked_id == current_user.id)
-    
+
     blocked_user_ids_result = await db.execute(blocked_users_query)
     blocked_user_ids = {row[0] for row in blocked_user_ids_result.all()}
-    
+
     blocking_users_ids_result = await db.execute(blocking_users_query)
     blocking_user_ids = {row[0] for row in blocking_users_ids_result.all()}
-    
+
     excluded_user_ids = blocked_user_ids | blocking_user_ids
-    
+
     # 既にマッチしているユーザーを除外
     my_likes_query = select(Like.liked_id).where(Like.liker_id == current_user.id)
     received_likes_query = select(Like.liker_id).where(Like.liked_id == current_user.id)
-    
+
     matched_users_query = select(User.id).where(
         and_(
             User.id.in_(my_likes_query),
             User.id.in_(received_likes_query),
         )
     )
-    
+
     matched_users_result = await db.execute(matched_users_query)
     matched_user_ids = {row[0] for row in matched_users_result.all()}
-    
+
     excluded_user_ids |= matched_user_ids
     excluded_user_ids.add(current_user.id)  # 自分自身も除外
+
+    async def build_fallback_response(reason: str) -> UserSuggestionsResponse:
+        conditions = [
+            User.is_active == True,
+            User.profile_completed == True,
+        ]
+        if excluded_user_ids:
+            conditions.append(User.id.not_in(list(excluded_user_ids)))
+
+        fallback_query = (
+            select(User)
+            .where(and_(*conditions))
+            .order_by(User.created_at.desc())
+            .limit(limit)
+        )
+
+        fallback_result = await db.execute(fallback_query)
+        fallback_users = fallback_result.scalars().all()
+
+        if not fallback_users:
+            return UserSuggestionsResponse(
+                users=[],
+                total=0,
+                limit=limit,
+            )
+
+        fallback_user_ids = [user.id for user in fallback_users]
+
+        fallback_tags_query = await db.execute(
+            select(UserTag)
+            .where(UserTag.user_id.in_(fallback_user_ids))
+            .options(selectinload(UserTag.tag))
+        )
+        fallback_user_tags = fallback_tags_query.scalars().all()
+
+        fallback_tags_dict = {}
+        for user_tag in fallback_user_tags:
+            fallback_tags_dict.setdefault(user_tag.user_id, []).append(
+                TagInfo(
+                    id=user_tag.tag.id,
+                    name=user_tag.tag.name,
+                    description=user_tag.tag.description,
+                )
+            )
+
+        suggestions = []
+        for user in fallback_users:
+            tags = fallback_tags_dict.get(user.id, [])
+            suggestions.append(
+                UserSuggestion(
+                    id=user.id,
+                    display_name=user.display_name,
+                    bio=user.bio if user.show_bio else None,
+                    faculty=user.faculty if user.show_faculty else None,
+                    grade=user.grade if user.show_grade else None,
+                    tags=tags if user.show_tags else [],
+                    match_score=0.0,
+                    reason=reason,
+                )
+            )
+
+        return UserSuggestionsResponse(
+            users=suggestions,
+            total=len(suggestions),
+            limit=limit,
+        )
+
+    if not my_tag_ids:
+        # タグがない場合は最近のユーザーを返す
+        return await build_fallback_response("タグ未設定のため、最近登録したユーザーをおすすめします")
     
     # 共通タグを持つユーザーを検索
     # 共通タグ数でスコアリング
@@ -581,11 +643,7 @@ async def get_user_suggestions(
     user_scores = common_tags_result.all()
     
     if not user_scores:
-        return UserSuggestionsResponse(
-            users=[],
-            total=0,
-            limit=limit,
-        )
+        return await build_fallback_response("共通タグが見つからなかったため、最近登録したユーザーをおすすめします")
     
     # ユーザー情報を取得
     suggested_user_ids = [row[0] for row in user_scores]

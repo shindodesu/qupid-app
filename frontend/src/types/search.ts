@@ -65,18 +65,11 @@ export type Gender = 'man' | 'woman' | 'non-binary' | 'transgender' | 'other'
 export type RelationshipGoal = 'friends' | 'dating' | 'all'
 export type Sex = 'male' | 'female' | 'other'
 
-// ジェンダー範囲
-export interface GenderRange {
-  min: number // 0-100の範囲で、0がMan、100がWoman
-  max: number
-}
-
 // Discoverフィルター
 export interface DiscoverFilters {
   sexuality?: Sexuality[]
   relationship_goal?: RelationshipGoal
   sex?: Sex[]
-  gender_range?: GenderRange
   age_min?: number
   age_max?: number
 }

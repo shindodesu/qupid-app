@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { DiscoverFilters, Sexuality, RelationshipGoal, Sex, GenderRange } from '@/types/search'
+import { DiscoverFilters, Sexuality, RelationshipGoal, Sex } from '@/types/search'
 import { Button } from '@/components/ui/Button'
 
 interface DiscoverFiltersProps {
@@ -13,7 +13,6 @@ interface DiscoverFiltersProps {
 
 export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: DiscoverFiltersProps) {
   const [showSexualityPicker, setShowSexualityPicker] = useState(false)
-  const [showGenderRange, setShowGenderRange] = useState(false)
 
   // セクシュアリティオプション
   const sexualityOptions: { value: Sexuality; label: string }[] = [
@@ -63,11 +62,6 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
   // 関係性目標選択のハンドラー
   const handleRelationshipGoalChange = (goal: RelationshipGoal) => {
     onFiltersChange({ ...filters, relationship_goal: goal })
-  }
-
-  // ジェンダー範囲のハンドラー
-  const handleGenderRangeChange = (range: GenderRange) => {
-    onFiltersChange({ ...filters, gender_range: range })
   }
 
   // セクシュアリティ表示用のテキスト
@@ -167,41 +161,6 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
                 {option.label}
               </button>
             ))}
-          </div>
-        </div>
-
-        {/* ジェンダーフィルター */}
-        <div>
-          <label className="block text-sm text-neutral-900 mb-3">ジェンダー</label>
-          <div className="space-y-4">
-            <div className="flex justify-between text-sm text-neutral-600">
-              <span>男性</span>
-              <span>女性</span>
-            </div>
-            <div className="relative">
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={filters.gender_range?.min || 0}
-                onChange={(e) => handleGenderRangeChange({
-                  min: parseInt(e.target.value),
-                  max: filters.gender_range?.max || 100
-                })}
-                className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
-              />
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={filters.gender_range?.max || 100}
-                onChange={(e) => handleGenderRangeChange({
-                  min: filters.gender_range?.min || 0,
-                  max: parseInt(e.target.value)
-                })}
-                className="w-full h-2 bg-neutral-200 rounded-lg appearance-none cursor-pointer slider"
-              />
-            </div>
           </div>
         </div>
       </div>
