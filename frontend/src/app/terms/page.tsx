@@ -150,7 +150,7 @@ export default function TermsPage() {
           </section>
 
           <div className="mt-12 text-right text-gray-600">
-            <p>2024年10月19日 制定</p>
+            <p>2025年10月19日 制定</p>
           </div>
         </div>
       </div>
