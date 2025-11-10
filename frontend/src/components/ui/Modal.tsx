@@ -21,7 +21,7 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
     if (!isOpen) return null
 
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto py-6 px-4">
         {/* オーバーレイ */}
         <div
           className="fixed inset-0 bg-black/50"
@@ -32,7 +32,7 @@ const Modal = forwardRef<HTMLDivElement, ModalProps>(
         <div
           ref={ref}
           className={cn(
-            'relative w-full rounded-lg bg-white p-6 shadow-lg',
+            'relative w-full rounded-lg bg-white p-6 shadow-lg max-h-full overflow-y-auto',
             sizeClasses[size],
             className
           )}
