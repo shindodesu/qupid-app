@@ -6,6 +6,8 @@ import { chatApi } from '@/lib/api/chat'
 import { MessageBubble } from './MessageBubble'
 import { MessageComposer } from './MessageComposer'
 import { ReportDialog, BlockConfirm } from '@/components/features/safety'
+import { ProfilePreviewModal } from '@/components/features/profile'
+import { ProfilePreviewModal } from '@/components/features/profile'
 import { Button } from '@/components/ui/Button'
 import { useUser } from '@/stores/auth'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -25,6 +27,8 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [showReportDialog, setShowReportDialog] = useState(false)
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
+  const [showProfilePreview, setShowProfilePreview] = useState(false)
+  const [showProfilePreview, setShowProfilePreview] = useState(false)
 
   // WebSocket接続
   const { isConnected, subscribe, sendTyping } = useWebSocket()
@@ -223,6 +227,33 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
     conversationDetail?.other_user?.display_name ??
     otherUserFromMessages?.sender_name ??
     '会話'
+  const otherUserAvatar =
+    conversationDetail?.other_user?.avatar_url || null
+  const otherUserBio =
+    conversationDetail?.other_user?.bio || undefined
+
+  const initialProfileData =
+    otherUserId !== null
+      ? {
+          id: otherUserId,
+          display_name: otherUserName,
+          bio: otherUserBio,
+          avatar_url: otherUserAvatar || undefined,
+        }
+      : undefined
+  const otherUserAvatar =
+    conversationDetail?.other_user?.avatar_url || null
+  const otherUserBio =
+    conversationDetail?.other_user?.bio || undefined
+
+  const initialProfileData = otherUserId
+    ? {
+        id: otherUserId,
+        display_name: otherUserName,
+        bio: otherUserBio,
+        avatar_url: otherUserAvatar || undefined,
+      }
+    : undefined
 
   return (
     <div className="flex flex-col h-full bg-white">
@@ -238,16 +269,31 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
       {/* ヘッダー */}
       <div className="border-b border-neutral-200 bg-white px-4 py-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div
+            className={`flex items-center gap-3 ${
+              otherUserId ? 'cursor-pointer transition-opacity hover:opacity-80' : ''
+            }`}
+            onClick={() => {
+              if (otherUserId) {
+                setShowProfilePreview(true)
+              }
+            }}
+          >
             {/* プロフィール画像（グラデーションボーダー付き） */}
             <div className="relative">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-r from-orange-400 to-purple-500 p-0.5">
-                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center overflow-hidden">
-                  <img 
-                    src="/icon.png" 
-                    alt={otherUserName}
-                    className="w-full h-full object-cover"
-                  />
+              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-orange-400 to-purple-500 p-[3px]">
+                <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-gray-200">
+                  {otherUserAvatar ? (
+                    <img
+                      src={otherUserAvatar}
+                      alt={otherUserName}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-lg font-semibold text-neutral-600">
+                      {otherUserName?.charAt(0) || '👤'}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -257,7 +303,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                 {otherUserName}
               </h2>
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="h-2 w-2 rounded-full bg-red-500"></div>
                 <span className="text-sm text-gray-500">Online</span>
               </div>
             </div>
@@ -293,6 +339,15 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                       onClick={() => setShowMenu(false)}
                     />
                     <div className="absolute right-0 mt-1 w-48 bg-white border border-neutral-200 rounded-md shadow-lg z-20">
+                      <button
+                        onClick={() => {
+                          setShowMenu(false)
+                          setShowProfilePreview(true)
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100"
+                      >
+                        👤 プロフィールを見る
+                      </button>
                       <button
                         onClick={() => {
                           setShowMenu(false)
@@ -410,6 +465,13 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
               // ブロック成功後、チャット一覧に戻る
               window.location.href = '/chat'
             }}
+          />
+
+          <ProfilePreviewModal
+            userId={otherUserId}
+            isOpen={showProfilePreview}
+            onClose={() => setShowProfilePreview(false)}
+            initialData={initialProfileData}
           />
         </>
       )}

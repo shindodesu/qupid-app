@@ -6,10 +6,12 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { searchApi } from '@/lib/api/search'
 import { chatApi } from '@/lib/api/chat'
+import { getAvatarUrl } from '@/lib/utils/image'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { ReportDialog, BlockConfirm } from '@/components/features/safety'
+import { ProfilePreviewModal, type ProfilePreviewData } from '@/components/features/profile'
 
 export default function LikesPage() {
   const [reportUserId, setReportUserId] = useState<number | null>(null)
@@ -18,6 +20,8 @@ export default function LikesPage() {
   const [blockUserName, setBlockUserName] = useState<string>('')
   const [showReportDialog, setShowReportDialog] = useState(false)
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
+  const [profilePreviewUserId, setProfilePreviewUserId] = useState<number | null>(null)
+  const [profilePreviewInitial, setProfilePreviewInitial] = useState<Partial<ProfilePreviewData> | undefined>()
   
   const queryClient = useQueryClient()
   const router = useRouter()
@@ -101,9 +105,27 @@ export default function LikesPage() {
         </div>
       ) : likesData && likesData.likes && likesData.likes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {likesData.likes.map((like: any) => (
-            <Card key={like.user.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
+          {likesData.likes.map((like: any) => {
+            const previewData: Partial<ProfilePreviewData> = {
+              display_name: like.user.display_name,
+              bio: like.user.bio,
+              avatar_url: like.user.avatar_url ? getAvatarUrl(like.user.avatar_url) : undefined,
+              campus: like.user.campus,
+              faculty: like.user.faculty,
+              grade: like.user.grade,
+              sexuality: like.user.sexuality,
+              looking_for: like.user.looking_for,
+              tags: like.user.tags || [],
+            }
+
+            const openProfilePreview = () => {
+              setProfilePreviewUserId(like.user.id)
+              setProfilePreviewInitial(previewData)
+            }
+
+            return (
+              <Card key={like.user.id} className="transition-shadow hover:shadow-lg">
+                <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-neutral-900">
@@ -135,6 +157,12 @@ export default function LikesPage() {
                     </button>
                     
                     <div className="hidden group-hover:block absolute right-0 mt-1 w-48 bg-white border border-neutral-200 rounded-md shadow-lg z-20">
+                      <button
+                        onClick={openProfilePreview}
+                        className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100"
+                      >
+                        👤 プロフィールを見る
+                      </button>
                       <button
                         onClick={() => handleOpenReport(like.user.id, like.user.display_name)}
                         className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100"
@@ -169,6 +197,13 @@ export default function LikesPage() {
 
                 {like.is_matched ? (
                   <div className="space-y-3">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={openProfilePreview}
+                    >
+                      👤 プロフィールを見る
+                    </Button>
                     <div className="rounded-md bg-green-50 border border-green-200 text-green-700 text-center py-3">
                       🎉 このユーザーとは既にマッチが成立しています！
                     </div>
@@ -181,17 +216,27 @@ export default function LikesPage() {
                     </Button>
                   </div>
                 ) : (
-                  <Button
-                    className="w-full"
-                    onClick={() => handleLikeBack(like.user.id)}
-                    disabled={likeMutation.isPending}
-                  >
-                    💕 いいねを返す
-                  </Button>
+                  <div className="space-y-3">
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={openProfilePreview}
+                    >
+                      👤 プロフィールを見る
+                    </Button>
+                    <Button
+                      className="w-full"
+                      onClick={() => handleLikeBack(like.user.id)}
+                      disabled={likeMutation.isPending}
+                    >
+                      💕 いいねを返す
+                    </Button>
+                  </div>
                 )}
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            )
+          })}
         </div>
       ) : (
         <div className="flex items-center justify-center py-12">
@@ -239,6 +284,20 @@ export default function LikesPage() {
           }}
         />
       )}
+
+      <ProfilePreviewModal
+        userId={profilePreviewUserId}
+        isOpen={profilePreviewUserId !== null}
+        onClose={() => {
+          setProfilePreviewUserId(null)
+          setProfilePreviewInitial(undefined)
+        }}
+        initialData={
+          profilePreviewUserId && profilePreviewInitial
+            ? { id: profilePreviewUserId, ...profilePreviewInitial }
+            : undefined
+        }
+      />
     </div>
   )
 }

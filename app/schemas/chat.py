@@ -25,6 +25,7 @@ class UserInfo(BaseModel):
     id: int
     display_name: str
     bio: Optional[str]
+    avatar_url: Optional[str] = None
     is_online: bool = Field(default=False, description="オンライン状態")
     last_seen_at: Optional[datetime] = Field(None, description="最終アクセス時刻")
 

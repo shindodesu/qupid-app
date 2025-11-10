@@ -10,6 +10,7 @@ export interface UserInfo {
   id: number
   display_name: string
   bio?: string | null
+  avatar_url?: string | null
   is_online: boolean
   last_seen_at?: string | null
 }

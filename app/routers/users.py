@@ -9,7 +9,7 @@ from app.models.user import User
 from app.models.tag import Tag, UserTag
 from app.models.like import Like
 from app.models.block import Block
-from app.schemas.user import UserCreate, UserRead, InitialProfileCreate, PrivacySettingsUpdate
+from app.schemas.user import UserCreate, UserRead, UserWithTags, InitialProfileCreate, PrivacySettingsUpdate
 from app.schemas.tag import (
     UserTagAdd,
     UserTagRead,
@@ -729,7 +729,7 @@ async def get_user_suggestions(
 # 注意: このエンドポイントは必ず最後に定義すること！
 # より具体的なルート（/me, /search, /suggestions等）の後に配置する必要がある
 
-@router.get("/{user_id}", response_model=UserRead)
+@router.get("/{user_id}", response_model=UserWithTags)
 async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
     """
     指定されたIDのユーザーをDBから探して、見つからなければ404、見つかれば整形して返す
@@ -740,5 +740,49 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
     user = await db.get(User, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
-    return user
+    
+    # タグ情報を取得
+    user_tags_query = await db.execute(
+        select(UserTag)
+        .where(UserTag.user_id == user.id)
+        .options(selectinload(UserTag.tag))
+    )
+    user_tags = user_tags_query.scalars().all()
+    
+    tags = [
+        {
+            "id": user_tag.tag.id,
+            "name": user_tag.tag.name,
+            "description": user_tag.tag.description,
+        }
+        for user_tag in user_tags
+    ]
+    
+    return UserWithTags(
+        id=user.id,
+        email=None,  # プライバシー保護のため
+        display_name=user.display_name,
+        bio=user.bio if user.show_bio else None,
+        avatar_url=user.avatar_url,
+        campus=user.campus,
+        faculty=user.faculty if user.show_faculty else None,
+        grade=user.grade if user.show_grade else None,
+        birthday=user.birthday if user.show_birthday else None,
+        gender=user.gender if user.show_gender else None,
+        sexuality=user.sexuality if user.show_sexuality else None,
+        looking_for=user.looking_for if user.show_looking_for else None,
+        profile_completed=user.profile_completed,
+        is_active=user.is_active,
+        created_at=user.created_at,
+        show_faculty=user.show_faculty,
+        show_grade=user.show_grade,
+        show_birthday=user.show_birthday,
+        show_age=user.show_age,
+        show_gender=user.show_gender,
+        show_sexuality=user.show_sexuality,
+        show_looking_for=user.show_looking_for,
+        show_bio=user.show_bio,
+        show_tags=user.show_tags,
+        tags=tags if user.show_tags else [],
+    )
 

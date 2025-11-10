@@ -1,6 +1,8 @@
+import type { TagInfo } from '@/types/search'
+
 export type User = {
   id: number
-  email: string
+  email?: string | null
   display_name: string
   bio?: string
   avatar_url?: string
@@ -26,6 +28,7 @@ export type User = {
   show_looking_for?: boolean
   show_bio?: boolean
   show_tags?: boolean
+  tags?: TagInfo[]
 }
 
 export type InitialProfileData = {
@@ -36,6 +39,10 @@ export type InitialProfileData = {
 }
 
 export type UserUpdate = Partial<Pick<User, 'display_name' | 'bio' | 'campus' | 'faculty' | 'grade' | 'birthday' | 'gender' | 'sexuality' | 'looking_for'>>
+
+export type UserProfile = User & {
+  tags: TagInfo[]
+}
 
 export type LoginPayload = { 
   email: string

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useUser, useAuthStore } from '@/stores/auth'
 import { getAvatarUrl } from '@/lib/utils/image'
+import { ProfilePreviewCard, type ProfilePreviewData } from '@/components/features/profile'
 
 export default function ProfilePage() {
   const router = useRouter()
@@ -64,6 +65,21 @@ export default function ProfilePage() {
 
   // userDataまたはuserストアからデータを取得（フォールバック対応）
   const displayUserData = userData || user
+  const previewProfile = useMemo<ProfilePreviewData | undefined>(() => {
+    if (!displayUserData) return undefined
+    return {
+      id: displayUserData.id,
+      display_name: displayUserData.display_name,
+      bio: displayUserData.bio || undefined,
+      avatar_url: displayUserData.avatar_url ? getAvatarUrl(displayUserData.avatar_url) : undefined,
+      campus: displayUserData.campus || undefined,
+      faculty: displayUserData.faculty || undefined,
+      grade: displayUserData.grade || undefined,
+      sexuality: displayUserData.sexuality || undefined,
+      looking_for: displayUserData.looking_for || undefined,
+      tags: displayUserData.show_tags ? tagsData?.tags ?? [] : [],
+    }
+  }, [displayUserData, tagsData])
 
   // ページマウント時にクエリキャッシュを無効化（必要に応じて）
   useEffect(() => {
@@ -267,6 +283,12 @@ export default function ProfilePage() {
           あなたのプロフィール情報を管理
         </p>
       </div>
+
+      {previewProfile && (
+        <div className="mb-8">
+          <ProfilePreviewCard profile={previewProfile} />
+        </div>
+      )}
 
       {/* プロフィール画像 */}
       <Card className="mb-6">

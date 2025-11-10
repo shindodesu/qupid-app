@@ -194,17 +194,61 @@ async def get_sent_likes(
     # マッチング状態を高速に判定するための辞書を作成
     matched_user_ids = {like.liker_id for like in reverse_likes}
 
+    # タグ情報を一括取得
+    if liked_user_ids:
+        liked_user_tags_query = await db.execute(
+            select(UserTag)
+            .where(UserTag.user_id.in_(liked_user_ids))
+            .options(selectinload(UserTag.tag))
+        )
+        liked_user_tags = liked_user_tags_query.scalars().all()
+    else:
+        liked_user_tags = []
+
+    user_tags_dict = {}
+    for user_tag in liked_user_tags:
+        user_tags_dict.setdefault(user_tag.user_id, []).append(
+            {
+                "id": user_tag.tag.id,
+                "name": user_tag.tag.name,
+                "description": user_tag.tag.description,
+            }
+        )
+
     # マッチング状態をチェックして整形
     likes_read = []
     for like in likes:
         is_matched = like.liked_id in matched_user_ids
+        tags = user_tags_dict.get(like.liked_id, [])
+        if not like.liked.show_tags:
+            tags = []
 
-        liked_user = UserRead(
+        liked_user = UserWithTags(
             id=like.liked.id,
+            email=None,
             display_name=like.liked.display_name,
-            bio=like.liked.bio,
-            faculty=like.liked.faculty,
-            grade=like.liked.grade,
+            bio=like.liked.bio if like.liked.show_bio else None,
+            avatar_url=like.liked.avatar_url,
+            campus=like.liked.campus,
+            faculty=like.liked.faculty if like.liked.show_faculty else None,
+            grade=like.liked.grade if like.liked.show_grade else None,
+            birthday=like.liked.birthday if like.liked.show_birthday else None,
+            gender=like.liked.gender if like.liked.show_gender else None,
+            sexuality=like.liked.sexuality if like.liked.show_sexuality else None,
+            looking_for=like.liked.looking_for if like.liked.show_looking_for else None,
+            profile_completed=like.liked.profile_completed,
+            is_active=like.liked.is_active,
+            created_at=like.liked.created_at,
+            show_faculty=like.liked.show_faculty,
+            show_grade=like.liked.show_grade,
+            show_birthday=like.liked.show_birthday,
+            show_age=like.liked.show_age,
+            show_gender=like.liked.show_gender,
+            show_sexuality=like.liked.show_sexuality,
+            show_looking_for=like.liked.show_looking_for,
+            show_bio=like.liked.show_bio,
+            show_tags=like.liked.show_tags,
+            tags=tags,
         )
 
         likes_read.append(
@@ -298,14 +342,34 @@ async def get_received_likes(
     for like in likes:
         is_matched = like.liker_id in matched_user_ids
         tags = user_tags_dict.get(like.liker_id, [])
+        if not like.liker.show_tags:
+            tags = []
 
         liker_user = UserWithTags(
             id=like.liker.id,
-            email=like.liker.email,
+            email=None,
             display_name=like.liker.display_name,
-            bio=like.liker.bio,
-            faculty=like.liker.faculty,
-            grade=like.liker.grade,
+            bio=like.liker.bio if like.liker.show_bio else None,
+            avatar_url=like.liker.avatar_url,
+            campus=like.liker.campus,
+            faculty=like.liker.faculty if like.liker.show_faculty else None,
+            grade=like.liker.grade if like.liker.show_grade else None,
+            birthday=like.liker.birthday if like.liker.show_birthday else None,
+            gender=like.liker.gender if like.liker.show_gender else None,
+            sexuality=like.liker.sexuality if like.liker.show_sexuality else None,
+            looking_for=like.liker.looking_for if like.liker.show_looking_for else None,
+            profile_completed=like.liker.profile_completed,
+            is_active=like.liker.is_active,
+            created_at=like.liker.created_at,
+            show_faculty=like.liker.show_faculty,
+            show_grade=like.liker.show_grade,
+            show_birthday=like.liker.show_birthday,
+            show_age=like.liker.show_age,
+            show_gender=like.liker.show_gender,
+            show_sexuality=like.liker.show_sexuality,
+            show_looking_for=like.liker.show_looking_for,
+            show_bio=like.liker.show_bio,
+            show_tags=like.liker.show_tags,
             tags=tags,
         )
 
@@ -448,13 +512,13 @@ async def get_matches(
     # ユーザーIDごとにタグを整理
     user_tags_dict = {}
     for user_tag in all_user_tags:
-        if user_tag.user_id not in user_tags_dict:
-            user_tags_dict[user_tag.user_id] = []
-        user_tags_dict[user_tag.user_id].append({
-            "id": user_tag.tag.id,
-            "name": user_tag.tag.name,
-            "description": user_tag.tag.description,
-        })
+        user_tags_dict.setdefault(user_tag.user_id, []).append(
+            {
+                "id": user_tag.tag.id,
+                "name": user_tag.tag.name,
+                "description": user_tag.tag.description,
+            }
+        )
 
     # レスポンス整形
     matches = []
@@ -467,13 +531,34 @@ async def get_matches(
 
         # ユーザーのタグを取得
         tags = user_tags_dict.get(user.id, [])
+        if not user.show_tags:
+            tags = []
 
         user_with_tags = UserWithTags(
             id=user.id,
+            email=None,
             display_name=user.display_name,
-            bio=user.bio,
-            faculty=user.faculty,
-            grade=user.grade,
+            bio=user.bio if user.show_bio else None,
+            avatar_url=user.avatar_url,
+            campus=user.campus,
+            faculty=user.faculty if user.show_faculty else None,
+            grade=user.grade if user.show_grade else None,
+            birthday=user.birthday if user.show_birthday else None,
+            gender=user.gender if user.show_gender else None,
+            sexuality=user.sexuality if user.show_sexuality else None,
+            looking_for=user.looking_for if user.show_looking_for else None,
+            profile_completed=user.profile_completed,
+            is_active=user.is_active,
+            created_at=user.created_at,
+            show_faculty=user.show_faculty,
+            show_grade=user.show_grade,
+            show_birthday=user.show_birthday,
+            show_age=user.show_age,
+            show_gender=user.show_gender,
+            show_sexuality=user.show_sexuality,
+            show_looking_for=user.show_looking_for,
+            show_bio=user.show_bio,
+            show_tags=user.show_tags,
             tags=tags,
         )
 
@@ -557,13 +642,34 @@ async def get_match_status(
             }
             for ut in user_tags
         ]
+        if not other_user.show_tags:
+            tags = []
 
         user_with_tags = UserWithTags(
             id=other_user.id,
+            email=None,
             display_name=other_user.display_name,
-            bio=other_user.bio,
-            faculty=other_user.faculty,
-            grade=other_user.grade,
+            bio=other_user.bio if other_user.show_bio else None,
+            avatar_url=other_user.avatar_url,
+            campus=other_user.campus,
+            faculty=other_user.faculty if other_user.show_faculty else None,
+            grade=other_user.grade if other_user.show_grade else None,
+            birthday=other_user.birthday if other_user.show_birthday else None,
+            gender=other_user.gender if other_user.show_gender else None,
+            sexuality=other_user.sexuality if other_user.show_sexuality else None,
+            looking_for=other_user.looking_for if other_user.show_looking_for else None,
+            profile_completed=other_user.profile_completed,
+            is_active=other_user.is_active,
+            created_at=other_user.created_at,
+            show_faculty=other_user.show_faculty,
+            show_grade=other_user.show_grade,
+            show_birthday=other_user.show_birthday,
+            show_age=other_user.show_age,
+            show_gender=other_user.show_gender,
+            show_sexuality=other_user.show_sexuality,
+            show_looking_for=other_user.show_looking_for,
+            show_bio=other_user.show_bio,
+            show_tags=other_user.show_tags,
             tags=tags,
         )
 

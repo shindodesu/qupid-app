@@ -29,7 +29,7 @@ class LikeResponse(BaseModel):
 
 class SentLikeRead(BaseModel):
     id: int
-    liked_user: UserRead
+    liked_user: UserWithTags
     created_at: datetime
     is_matched: bool
 
