@@ -39,7 +39,7 @@ class SentLikeRead(BaseModel):
 
 class ReceivedLikeRead(BaseModel):
     id: int
-    liker_user: UserRead
+    user: UserWithTags
     created_at: datetime
     is_matched: bool
 

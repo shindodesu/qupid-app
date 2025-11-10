@@ -271,23 +271,48 @@ async def get_received_likes(
     # マッチング状態を高速に判定するための辞書を作成
     matched_user_ids = {like.liked_id for like in my_likes}
 
+    # パフォーマンス最適化：全てのユーザータグを一度に取得
+    if liker_user_ids:
+        user_tags_query = await db.execute(
+            select(UserTag)
+            .where(UserTag.user_id.in_(liker_user_ids))
+            .options(selectinload(UserTag.tag))
+        )
+        all_user_tags = user_tags_query.scalars().all()
+    else:
+        all_user_tags = []
+
+    # ユーザーIDごとにタグを整理
+    user_tags_dict = {}
+    for user_tag in all_user_tags:
+        user_tags_dict.setdefault(user_tag.user_id, []).append(
+            {
+                "id": user_tag.tag.id,
+                "name": user_tag.tag.name,
+                "description": user_tag.tag.description,
+            }
+        )
+
     # マッチング状態をチェックして整形
     likes_read = []
     for like in likes:
         is_matched = like.liker_id in matched_user_ids
+        tags = user_tags_dict.get(like.liker_id, [])
 
-        liker_user = UserRead(
+        liker_user = UserWithTags(
             id=like.liker.id,
+            email=like.liker.email,
             display_name=like.liker.display_name,
             bio=like.liker.bio,
             faculty=like.liker.faculty,
             grade=like.liker.grade,
+            tags=tags,
         )
 
         likes_read.append(
             ReceivedLikeRead(
                 id=like.id,
-                liker_user=liker_user,
+                user=liker_user,
                 created_at=like.created_at,
                 is_matched=is_matched,
             )
