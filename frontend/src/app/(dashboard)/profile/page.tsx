@@ -73,10 +73,10 @@ export default function ProfilePage() {
       bio: displayUserData.bio || undefined,
       avatar_url: displayUserData.avatar_url ? getAvatarUrl(displayUserData.avatar_url) : undefined,
       campus: displayUserData.campus || undefined,
-      faculty: displayUserData.faculty || undefined,
-      grade: displayUserData.grade || undefined,
-      sexuality: displayUserData.sexuality || undefined,
-      looking_for: displayUserData.looking_for || undefined,
+      faculty: displayUserData.show_faculty ? displayUserData.faculty || undefined : undefined,
+      grade: displayUserData.show_grade ? displayUserData.grade || undefined : undefined,
+      sexuality: displayUserData.show_sexuality ? displayUserData.sexuality || undefined : undefined,
+      looking_for: displayUserData.show_looking_for ? displayUserData.looking_for || undefined : undefined,
       tags: displayUserData.show_tags ? tagsData?.tags ?? [] : [],
     }
   }, [displayUserData, tagsData])
