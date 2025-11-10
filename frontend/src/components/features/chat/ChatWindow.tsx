@@ -7,7 +7,6 @@ import { MessageBubble } from './MessageBubble'
 import { MessageComposer } from './MessageComposer'
 import { ReportDialog, BlockConfirm } from '@/components/features/safety'
 import { ProfilePreviewModal } from '@/components/features/profile'
-import { ProfilePreviewModal } from '@/components/features/profile'
 import { Button } from '@/components/ui/Button'
 import { useUser } from '@/stores/auth'
 import { useWebSocket } from '@/hooks/useWebSocket'
@@ -27,7 +26,6 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const [showReportDialog, setShowReportDialog] = useState(false)
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
-  const [showProfilePreview, setShowProfilePreview] = useState(false)
   const [showProfilePreview, setShowProfilePreview] = useState(false)
 
   // WebSocket接続
@@ -241,19 +239,6 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
           avatar_url: otherUserAvatar || undefined,
         }
       : undefined
-  const otherUserAvatar =
-    conversationDetail?.other_user?.avatar_url || null
-  const otherUserBio =
-    conversationDetail?.other_user?.bio || undefined
-
-  const initialProfileData = otherUserId
-    ? {
-        id: otherUserId,
-        display_name: otherUserName,
-        bio: otherUserBio,
-        avatar_url: otherUserAvatar || undefined,
-      }
-    : undefined
 
   return (
     <div className="flex flex-col h-full bg-white">
