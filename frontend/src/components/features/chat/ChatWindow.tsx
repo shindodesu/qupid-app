@@ -30,6 +30,12 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   const { isConnected, subscribe, sendTyping } = useWebSocket()
   const [typingUsers, setTypingUsers] = useState<Set<number>>(new Set())
   
+  // 会話詳細取得
+  const { data: conversationDetail } = useQuery({
+    queryKey: ['conversation', conversationId],
+    queryFn: () => chatApi.getConversation(conversationId),
+  })
+  
   // メッセージ履歴取得（ポーリング削除）
   const { data: messagesData, isLoading, error } = useQuery({
     queryKey: ['messages', conversationId],
@@ -94,6 +100,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
           sender_name: user.display_name,
           is_read: false,
           created_at: new Date().toISOString(),
+          message_type: 'text',
         }
         
         queryClient.setQueryData(['messages', conversationId], {
@@ -206,9 +213,16 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
   }
 
   const messages = messagesData?.messages || []
-  const otherUser = messages[0] ? messages.find(m => m.sender_id !== user?.id) : null
-  const otherUserId = otherUser?.sender_id
-  const otherUserName = otherUser?.sender_name || '会話'
+  const otherUserFromMessages = messages.find((m) => m.sender_id !== user?.id)
+
+  const otherUserId =
+    conversationDetail?.other_user?.id ??
+    otherUserFromMessages?.sender_id ??
+    null
+  const otherUserName =
+    conversationDetail?.other_user?.display_name ??
+    otherUserFromMessages?.sender_name ??
+    '会話'
 
   return (
     <div className="flex flex-col h-full bg-white">

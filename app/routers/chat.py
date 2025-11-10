@@ -411,6 +411,64 @@ async def create_conversation(
     )
 
 
+@router.get("/{conversation_id}", response_model=ConversationDetail)
+async def get_conversation_detail(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    特定の会話詳細を取得
+
+    - 会話の参加者のみアクセス可能
+    - 相手ユーザー情報を含む
+    """
+
+    conversation = await db.get(Conversation, conversation_id)
+    if not conversation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Conversation not found",
+        )
+
+    # 会話メンバーを取得
+    members_query = await db.execute(
+        select(ConversationMember)
+        .where(ConversationMember.conversation_id == conversation_id)
+        .options(selectinload(ConversationMember.user))
+    )
+    members = members_query.scalars().all()
+
+    # 現在のユーザーが会話に参加しているか確認
+    if not any(member.user_id == current_user.id for member in members):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        )
+
+    # 相手ユーザー情報
+    other_member = next((member for member in members if member.user_id != current_user.id), None)
+    if not other_member or not other_member.user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Other user not found",
+        )
+
+    return ConversationDetail(
+        id=conversation.id,
+        type=conversation.type,
+        title=conversation.title,
+        other_user=UserInfo(
+            id=other_member.user.id,
+            display_name=other_member.user.display_name,
+            bio=other_member.user.bio,
+            is_online=other_member.user.is_online,
+            last_seen_at=other_member.user.last_seen_at,
+        ),
+        created_at=conversation.created_at,
+    )
+
+
 # ==================== メッセージ履歴取得エンドポイント ====================
 
 @router.get("/{conversation_id}/messages", response_model=MessageListResponse)

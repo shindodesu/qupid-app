@@ -51,6 +51,21 @@ export const chatApi = {
   },
 
   /**
+   * 会話詳細を取得
+   */
+  async getConversation(conversationId: number): Promise<ConversationDetail> {
+    try {
+      return await apiClient.get<ConversationDetail>(`/conversations/${conversationId}`)
+    } catch (error: any) {
+      throw new ChatApiError(
+        error.message || '会話情報の取得に失敗しました',
+        error.status,
+        error.code
+      )
+    }
+  },
+
+  /**
    * 会話を作成
    */
   async createConversation(

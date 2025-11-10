@@ -79,7 +79,7 @@ export const MessageComposer = memo(function MessageComposer({
 
   return (
     <div className="border-t border-neutral-200 bg-white p-4">
-      <div className="flex items-center gap-3">
+      <form onSubmit={handleSubmit} className="flex items-end gap-3">
         <div className="flex-1 relative">
           <textarea
             value={content}
@@ -87,7 +87,7 @@ export const MessageComposer = memo(function MessageComposer({
             onKeyDown={handleKeyDown}
             disabled={disabled}
             placeholder={placeholder}
-            className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50 max-h-32 min-h-[3rem]"
+            className="w-full resize-none rounded-2xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 placeholder:text-neutral-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50 max-h-32 min-h-[3rem]"
             rows={1}
             style={{
               height: 'auto',
@@ -124,7 +124,21 @@ export const MessageComposer = memo(function MessageComposer({
             <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
           </svg>
         </button>
-      </div>
+
+        {/* 送信ボタン */}
+        <Button
+          type="submit"
+          disabled={disabled || !content.trim()}
+          className="h-12 px-4 rounded-full bg-primary-500 hover:bg-primary-600 text-white disabled:bg-primary-300 disabled:cursor-not-allowed"
+        >
+          <span className="flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0-9v9" />
+            </svg>
+            送信
+          </span>
+        </Button>
+      </form>
     </div>
   )
 })
