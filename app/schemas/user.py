@@ -47,7 +47,7 @@ class UserRead(BaseModel):
 # 初回プロフィール登録用スキーマ
 class InitialProfileCreate(BaseModel):
     display_name: str
-    birthday: date
+    birthday: date | None = None
     gender: str
     sexuality: str
     looking_for: str

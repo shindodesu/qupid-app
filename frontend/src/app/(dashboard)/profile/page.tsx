@@ -28,9 +28,10 @@ export default function ProfilePage() {
   const [isMultipleSexualityMode, setIsMultipleSexualityMode] = useState(false)
   
   // 「その他」の自由記述用の状態
-  const [otherGenderText, setOtherGenderText] = useState('')
   const [otherSexualityText, setOtherSexualityText] = useState('')
   const [otherLookingForText, setOtherLookingForText] = useState('')
+
+  const genderOptions = ['男性', '女性', 'インターセックス']
   const [formData, setFormData] = useState({
     display_name: '',
     bio: '',
@@ -82,12 +83,6 @@ export default function ProfilePage() {
       const looking_for = sourceData.looking_for || ''
       
       // 「その他:」で始まる値を抽出
-      if (gender.startsWith('その他:')) {
-        setOtherGenderText(gender.replace('その他: ', ''))
-      } else {
-        setOtherGenderText('')
-      }
-      
       if (sexuality.startsWith('その他:')) {
         setOtherSexualityText(sexuality.replace('その他: ', ''))
       } else {
@@ -493,12 +488,6 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    // 既に「その他:」で始まる値が設定されている場合、テキストを抽出
-                    if (formData.gender?.startsWith('その他:')) {
-                      setOtherGenderText(formData.gender.replace('その他: ', ''))
-                    } else {
-                      setOtherGenderText('')
-                    }
                     setShowGenderModal(true)
                   }}
                   className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-left hover:bg-neutral-50"
@@ -878,20 +867,15 @@ export default function ProfilePage() {
           <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold mb-4 text-neutral-900">体の性別を選択</h3>
             <div className="space-y-2">
-              {['男性', '女性', 'ノンバイナリー', 'その他', '回答しない'].map((option) => (
+              {genderOptions.map((option) => (
                 <button
                   key={option}
                   onClick={() => {
-                    if (option === 'その他') {
-                      setFormData({ ...formData, gender: 'その他' })
-                    } else {
-                      setFormData({ ...formData, gender: option })
-                      setOtherGenderText('')
-                      setShowGenderModal(false)
-                    }
+                    setFormData({ ...formData, gender: option })
+                    setShowGenderModal(false)
                   }}
                   className={`w-full p-3 text-left hover:bg-neutral-50 rounded-lg ${
-                    (formData.gender === option || (option === 'その他' && formData.gender?.startsWith('その他'))) && option !== 'その他'
+                    formData.gender === option
                       ? 'bg-primary-50 text-primary-600 font-medium'
                       : 'text-neutral-900'
                   }`}
@@ -900,49 +884,12 @@ export default function ProfilePage() {
                 </button>
               ))}
             </div>
-            {(formData.gender === 'その他' || formData.gender?.startsWith('その他')) && (
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-neutral-900 mb-2">
-                  具体的に入力してください
-                </label>
-                <input
-                  type="text"
-                  value={otherGenderText}
-                  onChange={(e) => {
-                    setOtherGenderText(e.target.value)
-                    setFormData({ 
-                      ...formData, 
-                      gender: e.target.value ? `その他: ${e.target.value}` : 'その他'
-                    })
-                  }}
-                  placeholder="例: 両性具有など"
-                  className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm"
-                  autoFocus
-                />
-              </div>
-            )}
             <div className="flex gap-2 mt-4">
-              {(formData.gender === 'その他' || formData.gender?.startsWith('その他')) && (
-                <Button
-                  onClick={() => {
-                    if (otherGenderText.trim()) {
-                      setShowGenderModal(false)
-                    }
-                  }}
-                  className="flex-1 bg-primary-500 text-white"
-                  disabled={!otherGenderText.trim()}
-                >
-                  確定
-                </Button>
-              )}
               <Button
                 onClick={() => {
                   setShowGenderModal(false)
-                  if ((formData.gender === 'その他' || formData.gender?.startsWith('その他')) && !otherGenderText.trim()) {
-                    setFormData({ ...formData, gender: '' })
-                  }
                 }}
-                className={`${(formData.gender === 'その他' || formData.gender?.startsWith('その他')) ? 'flex-1' : 'w-full'} bg-neutral-200 text-neutral-900`}
+                className="w-full bg-neutral-200 text-neutral-900"
               >
                 キャンセル
               </Button>

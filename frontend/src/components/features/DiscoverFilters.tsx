@@ -147,19 +147,17 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
         {/* 性別フィルター */}
         <div>
           <label className="block text-sm text-neutral-900 mb-3">体の性別</label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="space-y-2">
             {sexOptions.map((option) => (
-              <button
-                key={option.value}
-                onClick={() => handleSexToggle(option.value)}
-                className={`py-3 px-4 rounded-xl font-medium transition-colors ${
-                  filters.sex?.includes(option.value)
-                    ? 'bg-red-500 text-white'
-                    : 'bg-white text-neutral-900 border border-neutral-300 hover:bg-neutral-50'
-                }`}
-              >
-                {option.label}
-              </button>
+              <label key={option.value} className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={filters.sex?.includes(option.value) || false}
+                  onChange={() => handleSexToggle(option.value)}
+                  className="w-4 h-4 text-pink-500 border-neutral-300 rounded focus:ring-pink-500"
+                />
+                <span className="text-neutral-900">{option.label}</span>
+              </label>
             ))}
           </div>
         </div>

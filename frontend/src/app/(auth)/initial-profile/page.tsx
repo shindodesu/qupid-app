@@ -28,7 +28,6 @@ export default function InitialProfilePage() {
   
   const [formData, setFormData] = useState<InitialProfileData>({
     display_name: '',
-    birthday: '',
     gender: '',
     sexuality: '',
     looking_for: ''
@@ -46,7 +45,6 @@ export default function InitialProfilePage() {
   const [showLookingForModal, setShowLookingForModal] = useState(false)
   
   // 「その他」の自由記述用の状態
-  const [otherGenderText, setOtherGenderText] = useState('')
   const [otherSexualityText, setOtherSexualityText] = useState('')
   const [otherLookingForText, setOtherLookingForText] = useState('')
 
@@ -55,7 +53,6 @@ export default function InitialProfilePage() {
       console.log('[InitialProfile] Submitting profile data:', JSON.stringify(data, null, 2))
       console.log('[InitialProfile] Data types:', {
         display_name: typeof data.display_name,
-        birthday: typeof data.birthday,
         gender: typeof data.gender,
         sexuality: typeof data.sexuality,
         looking_for: typeof data.looking_for
@@ -177,10 +174,9 @@ export default function InitialProfilePage() {
     console.log('[InitialProfile] Form submit triggered', formData)
     
     // バリデーション
-    if (!formData.display_name || !formData.birthday || !formData.gender || !formData.sexuality || !formData.looking_for) {
+    if (!formData.display_name || !formData.gender || !formData.sexuality || !formData.looking_for) {
       console.log('[InitialProfile] Validation failed', {
         display_name: formData.display_name,
-        birthday: formData.birthday,
         gender: formData.gender,
         sexuality: formData.sexuality,
         looking_for: formData.looking_for
@@ -195,10 +191,6 @@ export default function InitialProfilePage() {
 
     console.log('[InitialProfile] Validation passed, submitting...')
     completeProfileMutation.mutate(formData)
-  }
-
-  const handleSkip = () => {
-    router.push('/profile')
   }
 
   const genderOptions = [
@@ -216,14 +208,8 @@ export default function InitialProfilePage() {
   return (
     <div className="min-h-screen bg-white text-gray-900">
       {/* ヘッダー */}
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-center p-4">
         <h1 className="text-xl font-bold text-gray-900">プロフィール登録</h1>
-        <button 
-          onClick={handleSkip}
-          className="text-red-500 text-sm font-medium"
-        >
-          スキップ
-        </button>
       </div>
 
       <div className="px-4 py-8">
@@ -278,27 +264,6 @@ export default function InitialProfilePage() {
               className="w-full"
               required
             />
-          </div>
-
-          {/* 生年月日 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
-              生年月日
-            </label>
-            <div className="relative">
-              <input
-                id="birthday-input"
-                type="date"
-                value={formData.birthday}
-                onChange={(e) => {
-                  console.log('[InitialProfile] Birthday changed:', e.target.value)
-                  setFormData({ ...formData, birthday: e.target.value })
-                }}
-                className="w-full p-4 bg-pink-100 rounded-lg text-gray-900 border-none focus:outline-none focus:ring-2 focus:ring-red-500"
-                required
-                max={new Date().toISOString().split('T')[0]}
-              />
-            </div>
           </div>
 
           {/* 体の性別 */}
@@ -386,6 +351,10 @@ export default function InitialProfilePage() {
             {completeProfileMutation.isPending ? '登録中...' : '確認'}
           </Button>
         </form>
+
+        <p className="mt-6 text-sm text-gray-600 text-center">
+          ※ これらの情報は後からプライバシー設定で非公開にすることもできます。
+        </p>
       </div>
 
       {/* 体の性別選択モーダル */}

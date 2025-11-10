@@ -30,7 +30,6 @@ export type User = {
 
 export type InitialProfileData = {
   display_name: string
-  birthday: string
   gender: string
   sexuality: string
   looking_for: string
