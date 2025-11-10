@@ -469,6 +469,8 @@ export default function ProfilePage() {
                   { value: '2年生', label: '2年生' },
                   { value: '3年生', label: '3年生' },
                   { value: '4年生', label: '4年生' },
+                  { value: '学部5年', label: '学部5年' },
+                  { value: '学部6年', label: '学部6年' },
                   { value: '修士1年', label: '修士1年' },
                   { value: '修士2年', label: '修士2年' },
                   { value: '博士1年', label: '博士1年' },
