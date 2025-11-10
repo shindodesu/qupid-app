@@ -29,7 +29,7 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
   const sexOptions: { value: Sex; label: string }[] = [
     { value: 'male', label: '男性' },
     { value: 'female', label: '女性' },
-    { value: 'other', label: 'その他' },
+    { value: 'other', label: 'インターセックス' },
   ]
 
   // 関係性目標オプション
