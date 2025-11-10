@@ -148,13 +148,19 @@ export default function LikesPage() {
                   </div>
                 )}
 
-                <Button
-                  className="w-full"
-                  onClick={() => handleLikeBack(like.user.id)}
-                  disabled={likeMutation.isPending}
-                >
-                  💕 いいねを返す
-                </Button>
+                {like.is_matched ? (
+                  <div className="rounded-md bg-green-50 border border-green-200 text-green-700 text-center py-3">
+                    🎉 このユーザーとは既にマッチが成立しています！
+                  </div>
+                ) : (
+                  <Button
+                    className="w-full"
+                    onClick={() => handleLikeBack(like.user.id)}
+                    disabled={likeMutation.isPending}
+                  >
+                    💕 いいねを返す
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ))}
