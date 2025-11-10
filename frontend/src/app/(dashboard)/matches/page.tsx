@@ -3,7 +3,9 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { searchApi } from '@/lib/api/search'
+import { chatApi } from '@/lib/api/chat'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -18,6 +20,7 @@ export default function LikesPage() {
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
   
   const queryClient = useQueryClient()
+  const router = useRouter()
 
   // 受け取ったいいね一覧取得
   const { data: likesData, isLoading } = useQuery({
@@ -31,6 +34,22 @@ export default function LikesPage() {
     onSuccess: () => {
       // いいね一覧を再取得
       queryClient.invalidateQueries({ queryKey: ['received-likes'] })
+    },
+  })
+
+  // チャットを開始するミューテーション
+  const startChatMutation = useMutation({
+    mutationFn: (userId: number) => chatApi.createConversation(userId),
+    onSuccess: (conversation) => {
+      queryClient.invalidateQueries({ queryKey: ['conversations'] })
+      router.push(`/chat/${conversation.id}`)
+    },
+    onError: (error: any) => {
+      console.error('Failed to start chat:', error)
+      alert(
+        error?.message ||
+          'チャットを開始できませんでした。時間を置いてもう一度お試しください。'
+      )
     },
   })
 
@@ -149,8 +168,17 @@ export default function LikesPage() {
                 )}
 
                 {like.is_matched ? (
-                  <div className="rounded-md bg-green-50 border border-green-200 text-green-700 text-center py-3">
-                    🎉 このユーザーとは既にマッチが成立しています！
+                  <div className="space-y-3">
+                    <div className="rounded-md bg-green-50 border border-green-200 text-green-700 text-center py-3">
+                      🎉 このユーザーとは既にマッチが成立しています！
+                    </div>
+                    <Button
+                      className="w-full"
+                      onClick={() => startChatMutation.mutate(like.user.id)}
+                      disabled={startChatMutation.isPending}
+                    >
+                      💬 チャットを開く
+                    </Button>
                   </div>
                 ) : (
                   <Button
