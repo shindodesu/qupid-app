@@ -8,6 +8,12 @@ const AUTH_ROUTES = [
   '/email-login',
 ]
 
+// 完全公開ページ（ログイン状態に関わらず閲覧可能）
+const PUBLIC_PAGES = [
+  '/terms',
+  '/privacy',
+]
+
 // 初回プロフィール入力ページ（認証必要）
 const INITIAL_PROFILE_ROUTE = '/initial-profile'
 
@@ -34,7 +40,13 @@ export function authMiddleware(request: NextRequest) {
     console.log(`[Middleware] Public resource, allowing access: ${pathname}`)
     return NextResponse.next()
   }
-  
+
+  // 完全公開ページは認証チェックをスキップ
+  if (PUBLIC_PAGES.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
+    console.log(`[Middleware] Public page, allowing access: ${pathname}`)
+    return NextResponse.next()
+  }
+
   // 認証トークンを取得
   const token = request.cookies.get('auth-token')?.value
   
