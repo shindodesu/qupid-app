@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { useUser, useAuthStore } from '@/stores/auth'
 import { getAvatarUrl } from '@/lib/utils/image'
-import { ProfilePreviewCard, type ProfilePreviewData } from '@/components/features/profile'
+import { ProfilePreviewCard, type ProfilePreviewData } from '@/components/features/profile/ProfilePreviewModal'
 
 export default function ProfilePage() {
   const router = useRouter()

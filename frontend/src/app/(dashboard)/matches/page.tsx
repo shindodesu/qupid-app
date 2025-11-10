@@ -11,7 +11,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { ReportDialog, BlockConfirm } from '@/components/features/safety'
-import { ProfilePreviewModal, type ProfilePreviewData } from '@/components/features/profile'
+import { ProfilePreviewModal, type ProfilePreviewData } from '@/components/features/profile/ProfilePreviewModal'
 
 export default function LikesPage() {
   const [reportUserId, setReportUserId] = useState<number | null>(null)
