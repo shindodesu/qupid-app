@@ -15,7 +15,7 @@ class UserCreate(BaseModel):
 
 class UserRead(BaseModel):
     id: int
-    email: str
+    email: Optional[EmailStr] = None
     display_name: str
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
