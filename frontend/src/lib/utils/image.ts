@@ -4,12 +4,17 @@
 
 // 実行時に環境変数を取得（クライアント側でのみ有効）
 function getApiUrl(): string {
-  if (typeof window !== 'undefined') {
-    // クライアント側では環境変数またはカスタムメタタグから取得
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  // クライアント側とサーバー側の両方で環境変数から取得
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  
+  // 環境変数が空文字列やundefinedの場合はデフォルト値を使用
+  if (!apiUrl || apiUrl.trim() === '') {
+    console.warn('[getApiUrl] NEXT_PUBLIC_API_URL is not set, using default:', 'http://localhost:8000')
+    return 'http://localhost:8000'
   }
-  // サーバー側では環境変数から取得
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  
+  // 末尾のスラッシュを削除
+  return apiUrl.replace(/\/$/, '')
 }
 
 /**
@@ -20,6 +25,12 @@ function getApiUrl(): string {
 export function getAvatarUrl(avatarUrl: string | null | undefined): string | null {
   if (!avatarUrl) {
     console.log('[getAvatarUrl] No avatar URL provided')
+    return null
+  }
+  
+  // 空文字列の場合はnullを返す
+  if (avatarUrl.trim() === '') {
+    console.log('[getAvatarUrl] Empty avatar URL provided')
     return null
   }
   
@@ -35,6 +46,13 @@ export function getAvatarUrl(avatarUrl: string | null | undefined): string | nul
   // 先頭のスラッシュを削除して結合
   const cleanPath = avatarUrl.startsWith('/') ? avatarUrl.slice(1) : avatarUrl
   const apiUrl = getApiUrl()
+  
+  // API URLが正しく設定されているか確認
+  if (!apiUrl || apiUrl.trim() === '') {
+    console.error('[getAvatarUrl] API URL is not set correctly')
+    return null
+  }
+  
   const fullUrl = `${apiUrl}/${cleanPath}`
   console.log('[getAvatarUrl] API URL:', apiUrl)
   console.log('[getAvatarUrl] Constructed URL:', fullUrl)
@@ -47,7 +65,7 @@ export function getAvatarUrl(avatarUrl: string | null | undefined): string | nul
  * @returns 完全なURL
  */
 export function getImageUrl(filePath: string | null | undefined): string | null {
-  if (!filePath) return null
+  if (!filePath || filePath.trim() === '') return null
   
   // 既に完全なURLの場合はそのまま返す
   if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
@@ -57,6 +75,13 @@ export function getImageUrl(filePath: string | null | undefined): string | null 
   // 相対パスの場合、APIのベースURLを追加
   const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath
   const apiUrl = getApiUrl()
+  
+  // API URLが正しく設定されているか確認
+  if (!apiUrl || apiUrl.trim() === '') {
+    console.error('[getImageUrl] API URL is not set correctly')
+    return null
+  }
+  
   return `${apiUrl}/${cleanPath}`
 }
 
