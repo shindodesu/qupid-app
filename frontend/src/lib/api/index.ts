@@ -83,7 +83,13 @@ class ApiClient {
       throw new Error(errorMessage)
     }
 
-    return response.json()
+    try {
+      const json = await response.json()
+      return json
+    } catch (jsonError) {
+      console.error('[API] Failed to parse response as JSON:', jsonError)
+      throw new Error('レスポンスの解析に失敗しました')
+    }
   }
 
   // GET request

@@ -29,6 +29,7 @@ export default function DiscoverPage() {
   const handleLike = async (userId: number) => {
     try {
       const response = await searchApi.sendLike(userId)
+      console.log('[Like] Response received:', response)
       
       if (response.is_match) {
         toast({
@@ -51,10 +52,12 @@ export default function DiscoverPage() {
       if (currentIndex >= users.length - 3) {
         refetch()
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('[Like] Error sending like:', error)
+      const errorMessage = error?.message || 'いいねの送信に失敗しました'
       toast({
         title: "エラーが発生しました",
-        description: "いいねの送信に失敗しました。",
+        description: errorMessage,
         type: "error"
       })
     }

@@ -95,7 +95,22 @@ export interface SendLikeRequest {
 // いいね送信レスポンス
 export interface SendLikeResponse {
   message: string
+  like: {
+    id: number
+    liker_id: number
+    liked_id: number
+    created_at: string
+  }
   is_match: boolean
-  match_id?: number
+  match?: {
+    id: number
+    user: {
+      id: number
+      display_name: string
+      bio?: string | null
+      faculty?: string | null
+      grade?: string | null
+    }
+  } | null
 }
 
