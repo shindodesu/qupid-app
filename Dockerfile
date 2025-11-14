@@ -20,12 +20,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # アプリケーションコードをコピー
 COPY . .
 
+# 起動スクリプトを実行可能にする
+RUN chmod +x start.sh
+
 # ポート設定（Renderが$PORTを提供）
 EXPOSE $PORT
 
-# データベースマイグレーションとサーバー起動
-CMD alembic upgrade head && \
-    gunicorn app.main:app \
-    --workers 4 \
-    --worker-class uvicorn.workers.UvicornWorker \
-    --bind 0.0.0.0:$PORT
+# 起動スクリプトを実行（リトライロジック付き）
+CMD ["./start.sh"]
