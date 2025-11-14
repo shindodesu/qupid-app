@@ -94,6 +94,10 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     Returns:
         パスワードが一致する場合はTrue、それ以外はFalse
     """
+    # Noneまたは空文字列の場合はFalseを返す
+    if not hashed_password or not plain_password:
+        return False
+    
     try:
         return pwd_context.verify(plain_password, hashed_password)
     except Exception as e:

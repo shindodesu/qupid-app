@@ -137,6 +137,9 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     
     すべての予期しないエラーをキャッチしてSentryに送信
     """
+    # リクエスト情報をログに記録
+    logger.error(f"Unhandled exception in {request.method} {request.url.path}")
+    logger.error(f"Request headers: {dict(request.headers)}")
     logger.exception(f"Unhandled exception: {str(exc)}")
     # Sentryが自動的にキャッチ
     

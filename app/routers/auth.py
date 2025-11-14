@@ -9,6 +9,9 @@ from app.core.security import create_access_token, hash_password, verify_passwor
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, Token
 from app.schemas.user import UserRead
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -39,6 +42,13 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
             detail="メールアドレスまたはパスワードが正しくありません"
         )
     
+    # パスワードが設定されていない場合（古いデータなど）
+    if not user.hashed_password:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="メールアドレスまたはパスワードが正しくありません"
+        )
+    
     # パスワード検証
     if not verify_password(payload.password, user.hashed_password):
         raise HTTPException(
@@ -46,21 +56,28 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
             detail="メールアドレスまたはパスワードが正しくありません"
         )
     
-    # アカウントが無効化されている場合
-    if not user.is_active:
+    # アカウントが無効化されている場合（is_activeがNoneの場合はTrueとして扱う）
+    if user.is_active is False:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="このアカウントは無効化されています"
         )
 
-    token = create_access_token(sub=str(user.id))
-    user_data = UserRead.model_validate(user)
-    
-    # フロントエンドが期待する形式で返却
-    return {
-        "token": token,
-        "user": user_data.model_dump()
-    }
+    try:
+        token = create_access_token(sub=str(user.id))
+        user_data = UserRead.model_validate(user)
+        
+        # フロントエンドが期待する形式で返却
+        return {
+            "token": token,
+            "user": user_data.model_dump()
+        }
+    except Exception as e:
+        logger.error(f"Error creating token or validating user data: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="ログイン処理中にエラーが発生しました"
+        )
 
 @router.post("/register")
 async def register(payload: RegisterRequest, db: AsyncSession = Depends(get_db)):
