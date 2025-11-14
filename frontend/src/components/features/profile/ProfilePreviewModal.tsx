@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge'
 import { usersApi } from '@/lib/api/users'
 import type { TagInfo } from '@/types/search'
 import type { UserProfile } from '@/types/user'
+import { getAvatarUrl, getImageUrl } from '@/lib/utils/image'
 
 export type ProfilePreviewData = {
   id: number
@@ -40,7 +41,19 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
     )
   }
 
-  const heroImage = profile.avatar_url || profile.gallery?.[0] || null
+  const heroImage = profile.avatar_url
+    ? getAvatarUrl(profile.avatar_url)
+    : profile.gallery?.[0]
+      ? getImageUrl(profile.gallery[0])
+      : null
+
+  // デバッグログ
+  console.log('[ProfilePreviewContent] Profile data:', {
+    avatar_url: profile.avatar_url,
+    heroImage,
+    hasGallery: !!profile.gallery,
+    galleryFirst: profile.gallery?.[0],
+  })
 
   const wantOptions = ['友人', '恋人', 'その他']
   const lookingForValue = profile.looking_for || ''
@@ -53,9 +66,33 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
             src={heroImage}
             alt={`${profile.display_name}のプロフィール画像`}
             className="h-full w-full object-cover"
+            onError={(e) => {
+              console.error('[ProfilePreviewContent] Image load error:', {
+                src: heroImage,
+                profileAvatarUrl: profile.avatar_url,
+              })
+              // エラー時はプレースホルダーを表示するため、親要素で処理
+              const img = e.currentTarget
+              img.style.display = 'none'
+              const placeholder = img.parentElement?.querySelector('.image-placeholder')
+              if (placeholder) {
+                (placeholder as HTMLElement).style.display = 'flex'
+              }
+            }}
+            onLoad={() => {
+              console.log('[ProfilePreviewContent] Image loaded successfully:', heroImage)
+            }}
           />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 text-6xl font-bold text-white">
+        ) : null}
+        {/* プレースホルダー（画像がない場合、または読み込みエラー時） */}
+        {!heroImage && (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 text-6xl font-bold text-white image-placeholder">
+            {profile.display_name?.charAt(0) || '👤'}
+          </div>
+        )}
+        {/* 画像読み込みエラー時のフォールバック */}
+        {heroImage && (
+          <div className="hidden image-placeholder flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 text-6xl font-bold text-white">
             {profile.display_name?.charAt(0) || '👤'}
           </div>
         )}
@@ -163,7 +200,7 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
               {profile.gallery.slice(0, 6).map((photo, index) => (
                 <img
                   key={`${photo}-${index}`}
-                  src={photo}
+                  src={getImageUrl(photo) || photo}
                   alt={`${profile.display_name}のギャラリー画像${index + 1}`}
                   className="aspect-square w-full rounded-xl object-cover"
                 />
