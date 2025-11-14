@@ -38,6 +38,5 @@ exec gunicorn app.main:app \
     --preload \
     --access-logfile - \
     --error-logfile - \
-    --log-level info \
-    --capture-output
+    --log-level info
 
