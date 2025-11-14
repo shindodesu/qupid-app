@@ -56,6 +56,13 @@ async def send_verification_code(
     try:
         email = payload.email.lower()
         
+        # 九州大学メールドメインの検証
+        if settings.ALLOWED_EMAIL_DOMAIN and not email.endswith(f"@{settings.ALLOWED_EMAIL_DOMAIN}"):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"九州大学のメールアドレス（@{settings.ALLOWED_EMAIL_DOMAIN}）のみ登録できます"
+            )
+        
         # 既存の未使用認証コードを無効化
         now = datetime.now(timezone.utc)
         await db.execute(
@@ -128,6 +135,13 @@ async def verify_code(
     email = request.email.lower()
     verification_code = request.verification_code
     password = request.password
+    
+    # 九州大学メールドメインの検証
+    if settings.ALLOWED_EMAIL_DOMAIN and not email.endswith(f"@{settings.ALLOWED_EMAIL_DOMAIN}"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"九州大学のメールアドレス（@{settings.ALLOWED_EMAIL_DOMAIN}）のみ登録できます"
+        )
     
     # 認証コードを検証
     now = datetime.now(timezone.utc)
@@ -235,6 +249,13 @@ async def resend_code(
     
     email = request.email.lower()
     
+    # 九州大学メールドメインの検証
+    if settings.ALLOWED_EMAIL_DOMAIN and not email.endswith(f"@{settings.ALLOWED_EMAIL_DOMAIN}"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"九州大学のメールアドレス（@{settings.ALLOWED_EMAIL_DOMAIN}）のみ登録できます"
+        )
+    
     # 既存の未使用認証コードを無効化
     await db.execute(
         select(EmailVerification)
@@ -292,6 +313,13 @@ async def reset_password(
     email = request.email.lower()
     verification_code = request.verification_code
     new_password = request.new_password
+    
+    # 九州大学メールドメインの検証
+    if settings.ALLOWED_EMAIL_DOMAIN and not email.endswith(f"@{settings.ALLOWED_EMAIL_DOMAIN}"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"九州大学のメールアドレス（@{settings.ALLOWED_EMAIL_DOMAIN}）のみ登録できます"
+        )
     
     # 認証コードを検証
     now = datetime.now(timezone.utc)
