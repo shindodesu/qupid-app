@@ -5,16 +5,28 @@
 // 実行時に環境変数を取得（クライアント側でのみ有効）
 function getApiUrl(): string {
   // クライアント側とサーバー側の両方で環境変数から取得
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL
+  const apiUrl = rawApiUrl || 'http://localhost:8000'
+  
+  // デバッグログ（本番環境でも確認できるように）
+  if (typeof window !== 'undefined') {
+    console.log('[getApiUrl] Raw NEXT_PUBLIC_API_URL:', rawApiUrl)
+    console.log('[getApiUrl] Resolved API URL:', apiUrl)
+    console.log('[getApiUrl] Current window location:', window.location.origin)
+  }
   
   // 環境変数が空文字列やundefinedの場合はデフォルト値を使用
   if (!apiUrl || apiUrl.trim() === '') {
-    console.warn('[getApiUrl] NEXT_PUBLIC_API_URL is not set, using default:', 'http://localhost:8000')
+    console.error('[getApiUrl] NEXT_PUBLIC_API_URL is not set or empty!')
+    console.error('[getApiUrl] This will cause images to fail loading.')
+    console.error('[getApiUrl] Please set NEXT_PUBLIC_API_URL in Vercel environment variables and redeploy.')
     return 'http://localhost:8000'
   }
   
   // 末尾のスラッシュを削除
-  return apiUrl.replace(/\/$/, '')
+  const cleanUrl = apiUrl.replace(/\/$/, '')
+  console.log('[getApiUrl] Final clean URL:', cleanUrl)
+  return cleanUrl
 }
 
 /**
@@ -55,7 +67,17 @@ export function getAvatarUrl(avatarUrl: string | null | undefined): string | nul
   
   const fullUrl = `${apiUrl}/${cleanPath}`
   console.log('[getAvatarUrl] API URL:', apiUrl)
+  console.log('[getAvatarUrl] Clean path:', cleanPath)
   console.log('[getAvatarUrl] Constructed URL:', fullUrl)
+  
+  // フロントエンドのドメインが含まれている場合は警告
+  if (typeof window !== 'undefined' && fullUrl.includes(window.location.origin)) {
+    console.error('[getAvatarUrl] WARNING: URL contains frontend domain!')
+    console.error('[getAvatarUrl] This means NEXT_PUBLIC_API_URL is not set correctly.')
+    console.error('[getAvatarUrl] Expected API URL:', apiUrl)
+    console.error('[getAvatarUrl] Frontend origin:', window.location.origin)
+  }
+  
   return fullUrl
 }
 
