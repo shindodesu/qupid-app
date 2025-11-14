@@ -12,6 +12,7 @@ import { useUser } from '@/stores/auth'
 import { useWebSocket } from '@/hooks/useWebSocket'
 import type { Message } from '@/types/chat'
 import Link from 'next/link'
+import { getAvatarUrl } from '@/lib/utils/image'
 
 interface ChatWindowProps {
   conversationId: number
@@ -226,7 +227,9 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
     otherUserFromMessages?.sender_name ??
     '会話'
   const otherUserAvatar =
-    conversationDetail?.other_user?.avatar_url || null
+    conversationDetail?.other_user?.avatar_url
+      ? getAvatarUrl(conversationDetail.other_user.avatar_url)
+      : null
   const otherUserBio =
     conversationDetail?.other_user?.bio || undefined
 

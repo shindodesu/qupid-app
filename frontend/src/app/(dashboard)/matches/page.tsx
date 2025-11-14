@@ -125,7 +125,7 @@ export default function LikesPage() {
 
             return (
               <Card key={like.user.id} className="transition-shadow hover:shadow-lg">
-                <CardContent className="p-6">
+              <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-neutral-900">
@@ -224,17 +224,17 @@ export default function LikesPage() {
                     >
                       👤 プロフィールを見る
                     </Button>
-                    <Button
-                      className="w-full"
-                      onClick={() => handleLikeBack(like.user.id)}
-                      disabled={likeMutation.isPending}
-                    >
-                      💕 いいねを返す
-                    </Button>
+                <Button
+                  className="w-full"
+                  onClick={() => handleLikeBack(like.user.id)}
+                  disabled={likeMutation.isPending}
+                >
+                  💕 いいねを返す
+                </Button>
                   </div>
                 )}
-                </CardContent>
-              </Card>
+              </CardContent>
+            </Card>
             )
           })}
         </div>

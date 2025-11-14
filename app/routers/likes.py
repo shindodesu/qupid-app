@@ -514,9 +514,9 @@ async def get_matches(
     for user_tag in all_user_tags:
         user_tags_dict.setdefault(user_tag.user_id, []).append(
             {
-                "id": user_tag.tag.id,
-                "name": user_tag.tag.name,
-                "description": user_tag.tag.description,
+            "id": user_tag.tag.id,
+            "name": user_tag.tag.name,
+            "description": user_tag.tag.description,
             }
         )
 
