@@ -63,6 +63,12 @@ export default function ProfilePage() {
     retryDelay: 1000, // 再試行の間隔は1秒
   })
 
+  // 自分のタグ取得（previewProfileより前に定義する必要がある）
+  const { data: tagsData } = useQuery({
+    queryKey: ['user', 'me', 'tags'],
+    queryFn: () => apiClient.getUserTags(),
+  })
+
   // userDataまたはuserストアからデータを取得（フォールバック対応）
   const displayUserData = userData || user
   const previewProfile = useMemo<ProfilePreviewData | undefined>(() => {
@@ -126,12 +132,6 @@ export default function ProfilePage() {
       setAvatarLoadError(false)
     }
   }, [userData, user])
-
-  // 自分のタグ取得
-  const { data: tagsData } = useQuery({
-    queryKey: ['user', 'me', 'tags'],
-    queryFn: () => apiClient.getUserTags(),
-  })
 
   // 全タグ取得
   const { data: allTagsData } = useQuery({
