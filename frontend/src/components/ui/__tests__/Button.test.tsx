@@ -36,7 +36,7 @@ describe('Button', () => {
   })
 
   it('variant propsが正しく適用される', () => {
-    const { rerender } = render(<Button variant="primary">Primary</Button>)
+    const { rerender } = render(<Button variant="default">Default</Button>)
     let button = screen.getByRole('button')
     expect(button.className).toContain('primary')
 
@@ -48,11 +48,11 @@ describe('Button', () => {
   it('size propsが正しく適用される', () => {
     const { rerender } = render(<Button size="sm">Small</Button>)
     let button = screen.getByRole('button')
-    expect(button.className).toContain('sm')
+    expect(button.className).toContain('h-9')
 
     rerender(<Button size="lg">Large</Button>)
     button = screen.getByRole('button')
-    expect(button.className).toContain('lg')
+    expect(button.className).toContain('h-11')
   })
 
   it('loading状態で正しくレンダリングされる', () => {
@@ -60,8 +60,8 @@ describe('Button', () => {
     const button = screen.getByRole('button')
     
     expect(button).toBeDisabled()
-    // ローディングスピナーが表示されているか確認
-    expect(button.querySelector('svg')).toBeInTheDocument()
+    // ローディングスピナーが表示されているか確認（animate-spinクラスを持つ要素）
+    expect(button.querySelector('.animate-spin')).toBeInTheDocument()
   })
 })
 

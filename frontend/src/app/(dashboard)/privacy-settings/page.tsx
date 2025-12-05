@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api'
 import { Button } from '@/components/ui/Button'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/common/ToastContainer'
+import type { User } from '@/types/user'
 
 interface PrivacySettings {
   show_faculty: boolean
@@ -38,9 +39,9 @@ export default function PrivacySettingsPage() {
   })
 
   // ユーザー情報を取得
-  const { data: userData } = useQuery({
+  const { data: userData } = useQuery<User>({
     queryKey: ['user', 'me'],
-    queryFn: () => apiClient.get('/users/me')
+    queryFn: () => apiClient.get<User>('/users/me')
   })
 
   // ユーザー情報からプライバシー設定を読み込む

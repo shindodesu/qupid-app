@@ -1,5 +1,6 @@
 'use client'
 
+import { ReactElement } from 'react'
 import { Toast } from '@/hooks/useToast'
 
 interface ToastContainerProps {
@@ -68,7 +69,7 @@ function getToastBorderColor(type: Toast['type']): string {
   }
 }
 
-function getToastIcon(type: Toast['type']): JSX.Element {
+function getToastIcon(type: Toast['type']): ReactElement {
   switch (type) {
     case 'success':
       return (

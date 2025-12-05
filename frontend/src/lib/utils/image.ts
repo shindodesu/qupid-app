@@ -30,19 +30,31 @@ function getApiUrl(): string {
 }
 
 /**
+ * デフォルトアバター画像のパス
+ */
+export const DEFAULT_AVATAR_PATH = '/initial_icon.png'
+
+/**
  * アバター画像のURLを取得
  * @param avatarUrl - データベースから取得したavatar_url
- * @returns 完全なURL
+ * @param useDefault - avatarUrlがnullの場合にデフォルト画像を返すかどうか（デフォルト: false）
+ * @returns 完全なURL、またはデフォルト画像のパス
  */
-export function getAvatarUrl(avatarUrl: string | null | undefined): string | null {
+export function getAvatarUrl(avatarUrl: string | null | undefined, useDefault: boolean = false): string | null {
   if (!avatarUrl) {
     console.log('[getAvatarUrl] No avatar URL provided')
+    if (useDefault) {
+      return DEFAULT_AVATAR_PATH
+    }
     return null
   }
   
-  // 空文字列の場合はnullを返す
+  // 空文字列の場合はnullを返す（またはデフォルト画像）
   if (avatarUrl.trim() === '') {
     console.log('[getAvatarUrl] Empty avatar URL provided')
+    if (useDefault) {
+      return DEFAULT_AVATAR_PATH
+    }
     return null
   }
   
@@ -62,6 +74,9 @@ export function getAvatarUrl(avatarUrl: string | null | undefined): string | nul
   // API URLが正しく設定されているか確認
   if (!apiUrl || apiUrl.trim() === '') {
     console.error('[getAvatarUrl] API URL is not set correctly')
+    if (useDefault) {
+      return DEFAULT_AVATAR_PATH
+    }
     return null
   }
   

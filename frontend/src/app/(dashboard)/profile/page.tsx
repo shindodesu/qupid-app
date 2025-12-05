@@ -298,23 +298,16 @@ export default function ProfilePage() {
         <CardContent>
           <div className="flex items-center gap-6">
             <div className="relative">
-              {displayUserData?.avatar_url && !avatarLoadError ? (
-                <img
-                  src={getAvatarUrl(displayUserData.avatar_url) || ''}
-                  alt="プロフィール画像"
-                  className="w-24 h-24 rounded-full object-cover"
-                  onError={() => {
-                    // 画像の読み込みに失敗した場合はエラー状態を設定
-                    setAvatarLoadError(true)
-                  }}
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-neutral-200 flex items-center justify-center">
-                  <svg className="w-12 h-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-              )}
+              <img
+                src={getAvatarUrl(displayUserData?.avatar_url, true) || '/initial_icon.png'}
+                alt="プロフィール画像"
+                className="w-24 h-24 rounded-full object-cover"
+                onError={(e) => {
+                  // 画像の読み込みに失敗した場合はデフォルト画像にフォールバック
+                  e.currentTarget.src = '/initial_icon.png'
+                  setAvatarLoadError(true)
+                }}
+              />
             </div>
             
             <div className="flex-1">
@@ -392,7 +385,7 @@ export default function ProfilePage() {
                   onClick={() => {
                     // トランスジェンダーを選択している場合、複数選択モードにする
                     const isTransgender = formData.sexuality === 'トランスジェンダー' || 
-                      (formData.sexuality && formData.sexuality.includes('トランスジェンダー'))
+                      (formData.sexuality ? formData.sexuality.includes('トランスジェンダー') : false)
                     setIsMultipleSexualityMode(isTransgender)
                     if (isTransgender && formData.sexuality) {
                       setSelectedSexualities(formData.sexuality.split(', ').filter(s => s))

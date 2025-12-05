@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { DiscoverFilters, Sexuality, RelationshipGoal, Sex } from '@/types/search'
+import type { DiscoverFilters, Sexuality, RelationshipGoal, Sex } from '@/types/search'
 import { Button } from '@/components/ui/Button'
 
 interface DiscoverFiltersProps {
@@ -80,7 +80,7 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
       <div className="flex items-center justify-between p-6 border-b border-neutral-200">
         <h2 className="text-xl font-bold text-neutral-900">フィルター</h2>
         <Button
-          variant="text"
+          variant="ghost"
           onClick={onClear}
           className="text-red-500 hover:text-red-600 font-medium"
         >

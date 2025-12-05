@@ -226,10 +226,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
     conversationDetail?.other_user?.display_name ??
     otherUserFromMessages?.sender_name ??
     '会話'
-  const otherUserAvatar =
-    conversationDetail?.other_user?.avatar_url
-      ? getAvatarUrl(conversationDetail.other_user.avatar_url)
-      : null
+  const otherUserAvatar = getAvatarUrl(conversationDetail?.other_user?.avatar_url, true)
   const otherUserBio =
     conversationDetail?.other_user?.bio || undefined
 

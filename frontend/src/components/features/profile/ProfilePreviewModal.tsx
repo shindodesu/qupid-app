@@ -42,10 +42,10 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
   }
 
   const heroImage = profile.avatar_url
-    ? getAvatarUrl(profile.avatar_url)
+    ? getAvatarUrl(profile.avatar_url, true)
     : profile.gallery?.[0]
       ? getImageUrl(profile.gallery[0])
-      : null
+      : getAvatarUrl(null, true) // デフォルト画像を使用
 
   // デバッグログ
   console.log('[ProfilePreviewContent] Profile data:', {
@@ -61,7 +61,7 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
   return (
     <div className="space-y-6">
       <div className="relative aspect-[3/4] overflow-hidden rounded-3xl shadow-lg">
-        {heroImage ? (
+        {heroImage && (
           <img
             src={heroImage}
             alt={`${profile.display_name}のプロフィール画像`}
@@ -71,30 +71,13 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
                 src: heroImage,
                 profileAvatarUrl: profile.avatar_url,
               })
-              // エラー時はプレースホルダーを表示するため、親要素で処理
-              const img = e.currentTarget
-              img.style.display = 'none'
-              const placeholder = img.parentElement?.querySelector('.image-placeholder')
-              if (placeholder) {
-                (placeholder as HTMLElement).style.display = 'flex'
-              }
+              // エラー時はデフォルト画像にフォールバック
+              e.currentTarget.src = '/initial_icon.png'
             }}
             onLoad={() => {
               console.log('[ProfilePreviewContent] Image loaded successfully:', heroImage)
             }}
           />
-        ) : null}
-        {/* プレースホルダー（画像がない場合、または読み込みエラー時） */}
-        {!heroImage && (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 text-6xl font-bold text-white image-placeholder">
-            {profile.display_name?.charAt(0) || '👤'}
-          </div>
-        )}
-        {/* 画像読み込みエラー時のフォールバック */}
-        {heroImage && (
-          <div className="hidden image-placeholder flex h-full w-full items-center justify-center bg-gradient-to-br from-pink-400 via-purple-500 to-indigo-600 text-6xl font-bold text-white">
-            {profile.display_name?.charAt(0) || '👤'}
-          </div>
         )}
         <div className="absolute inset-x-0 top-4 flex items-center justify-between px-4">
           <div className="rounded-full bg-white/70 px-3 py-1 text-sm font-medium text-neutral-700">

@@ -7,7 +7,7 @@ export function PWAEnhancer() {
     // PWAの表示モードを強制
     const enhancePWA = () => {
       // iOS Safari での PWA 表示を改善
-      if (window.navigator.standalone === false) {
+      if ('standalone' in window.navigator && (window.navigator as any).standalone === false) {
         // ブラウザ内で実行されている場合の処理
         const meta = document.createElement('meta');
         meta.name = 'apple-mobile-web-app-capable';
@@ -16,7 +16,7 @@ export function PWAEnhancer() {
       }
 
       // フルスクリーン表示の強制
-      if (document.documentElement.requestFullscreen) {
+      if (document.fullscreenEnabled) {
         // 必要に応じてフルスクリーンモードを有効化
         // document.documentElement.requestFullscreen();
       }

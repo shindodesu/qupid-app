@@ -5,6 +5,12 @@ class ApiClient {
     this.baseURL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
   }
 
+  get defaults() {
+    return {
+      baseURL: this.baseURL,
+    }
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -14,13 +20,36 @@ class ApiClient {
       document.cookie.split(';').find(c => c.trim().startsWith('auth-token='))?.split('=')[1] : 
       null
 
+    // ヘッダーの処理
+    const existingHeaders = options.headers || {}
+    const headersObj: Record<string, string> = {}
+    
+    // 既存のヘッダーをオブジェクトに変換
+    if (existingHeaders instanceof Headers) {
+      existingHeaders.forEach((value, key) => {
+        headersObj[key] = value
+      })
+    } else if (Array.isArray(existingHeaders)) {
+      existingHeaders.forEach(([key, value]) => {
+        headersObj[key] = value
+      })
+    } else if (existingHeaders) {
+      Object.assign(headersObj, existingHeaders)
+    }
+
+    // FormDataの場合はContent-Typeを設定しない（ブラウザが自動設定）
+    if (!(options.body instanceof FormData) && !headersObj['Content-Type']) {
+      headersObj['Content-Type'] = 'application/json'
+    }
+
+    // トークンを追加
+    if (token) {
+      headersObj['Authorization'] = `Bearer ${token}`
+    }
+
     const config: RequestInit = {
       ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...(options.headers || {}),
-      },
+      headers: headersObj,
     }
 
     console.log('API Request:', {
@@ -83,6 +112,12 @@ class ApiClient {
       throw new Error(errorMessage)
     }
 
+    // responseTypeがblobの場合はBlobとして返す
+    const contentType = response.headers.get('content-type')
+    if (contentType && contentType.includes('application/octet-stream')) {
+      return await response.blob() as T
+    }
+
     try {
       const json = await response.json()
       return json
@@ -93,16 +128,28 @@ class ApiClient {
   }
 
   // GET request
-  async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' })
+  async get<T>(endpoint: string, config?: RequestInit): Promise<T> {
+    return this.request<T>(endpoint, { method: 'GET', ...config })
   }
 
   // POST request
-  async post<T>(endpoint: string, data?: any): Promise<T> {
-    return this.request<T>(endpoint, {
+  async post<T>(endpoint: string, data?: any, config?: RequestInit): Promise<T> {
+    const isFormData = data instanceof FormData
+    const options: RequestInit = {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
-    })
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
+      ...config,
+    }
+    
+    // FormDataの場合はContent-Typeを設定しない（ブラウザが自動設定）
+    if (!isFormData) {
+      options.headers = {
+        'Content-Type': 'application/json',
+        ...(config?.headers || {}),
+      }
+    }
+    
+    return this.request<T>(endpoint, options)
   }
 
   // PUT request
@@ -114,8 +161,23 @@ class ApiClient {
   }
 
   // DELETE request
-  async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' })
+  async delete<T>(endpoint: string, data?: any, config?: RequestInit): Promise<T> {
+    const isFormData = data instanceof FormData
+    const options: RequestInit = {
+      method: 'DELETE',
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
+      ...config,
+    }
+    
+    // FormDataの場合はContent-Typeを設定しない（ブラウザが自動設定）
+    if (!isFormData && data) {
+      options.headers = {
+        'Content-Type': 'application/json',
+        ...(config?.headers || {}),
+      }
+    }
+    
+    return this.request<T>(endpoint, options)
   }
 
   // 認証関連のメソッド

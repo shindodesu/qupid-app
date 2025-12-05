@@ -90,11 +90,11 @@ export default function DesignSystemPage() {
             <CardContent>
               <Stack size={6}>
                 <div>
-                  <Heading variant="h1">Heading 1</Heading>
+                  <Heading>Heading 1</Heading>
                   <Muted>text-4xl font-extrabold tracking-tight lg:text-5xl</Muted>
                 </div>
                 <div>
-                  <Subheading variant="h2">Heading 2</Subheading>
+                  <Subheading>Heading 2</Subheading>
                   <Muted>text-3xl font-semibold tracking-tight</Muted>
                 </div>
                 <div>

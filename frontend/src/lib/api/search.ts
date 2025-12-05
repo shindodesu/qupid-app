@@ -86,28 +86,37 @@ export const searchApi = {
       
       // Discoverフィルターの追加
       if (filters) {
+        console.log('[Filter API] Building request with filters:', filters)
         if (filters.sexuality && filters.sexuality.length > 0) {
           params.append('sexuality', filters.sexuality.join(','))
+          console.log('[Filter API] Added sexuality:', filters.sexuality.join(','))
         }
         
         if (filters.relationship_goal) {
           params.append('relationship_goal', filters.relationship_goal)
+          console.log('[Filter API] Added relationship_goal:', filters.relationship_goal)
         }
         
         if (filters.sex && filters.sex.length > 0) {
           params.append('sex', filters.sex.join(','))
+          console.log('[Filter API] Added sex:', filters.sex.join(','))
         }
         
         if (filters.age_min !== undefined) {
           params.append('age_min', String(filters.age_min))
+          console.log('[Filter API] Added age_min:', filters.age_min)
         }
         
         if (filters.age_max !== undefined) {
           params.append('age_max', String(filters.age_max))
+          console.log('[Filter API] Added age_max:', filters.age_max)
         }
+      } else {
+        console.log('[Filter API] No filters provided')
       }
       
       const endpoint = `/users/suggestions?${params.toString()}`
+      console.log('[Filter API] Request endpoint:', endpoint)
       return await apiClient.get<UserSuggestionsResponse>(endpoint)
     } catch (error: any) {
       throw new SearchApiError(

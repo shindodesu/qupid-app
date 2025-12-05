@@ -109,7 +109,7 @@ export default function LikesPage() {
             const previewData: Partial<ProfilePreviewData> = {
               display_name: like.user.display_name,
               bio: like.user.bio,
-              avatar_url: like.user.avatar_url ? getAvatarUrl(like.user.avatar_url) : undefined,
+              avatar_url: getAvatarUrl(like.user.avatar_url, true) || undefined,
               campus: like.user.campus,
               faculty: like.user.faculty,
               grade: like.user.grade,

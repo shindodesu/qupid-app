@@ -121,12 +121,7 @@ export default function RootLayout({
         <PWAEnhancer />
         <PWAInstallPrompt />
         <PWANavigationFix />
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider defaultTheme="light">
           <ErrorBoundary>
             <QueryProvider>
               <AuthProvider>

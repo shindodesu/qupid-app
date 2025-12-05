@@ -32,12 +32,7 @@ export const fileApi = {
 
       return await apiClient.post<FileUploadResponse>(
         '/files/upload/voice',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        formData
       )
     } catch (error: any) {
       throw new FileApiError(
@@ -58,12 +53,7 @@ export const fileApi = {
 
       return await apiClient.post<FileUploadResponse>(
         '/files/upload/image',
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        }
+        formData
       )
     } catch (error: any) {
       throw new FileApiError(
@@ -79,11 +69,8 @@ export const fileApi = {
    */
   async downloadFile(filePath: string): Promise<Blob> {
     try {
-      const response = await apiClient.get(
-        `/files/download/${encodeURIComponent(filePath)}`,
-        {
-          responseType: 'blob',
-        }
+      const response = await apiClient.get<Blob>(
+        `/files/download/${encodeURIComponent(filePath)}`
       )
       return response
     } catch (error: any) {

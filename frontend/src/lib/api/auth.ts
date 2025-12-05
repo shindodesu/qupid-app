@@ -172,9 +172,7 @@ export const authApi = {
   // アカウント削除
   async deleteAccount(password: string) {
     try {
-      return await apiClient.delete('/auth/delete-account', {
-        body: JSON.stringify({ password }),
-      })
+      return await apiClient.delete('/auth/delete-account', { password })
     } catch (error: any) {
       throw new ApiError(
         error.message || 'アカウントの削除に失敗しました',

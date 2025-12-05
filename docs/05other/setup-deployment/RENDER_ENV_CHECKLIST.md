@@ -214,3 +214,6 @@ CORS_ORIGINS=https://qupid-app.vercel.app,https://qupid-app-preview.vercel.app
 - [Vercelセットアップガイド](../VERCEL_SETUP.md)
 - [Renderデプロイメントガイド](RENDER_DEPLOYMENT_GUIDE.md)
 
+
+
+

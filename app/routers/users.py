@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, and_, or_, func, distinct
+from sqlalchemy import select, and_, or_, func, distinct, text
 from sqlalchemy.orm import selectinload
 from app.db.session import get_db
 from app.models.user import User
@@ -28,6 +28,11 @@ from app.schemas.search import (
 )
 from app.core.security import get_current_user
 from typing import Optional
+from datetime import date, datetime
+import sys
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Define the router with a prefix and tags
 router = APIRouter(prefix="/users", tags=["users"])
@@ -503,6 +508,11 @@ async def search_users(
 @router.get("/suggestions", response_model=UserSuggestionsResponse)
 async def get_user_suggestions(
     limit: int = Query(10, ge=1, le=50, description="取得件数"),
+    sexuality: Optional[str] = Query(None, description="セクシュアリティフィルター（カンマ区切り）"),
+    relationship_goal: Optional[str] = Query(None, description="関係性目標フィルター（friends, dating, all）"),
+    sex: Optional[str] = Query(None, description="性別フィルター（カンマ区切り、male, female, other）"),
+    age_min: Optional[int] = Query(None, ge=0, le=150, description="最小年齢"),
+    age_max: Optional[int] = Query(None, ge=0, le=150, description="最大年齢"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -514,7 +524,12 @@ async def get_user_suggestions(
     - ブロックユーザーを除外
     - 自分自身を除外
     - 既にマッチしているユーザーを除外
+    - フィルター対応（sexuality, relationship_goal, sex, age_min, age_max）
     """
+    
+    # リクエストパラメータのログ出力
+    logger.info(f"[Filter Debug] Request params - sexuality: {sexuality}, relationship_goal: {relationship_goal}, sex: {sex}, age_min: {age_min}, age_max: {age_max}")
+    print(f"[Filter Debug] Request params - sexuality: {sexuality}, relationship_goal: {relationship_goal}, sex: {sex}, age_min: {age_min}, age_max: {age_max}", file=sys.stderr)
     
     # 自分のタグを取得
     my_tags_query = await db.execute(
@@ -551,6 +566,69 @@ async def get_user_suggestions(
     excluded_user_ids |= matched_user_ids
     excluded_user_ids.add(current_user.id)  # 自分自身も除外
 
+    # フィルター条件を構築
+    filter_conditions = []
+    
+    # セクシュアリティフィルター
+    if sexuality:
+        sexuality_list = [s.strip() for s in sexuality.split(",") if s.strip()]
+        if sexuality_list:
+            filter_conditions.append(User.sexuality.in_(sexuality_list))
+            logger.info(f"[Filter Debug] Sexuality filter applied: {sexuality_list}")
+            print(f"[Filter Debug] Sexuality filter applied: {sexuality_list}", file=sys.stderr)
+    
+    # 関係性目標フィルター（looking_forフィールドに対応）
+    if relationship_goal:
+        if relationship_goal == "all":
+            # "all"の場合はフィルターを適用しない
+            logger.info(f"[Filter Debug] Relationship goal is 'all', skipping filter")
+            print(f"[Filter Debug] Relationship goal is 'all', skipping filter", file=sys.stderr)
+        else:
+            # "friends" または "dating" の場合
+            filter_conditions.append(User.looking_for == relationship_goal)
+            logger.info(f"[Filter Debug] Relationship goal filter applied: {relationship_goal}")
+            print(f"[Filter Debug] Relationship goal filter applied: {relationship_goal}", file=sys.stderr)
+    
+    # 性別フィルター（genderフィールドに対応、sexパラメータを使用）
+    if sex:
+        sex_list = [s.strip() for s in sex.split(",") if s.strip()]
+        if sex_list:
+            filter_conditions.append(User.gender.in_(sex_list))
+            logger.info(f"[Filter Debug] Sex filter applied: {sex_list}")
+            print(f"[Filter Debug] Sex filter applied: {sex_list}", file=sys.stderr)
+    
+    # 年齢フィルター（birthdayから年齢を計算）
+    # PostgreSQLのAGE関数を使用して年齢を計算
+    if age_min is not None or age_max is not None:
+        # 年齢を計算するためのSQL式
+        # EXTRACT(YEAR FROM AGE(birthday)) で年齢を取得
+        # text()を使用してPostgreSQLのAGE関数を直接使用
+        # カラム参照を正しく行うために、User.birthdayのカラム名を直接指定
+        # SQLAlchemyでは、text()内でカラム名を直接指定する必要がある
+        age_expr = text("EXTRACT(YEAR FROM AGE(users.birthday))")
+        
+        if age_min is not None and age_max is not None:
+            # 両方指定されている場合
+            filter_conditions.append(and_(age_expr >= age_min, age_expr <= age_max))
+            logger.info(f"[Filter Debug] Age filter applied: {age_min} <= age <= {age_max}")
+            print(f"[Filter Debug] Age filter applied: {age_min} <= age <= {age_max}", file=sys.stderr)
+        elif age_min is not None:
+            # 最小年齢のみ指定
+            filter_conditions.append(age_expr >= age_min)
+            logger.info(f"[Filter Debug] Age min filter applied: age >= {age_min}")
+            print(f"[Filter Debug] Age min filter applied: age >= {age_min}", file=sys.stderr)
+        elif age_max is not None:
+            # 最大年齢のみ指定
+            filter_conditions.append(age_expr <= age_max)
+            logger.info(f"[Filter Debug] Age max filter applied: age <= {age_max}")
+            print(f"[Filter Debug] Age max filter applied: age <= {age_max}", file=sys.stderr)
+        
+        # birthdayがNULLの場合は除外（年齢が計算できないため）
+        filter_conditions.append(User.birthday.isnot(None))
+    
+    logger.info(f"[Filter Debug] Total filter conditions: {len(filter_conditions)}")
+    print(f"[Filter Debug] Total filter conditions: {len(filter_conditions)}", file=sys.stderr)
+
     async def build_fallback_response(reason: str) -> UserSuggestionsResponse:
         conditions = [
             User.is_active == True,
@@ -558,6 +636,10 @@ async def get_user_suggestions(
         ]
         if excluded_user_ids:
             conditions.append(User.id.not_in(list(excluded_user_ids)))
+        
+        # フィルター条件を追加
+        if filter_conditions:
+            conditions.extend(filter_conditions)
 
         fallback_query = (
             select(User)
@@ -621,19 +703,50 @@ async def get_user_suggestions(
         # タグがない場合は最近のユーザーを返す
         return await build_fallback_response("タグ未設定のため、最近登録したユーザーをおすすめします")
     
+    # フィルター条件を満たすユーザーIDを事前に取得
+    filtered_user_ids = None
+    if filter_conditions:
+        logger.info(f"[Filter Debug] Applying filter conditions to query")
+        print(f"[Filter Debug] Applying filter conditions to query", file=sys.stderr)
+        filtered_users_query = select(User.id).where(
+            and_(
+                User.is_active == True,
+                User.profile_completed == True,
+                *filter_conditions
+            )
+        )
+        filtered_result = await db.execute(filtered_users_query)
+        filtered_user_ids = {row[0] for row in filtered_result.all()}
+        logger.info(f"[Filter Debug] Filtered user IDs count: {len(filtered_user_ids)}")
+        print(f"[Filter Debug] Filtered user IDs count: {len(filtered_user_ids)}", file=sys.stderr)
+        
+        # フィルター結果が空の場合は空のレスポンスを返す
+        if not filtered_user_ids:
+            logger.info(f"[Filter Debug] No users match filter conditions")
+            print(f"[Filter Debug] No users match filter conditions", file=sys.stderr)
+            return await build_fallback_response("フィルター条件に一致するユーザーが見つかりませんでした")
+    else:
+        logger.info(f"[Filter Debug] No filter conditions to apply")
+        print(f"[Filter Debug] No filter conditions to apply", file=sys.stderr)
+    
     # 共通タグを持つユーザーを検索
     # 共通タグ数でスコアリング
+    common_tags_conditions = [
+        UserTag.tag_id.in_(my_tag_ids),
+    ]
+    
+    if excluded_user_ids:
+        common_tags_conditions.append(UserTag.user_id.not_in(excluded_user_ids))
+    
+    if filtered_user_ids:
+        common_tags_conditions.append(UserTag.user_id.in_(filtered_user_ids))
+    
     common_tags_query = (
         select(
             UserTag.user_id,
             func.count(UserTag.tag_id).label("common_tag_count")
         )
-        .where(
-            and_(
-                UserTag.tag_id.in_(my_tag_ids),
-                UserTag.user_id.not_in(excluded_user_ids) if excluded_user_ids else True,
-            )
-        )
+        .where(and_(*common_tags_conditions))
         .group_by(UserTag.user_id)
         .order_by(func.count(UserTag.tag_id).desc())
         .limit(limit)
@@ -649,13 +762,16 @@ async def get_user_suggestions(
     suggested_user_ids = [row[0] for row in user_scores]
     user_score_dict = {row[0]: row[1] for row in user_scores}
     
+    # ユーザー情報を取得（フィルター条件も適用）
+    user_query_conditions = [
+        User.id.in_(suggested_user_ids),
+        User.is_active == True,
+    ]
+    if filter_conditions:
+        user_query_conditions.extend(filter_conditions)
+    
     users_query = await db.execute(
-        select(User).where(
-            and_(
-                User.id.in_(suggested_user_ids),
-                User.is_active == True
-            )
-        )
+        select(User).where(and_(*user_query_conditions))
     )
     users = users_query.scalars().all()
     

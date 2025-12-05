@@ -6,10 +6,15 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   error?: string
   helperText?: string
   options: { value: string; label: string }[]
+  placeholder?: string
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, label, error, helperText, options, ...props }, ref) => {
+  ({ className, label, error, helperText, options, placeholder, defaultValue, ...props }, ref) => {
+    const displayOptions = placeholder
+      ? [{ value: '', label: placeholder }, ...options]
+      : options
+
     return (
       <div className="space-y-2">
         {label && (
@@ -24,9 +29,10 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
             className
           )}
           ref={ref}
+          defaultValue={defaultValue ?? (placeholder ? '' : undefined)}
           {...props}
         >
-          {options.map((option) => (
+          {displayOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>

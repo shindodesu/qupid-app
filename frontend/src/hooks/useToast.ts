@@ -28,7 +28,7 @@ export function useToast(): UseToastReturn {
     setToasts(prev => [...prev, toastWithId])
 
     // 自動削除
-    if (toastWithId.duration > 0) {
+    if (toastWithId.duration != null && toastWithId.duration > 0) {
       setTimeout(() => {
         removeToast(id)
       }, toastWithId.duration)

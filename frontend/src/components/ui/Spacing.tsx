@@ -1,4 +1,4 @@
-import { HTMLAttributes, forwardRef } from 'react'
+import { HTMLAttributes, forwardRef, ElementType } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
@@ -58,12 +58,12 @@ const spacingVariants = cva('', {
 export interface SpacingProps
   extends HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof spacingVariants> {
-  as?: keyof JSX.IntrinsicElements
+  as?: ElementType
 }
 
 const Spacing = forwardRef<HTMLDivElement, SpacingProps>(
   ({ className, size, direction, type, as = 'div', ...props }, ref) => {
-    const Component = as
+    const Component: ElementType = as
     
     return (
       <Component
@@ -112,7 +112,9 @@ export const Divider = forwardRef<HTMLHRElement, Omit<SpacingProps, 'type' | 'di
 )
 Divider.displayName = 'Divider'
 
-export const Container = forwardRef<HTMLDivElement, Omit<SpacingProps, 'type' | 'direction'>>(
+export const Container = forwardRef<HTMLDivElement, Omit<SpacingProps, 'type' | 'direction' | 'size'> & {
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl'
+}>(
   ({ className, size, children, ...props }, ref) => (
     <div
       ref={ref}

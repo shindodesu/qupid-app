@@ -1,4 +1,4 @@
-import { HTMLAttributes, forwardRef } from 'react'
+import { HTMLAttributes, ElementType, forwardRef } from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
@@ -65,9 +65,9 @@ const typographyVariants = cva('', {
 })
 
 export interface TypographyProps
-  extends HTMLAttributes<HTMLElement>,
+  extends Omit<HTMLAttributes<HTMLElement>, 'color'>,
     VariantProps<typeof typographyVariants> {
-  as?: keyof JSX.IntrinsicElements
+  as?: ElementType
 }
 
 const Typography = forwardRef<HTMLElement, TypographyProps>(
@@ -89,7 +89,7 @@ const Typography = forwardRef<HTMLElement, TypographyProps>(
 Typography.displayName = 'Typography'
 
 // バリアントに応じたデフォルト要素を取得
-function getDefaultElement(variant: string | null | undefined): keyof JSX.IntrinsicElements {
+function getDefaultElement(variant: string | null | undefined): ElementType {
   switch (variant) {
     case 'h1':
       return 'h1'
@@ -180,7 +180,7 @@ export const Large = forwardRef<HTMLDivElement, Omit<TypographyProps, 'variant'>
 )
 Large.displayName = 'Large'
 
-export const Small = forwardRef<HTMLSmallElement, Omit<TypographyProps, 'variant'>>(
+export const Small = forwardRef<HTMLElement, Omit<TypographyProps, 'variant'>>(
   ({ className, ...props }, ref) => (
     <Typography
       ref={ref}

@@ -9,10 +9,11 @@ import { wsClient, WebSocketMessage, WebSocketEventHandler } from '@/lib/websock
 import { useAuthStore } from '@/stores/auth'
 
 export const useWebSocket = () => {
-  const { token, isAuthenticated } = useAuthStore()
+  const { tokens, isAuthenticated } = useAuthStore()
   const [isConnected, setIsConnected] = useState(false)
   
   useEffect(() => {
+    const token = tokens?.accessToken
     if (isAuthenticated && token) {
       // WebSocket接続を確立
       wsClient.connect(token)
@@ -30,7 +31,7 @@ export const useWebSocket = () => {
       wsClient.disconnect()
       setIsConnected(false)
     }
-  }, [isAuthenticated, token])
+  }, [isAuthenticated, tokens])
   
   const send = useCallback((message: Record<string, any>) => {
     wsClient.send(message)

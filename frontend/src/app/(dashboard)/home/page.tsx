@@ -1,27 +1,31 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { searchApi } from '@/lib/api/search'
 import { DiscoverUserCard } from '@/components/features/DiscoverUserCard'
 import { DiscoverFilters } from '@/components/features/DiscoverFilters'
 import { PWADownloadModal } from '@/components/features/PWADownloadModal'
 import { InAppPWAInstallPrompt } from '@/components/features/InAppPWAInstallPrompt'
+import { ProfilePreviewModal } from '@/components/features/profile/ProfilePreviewModal'
 import { useToast } from '@/hooks/useToast'
 import { ToastContainer } from '@/components/common/ToastContainer'
 import { DiscoverFilters as DiscoverFiltersType } from '@/types/search'
 
 export default function DiscoverPage() {
-  const [currentIndex, setCurrentIndex] = useState(0)
   const [showFilters, setShowFilters] = useState(false)
   const [showDownloadModal, setShowDownloadModal] = useState(false)
+  const [previewUserId, setPreviewUserId] = useState<number | null>(null)
   const [filters, setFilters] = useState<DiscoverFiltersType>({})
   const { toast, toasts, removeToast } = useToast()
 
   // おすすめユーザー取得（より多くのユーザーを取得）
   const { data: suggestionsData, isLoading, refetch } = useQuery({
     queryKey: ['suggestions', filters],
-    queryFn: () => searchApi.getSuggestions(20, filters),
+    queryFn: () => {
+      console.log('[Filter] API call with filters:', filters)
+      return searchApi.getSuggestions(20, filters)
+    },
   })
 
   const users = suggestionsData?.users || []
@@ -45,13 +49,8 @@ export default function DiscoverPage() {
         })
       }
       
-      // 次のユーザーに移動
-      setCurrentIndex(prev => prev + 1)
-      
-      // ユーザーが少なくなったら再取得
-      if (currentIndex >= users.length - 3) {
-        refetch()
-      }
+      // ユーザーリストから削除（オプション：再取得）
+      refetch()
     } catch (error: any) {
       console.error('[Like] Error sending like:', error)
       const errorMessage = error?.message || 'いいねの送信に失敗しました'
@@ -63,37 +62,38 @@ export default function DiscoverPage() {
     }
   }
 
-  const handleSkip = () => {
-    // 次のユーザーに移動
-    setCurrentIndex(prev => prev + 1)
-    
-    // ユーザーが少なくなったら再取得
-    if (currentIndex >= users.length - 3) {
-      refetch()
-    }
+  const handleSkip = async (userId: number) => {
+    // スキップ処理（必要に応じてAPI呼び出しを追加）
+    // 現在は単にリストから除外する想定
+    refetch()
   }
-
-  const currentUser = users[currentIndex]
 
   // フィルターハンドラー
   const handleFiltersChange = (newFilters: DiscoverFiltersType) => {
+    console.log('[Filter] Filters changed:', newFilters)
     setFilters(newFilters)
   }
 
   const handleApplyFilters = () => {
+    console.log('[Filter] Apply button clicked, current filters:', filters)
     setShowFilters(false)
-    setCurrentIndex(0) // フィルター適用時に最初のユーザーに戻る
-    refetch()
+    // React QueryはqueryKeyにfiltersが含まれているので、
+    // filtersが変更されると自動的に再フェッチされる
+    // ただし、状態更新が非同期なので、useEffectで処理する
   }
 
   const handleClearFilters = () => {
+    console.log('[Filter] Clear button clicked')
     setFilters({})
-    setCurrentIndex(0)
-    refetch()
   }
 
+  // filtersが変更されたときにログを出力（デバッグ用）
+  useEffect(() => {
+    console.log('[Filter] Filters state updated:', filters)
+  }, [filters])
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
+    <div className="min-h-screen bg-white">
       {/* ヘッダー */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-neutral-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
@@ -112,9 +112,9 @@ export default function DiscoverPage() {
       </div>
 
       {/* メインコンテンツ */}
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-4">
         {/* インストールプロンプトバナー */}
-        <div className="max-w-sm mx-auto mb-6">
+        <div className="mb-4">
           <InAppPWAInstallPrompt onOpenModal={() => setShowDownloadModal(true)} />
         </div>
         
@@ -125,13 +125,17 @@ export default function DiscoverPage() {
               <p className="mt-4 text-neutral-600">新しいユーザーを探しています...</p>
             </div>
           </div>
-        ) : currentUser ? (
-          <div className="max-w-sm mx-auto">
-            <DiscoverUserCard
-              user={currentUser}
-              onLike={() => handleLike(currentUser.id)}
-              onSkip={handleSkip}
-            />
+        ) : users.length > 0 ? (
+          <div className="grid grid-cols-2 gap-3">
+            {users.map((user) => (
+              <DiscoverUserCard
+                key={user.id}
+                user={user}
+                onLike={() => handleLike(user.id)}
+                onSkip={() => handleSkip(user.id)}
+                onCardClick={() => setPreviewUserId(user.id)}
+              />
+            ))}
           </div>
         ) : (
           <div className="text-center py-16">
@@ -143,7 +147,6 @@ export default function DiscoverPage() {
             </p>
             <button 
               onClick={async () => {
-                setCurrentIndex(0)
                 try {
                   await refetch()
                 } catch (error) {
@@ -179,6 +182,20 @@ export default function DiscoverPage() {
       <PWADownloadModal 
         isOpen={showDownloadModal} 
         onClose={() => setShowDownloadModal(false)} 
+      />
+
+      {/* プロフィールプレビューモーダル */}
+      <ProfilePreviewModal
+        userId={previewUserId}
+        isOpen={previewUserId !== null}
+        onClose={() => setPreviewUserId(null)}
+        initialData={previewUserId ? users.find(u => u.id === previewUserId) ? {
+          display_name: users.find(u => u.id === previewUserId)!.display_name,
+          bio: users.find(u => u.id === previewUserId)!.bio,
+          faculty: users.find(u => u.id === previewUserId)!.faculty,
+          grade: users.find(u => u.id === previewUserId)!.grade,
+          tags: users.find(u => u.id === previewUserId)!.tags,
+        } : undefined : undefined}
       />
     </div>
   )
