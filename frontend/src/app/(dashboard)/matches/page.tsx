@@ -327,7 +327,16 @@ export default function LikesPage() {
                     src={getAvatarUrl(currentUser.user.avatar_url) || '/icon.png'}
                     alt={currentUser.user.display_name}
                     fill
+                    unoptimized
                     className="object-cover transform group-hover:scale-105 transition-transform duration-700"
+                    onError={(e) => {
+                      console.error('[MatchesPage] Image load error:', {
+                        src: getAvatarUrl(currentUser.user.avatar_url),
+                        avatarUrl: currentUser.user.avatar_url,
+                      })
+                      // エラー時はデフォルト画像にフォールバック
+                      e.currentTarget.src = '/initial_icon.png'
+                    }}
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full">

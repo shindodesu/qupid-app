@@ -39,6 +39,11 @@ const nextConfig: NextConfig = {
         hostname: 'qupid-app.onrender.com',
         pathname: '/uploads/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'qupid-api.onrender.com',
+        pathname: '/uploads/**',
+      },
     ],
     formats: ['image/webp', 'image/avif'],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],

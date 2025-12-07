@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { UserSuggestion } from '@/types/search'
 import Image from 'next/image'
 import { useTheme } from '@/hooks/useTheme'
+import { getAvatarUrl } from '@/lib/utils/image'
 
 interface DiscoverUserGridCardProps {
   user: UserSuggestion
@@ -67,10 +68,19 @@ export function DiscoverUserGridCard({ user, onLike, onSkip, onImageClick }: Dis
       >
         {user.avatar_url ? (
           <Image
-            src={user.avatar_url}
+            src={getAvatarUrl(user.avatar_url) || '/initial_icon.png'}
             alt={user.display_name}
             fill
+            unoptimized
             className="object-cover group-hover:scale-110 transition-transform duration-700"
+            onError={(e) => {
+              console.error('[DiscoverUserGridCard] Image load error:', {
+                src: getAvatarUrl(user.avatar_url),
+                avatarUrl: user.avatar_url,
+              })
+              // エラー時はデフォルト画像にフォールバック
+              e.currentTarget.src = '/initial_icon.png'
+            }}
           />
         ) : (
           <div className="flex flex-col items-center justify-center">
