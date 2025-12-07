@@ -4,14 +4,17 @@ import { useState } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+import { motion, AnimatePresence } from 'framer-motion'
 import { searchApi } from '@/lib/api/search'
 import { chatApi } from '@/lib/api/chat'
 import { getAvatarUrl } from '@/lib/utils/image'
-import { Card, CardContent } from '@/components/ui/Card'
-import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
 import { ReportDialog, BlockConfirm } from '@/components/features/safety'
 import { ProfilePreviewModal, type ProfilePreviewData } from '@/components/features/profile/ProfilePreviewModal'
+import { Badge } from '@/components/ui/Badge'
+import type { TagInfo } from '@/types/search'
+import { PageTransition, AnimatedBackground } from '@/components/ui/PageTransition'
+import { useTheme } from '@/hooks/useTheme'
 
 export default function LikesPage() {
   const [reportUserId, setReportUserId] = useState<number | null>(null)
@@ -22,9 +25,14 @@ export default function LikesPage() {
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
   const [profilePreviewUserId, setProfilePreviewUserId] = useState<number | null>(null)
   const [profilePreviewInitial, setProfilePreviewInitial] = useState<Partial<ProfilePreviewData> | undefined>()
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
+  const [showMatchCelebration, setShowMatchCelebration] = useState(false)
   
   const queryClient = useQueryClient()
   const router = useRouter()
+  const theme = useTheme()
 
   // 受け取ったいいね一覧取得
   const { data: likesData, isLoading } = useQuery({
@@ -70,184 +78,423 @@ export default function LikesPage() {
   }
 
   const handleLikeBack = async (userId: number) => {
+    if (isAnimating) return
+    
+    setIsAnimating(true)
+    setSwipeDirection('right')
+    
     try {
       const result = await likeMutation.mutateAsync(userId)
+      
+      // アニメーション完了後に次のユーザーに進む
+      setTimeout(() => {
+        if (likesData && likesData.likes && currentIndex < likesData.likes.length - 1) {
+          setCurrentIndex(currentIndex + 1)
+        } else {
+          queryClient.invalidateQueries({ queryKey: ['received-likes'] })
+          setCurrentIndex(0)
+        }
+        setIsAnimating(false)
+        setSwipeDirection(null)
+      }, 400)
+      
       if (result.is_match) {
-        alert('🎉 マッチしました！チャットページから会話を始めましょう。')
-      } else {
-        alert('💕 いいねを送りました！')
+        setShowMatchCelebration(true)
+        setTimeout(() => setShowMatchCelebration(false), 3000)
       }
     } catch (error) {
       console.error('Failed to send like:', error)
       alert('いいねの送信に失敗しました')
+      setIsAnimating(false)
+      setSwipeDirection(null)
+    }
+  }
+
+  const handleSkip = () => {
+    if (isAnimating) return
+    
+    setIsAnimating(true)
+    setSwipeDirection('left')
+    
+    // アニメーション完了後に次のユーザーに進む
+    setTimeout(() => {
+      if (likesData && likesData.likes && currentIndex < likesData.likes.length - 1) {
+        setCurrentIndex(currentIndex + 1)
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['received-likes'] })
+        setCurrentIndex(0)
+      }
+      setIsAnimating(false)
+      setSwipeDirection(null)
+    }, 400)
+  }
+
+  // 現在表示中のユーザー
+  const currentUser = likesData && likesData.likes && likesData.likes.length > 0 
+    ? likesData.likes[currentIndex] 
+    : null
+
+  // プロフィールプレビュー用のデータ準備
+  const previewData = currentUser ? {
+    display_name: currentUser.user.display_name,
+    bio: currentUser.user.bio,
+    avatar_url: currentUser.user.avatar_url ? getAvatarUrl(currentUser.user.avatar_url) : undefined,
+    campus: currentUser.user.campus,
+    faculty: currentUser.user.faculty,
+    grade: currentUser.user.grade,
+    sexuality: currentUser.user.sexuality,
+    looking_for: currentUser.user.looking_for,
+    tags: currentUser.user.tags || [],
+  } : undefined
+
+  const openProfilePreview = () => {
+    if (currentUser) {
+      setProfilePreviewUserId(currentUser.user.id)
+      setProfilePreviewInitial(previewData)
     }
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      {/* ヘッダー */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-          いいね
-        </h1>
-        <p className="text-neutral-600">
-          あなたにいいねを送ってくれた人を確認できます
-        </p>
-      </div>
+    <PageTransition variant="bounce">
+      <div className="min-h-screen bg-theme-page relative overflow-hidden">
+        {/* 装飾的な背景要素 */}
+        <AnimatedBackground variant="bubbles" />
+        
+        {/* ヘッダー */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="bg-theme-header border-b border-theme-primary/20 sticky top-0 z-10 backdrop-blur-md shadow-sm"
+        >
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between mb-3">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+              >
+                <h1 className="text-3xl font-bold text-theme-gradient mb-1">
+                  いいね
+                </h1>
+                {likesData && likesData.likes && likesData.likes.length > 0 && (
+                  <motion.p 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.4 }}
+                    className="text-sm text-neutral-600"
+                  >
+                    お相手からのいいね! {likesData.likes.length}件
+                  </motion.p>
+                )}
+              </motion.div>
+              {/* 通知バッジ（モバイル用） */}
+              {likesData && likesData.likes && likesData.likes.length > 0 ? (
+                <motion.div 
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ 
+                    type: 'spring',
+                    stiffness: 300,
+                    damping: 20,
+                    delay: 0.5
+                  }}
+                  className="md:hidden inline-block px-3 py-1.5 bg-theme-gradient border border-theme-primary/30 rounded-lg shadow-lg shadow-theme"
+                  style={theme.gradientStyle}
+                >
+                  <span className="text-white text-xs font-medium">
+                    {likesData.likes.length}
+                  </span>
+                </motion.div>
+              ) : null}
+            </div>
+          </div>
+        </motion.div>
 
-      {/* いいね一覧 */}
+      {/* メインコンテンツ */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center min-h-[60vh] relative z-10">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500"></div>
-            <p className="mt-4 text-neutral-600">読み込み中...</p>
+            <div className="relative inline-block">
+              <div className="animate-spin rounded-full h-16 w-16 border-4 border-theme-primary/20 border-t-theme-primary"></div>
+              <div className="absolute inset-0 animate-spin rounded-full h-16 w-16 border-4 border-transparent border-r-theme-secondary" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            </div>
+            <p className="mt-6 text-neutral-600 font-medium animate-pulse-soft">読み込み中...</p>
           </div>
         </div>
-      ) : likesData && likesData.likes && likesData.likes.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {likesData.likes.map((like: any) => {
-            const previewData: Partial<ProfilePreviewData> = {
-              display_name: like.user.display_name,
-              bio: like.user.bio,
-              avatar_url: getAvatarUrl(like.user.avatar_url, true) || undefined,
-              campus: like.user.campus,
-              faculty: like.user.faculty,
-              grade: like.user.grade,
-              sexuality: like.user.sexuality,
-              looking_for: like.user.looking_for,
-              tags: like.user.tags || [],
-            }
+      ) : currentUser ? (
+        <div className="container mx-auto px-4 py-4 max-w-2xl relative z-10">
+          {/* マッチ成功時の祝福アニメーション */}
+          <AnimatePresence>
+            {showMatchCelebration && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+              >
+                <div className="relative">
+                  {/* 背景の光るエフェクト */}
+                  <motion.div
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 2, opacity: [0, 0.5, 0] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                    className="absolute inset-0 rounded-full blur-3xl"
+                    style={{
+                      background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary}, ${theme.accent})`,
+                    }}
+                  />
+                  {/* メインメッセージ */}
+                  <motion.div
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                    className="relative rounded-3xl p-12 shadow-2xl"
+                    style={{
+                      background: `linear-gradient(to bottom right, ${theme.primary}, ${theme.secondary}, ${theme.accent})`,
+                    }}
+                  >
+                    <motion.div
+                      animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                      transition={{ duration: 0.5, repeat: 2 }}
+                      className="text-8xl mb-4 text-center"
+                    >
+                      🎉
+                    </motion.div>
+                    <h2 className="text-4xl font-bold text-white text-center mb-2">マッチしました！</h2>
+                    <p className="text-white/90 text-lg text-center">チャットページから会話を始めましょう</p>
+                  </motion.div>
+                  {/* キラキラエフェクト */}
+                  {[...Array(20)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ x: 0, y: 0, opacity: 1, scale: 0 }}
+                      animate={{
+                        x: Math.cos((i * 360) / 20) * 200,
+                        y: Math.sin((i * 360) / 20) * 200,
+                        opacity: [1, 0],
+                        scale: [0, 1, 0],
+                      }}
+                      transition={{ duration: 2, delay: i * 0.1 }}
+                      className="absolute inset-0 flex items-center justify-center"
+                    >
+                      <span className="text-2xl">✨</span>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
-            const openProfilePreview = () => {
-              setProfilePreviewUserId(like.user.id)
-              setProfilePreviewInitial(previewData)
-            }
-
-            return (
-              <Card key={like.user.id} className="transition-shadow hover:shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-neutral-900">
-                      {like.user.display_name}
-                    </h3>
-                    {(like.user.faculty || like.user.grade) && (
-                      <p className="text-sm text-neutral-600 mt-1">
-                        {[like.user.faculty, like.user.grade].filter(Boolean).join(' · ')}
-                      </p>
-                    )}
+          {/* プロフィールカード */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentUser.user.id}
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ 
+                opacity: 1, 
+                scale: 1, 
+                y: 0,
+                x: swipeDirection === 'left' ? -500 : swipeDirection === 'right' ? 500 : 0,
+                rotate: swipeDirection === 'left' ? -30 : swipeDirection === 'right' ? 30 : 0,
+              }}
+              exit={{ 
+                opacity: 0, 
+                scale: 0.8,
+                x: swipeDirection === 'left' ? -500 : 500,
+                rotate: swipeDirection === 'left' ? -30 : 30,
+              }}
+              transition={{ 
+                duration: 0.4,
+                ease: [0.25, 0.1, 0.25, 1]
+              }}
+              className="bg-theme-card rounded-3xl mb-8 shadow-2xl shadow-theme border border-theme-primary/20 overflow-hidden relative group hover:shadow-theme-lg transition-all duration-500 backdrop-blur-sm"
+            >
+              {/* グラデーションオーバーレイ */}
+              <div 
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"
+                style={{
+                  background: `linear-gradient(to bottom right, ${theme.primary}08, transparent, ${theme.secondary}08)`,
+                }}
+              ></div>
+              {/* 光るエフェクト */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-10"></div>
+              
+              {/* プロフィール画像 */}
+              <div className="relative aspect-square overflow-hidden">
+                {currentUser.user.avatar_url ? (
+                  <Image
+                    src={getAvatarUrl(currentUser.user.avatar_url) || '/icon.png'}
+                    alt={currentUser.user.display_name}
+                    fill
+                    className="object-cover transform group-hover:scale-105 transition-transform duration-700"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    {/* 頭部（大きな円） */}
+                    <div className="w-32 h-32 bg-neutral-300 rounded-full mb-4"></div>
+                    {/* 肩部（大きなU字型） */}
+                    <div className="w-64 h-32 bg-neutral-300 rounded-t-full"></div>
                   </div>
-                  
-                  {/* メニューボタン */}
-                  <div className="relative group">
-                    <button className="p-1 hover:bg-neutral-100 rounded-full transition-colors">
-                      <svg
-                        className="w-5 h-5 text-neutral-600"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                        />
-                      </svg>
-                    </button>
-                    
-                    <div className="hidden group-hover:block absolute right-0 mt-1 w-48 bg-white border border-neutral-200 rounded-md shadow-lg z-20">
+                )}
+                
+                {/* グラデーションオーバーレイ（テキスト読みやすくするため） */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                
+                {/* ユーザー情報（画像の上に重ねて表示） */}
+                <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <div className="flex items-center justify-between mb-3">
+                      <div>
+                        <h2 className="text-3xl font-bold text-white mb-1 drop-shadow-lg">
+                          {currentUser.user.display_name}
+                        </h2>
+                        {(currentUser.user.faculty || currentUser.user.grade) && (
+                          <p className="text-white/90 text-sm drop-shadow-md">
+                            {[currentUser.user.faculty, currentUser.user.grade].filter(Boolean).join(' · ')}
+                          </p>
+                        )}
+                      </div>
                       <button
                         onClick={openProfilePreview}
-                        className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100"
+                        className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 border border-white/30"
                       >
-                        👤 プロフィールを見る
-                      </button>
-                      <button
-                        onClick={() => handleOpenReport(like.user.id, like.user.display_name)}
-                        className="w-full text-left px-4 py-2 text-sm text-neutral-700 hover:bg-neutral-100"
-                      >
-                        🚨 通報する
-                      </button>
-                      <button
-                        onClick={() => handleOpenBlock(like.user.id, like.user.display_name)}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-                      >
-                        🚫 ブロックする
+                        詳細を見る
                       </button>
                     </div>
-                  </div>
+
+                    {/* タグ */}
+                    {currentUser.user.tags && currentUser.user.tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {currentUser.user.tags.slice(0, 3).map((tag: TagInfo) => (
+                          <Badge 
+                            key={tag.id} 
+                            variant="outline" 
+                            className="bg-white/20 border-white/30 text-white backdrop-blur-sm hover:bg-white/30 transition-all duration-300"
+                          >
+                            {tag.name}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* バイオ */}
+                    {currentUser.user.bio && (
+                      <p className="text-white/95 text-sm mb-3 line-clamp-2 drop-shadow-md">
+                        {currentUser.user.bio}
+                      </p>
+                    )}
+                  </motion.div>
                 </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
 
-                {like.user.bio && (
-                  <p className="text-sm text-neutral-700 mb-4 line-clamp-2">
-                    {like.user.bio}
-                  </p>
-                )}
+          {/* アクションボタン */}
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="flex items-center justify-center gap-6 md:gap-8 mb-8"
+          >
+            {/* スキップボタン */}
+            <motion.button
+              onClick={handleSkip}
+              disabled={isAnimating}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex flex-col items-center justify-center gap-2 w-20 h-20 md:w-28 md:h-28 bg-gradient-to-br from-neutral-200 via-neutral-250 to-neutral-300 border-2 border-white/80 rounded-full hover:from-neutral-300 hover:via-neutral-350 hover:to-neutral-400 transition-all duration-300 shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+            >
+              {/* リップル効果 */}
+              <span className="absolute inset-0 rounded-full bg-white/30 scale-0 group-active:scale-100 opacity-0 group-active:opacity-100 transition-all duration-300"></span>
+              {/* 曲がった矢印アイコン */}
+              <svg className="w-6 h-6 md:w-8 md:h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+              <span className="text-xs font-medium text-neutral-900">スキップ</span>
+            </motion.button>
 
-                {like.user.tags && like.user.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {like.user.tags.slice(0, 3).map((tag: any) => (
-                      <Badge key={tag.id} variant="outline" size="sm">
-                        {tag.name}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-
-                {like.is_matched ? (
-                  <div className="space-y-3">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={openProfilePreview}
-                    >
-                      👤 プロフィールを見る
-                    </Button>
-                    <div className="rounded-md bg-green-50 border border-green-200 text-green-700 text-center py-3">
-                      🎉 このユーザーとは既にマッチが成立しています！
-                    </div>
-                    <Button
-                      className="w-full"
-                      onClick={() => startChatMutation.mutate(like.user.id)}
-                      disabled={startChatMutation.isPending}
-                    >
-                      💬 チャットを開く
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={openProfilePreview}
-                    >
-                      👤 プロフィールを見る
-                    </Button>
-                <Button
-                  className="w-full"
-                  onClick={() => handleLikeBack(like.user.id)}
-                  disabled={likeMutation.isPending}
+            {/* ありがとうボタン */}
+            <motion.button
+              onClick={() => handleLikeBack(currentUser.user.id)}
+              disabled={likeMutation.isPending || isAnimating}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              className="flex flex-col items-center justify-center gap-2 w-24 h-24 md:w-32 md:h-32 border-2 border-white/80 rounded-full hover:opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative shadow-2xl shadow-theme-lg hover:shadow-theme overflow-hidden group"
+              style={{
+                background: `linear-gradient(to bottom right, ${theme.primary}, ${theme.secondary}, ${theme.accent})`,
+              }}
+            >
+              {/* リップル効果 */}
+              <span className="absolute inset-0 rounded-full bg-white/40 scale-0 group-active:scale-100 opacity-0 group-active:opacity-100 transition-all duration-300"></span>
+              {/* 光るエフェクト */}
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              {/* キラキラした手のアイコン（親指を立てた手） */}
+              <motion.div 
+                className="relative"
+                animate={likeMutation.isPending ? { scale: [1, 1.2, 1] } : {}}
+                transition={{ duration: 0.5, repeat: likeMutation.isPending ? Infinity : 0 }}
+              >
+                <svg className="w-6 h-6 md:w-8 md:h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
+                </svg>
+                {/* キラキラエフェクト（星） */}
+                <motion.svg 
+                  className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 md:w-3 md:h-3 text-yellow-300" 
+                  fill="currentColor" 
+                  viewBox="0 0 24 24"
+                  animate={{ rotate: [0, 180, 360], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
                 >
-                  💕 いいねを返す
-                </Button>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-            )
-          })}
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </motion.svg>
+                <motion.svg 
+                  className="absolute -bottom-0.5 -left-0.5 w-2 h-2 md:w-2.5 md:h-2.5 text-yellow-300" 
+                  fill="currentColor" 
+                  viewBox="0 0 24 24"
+                  animate={{ rotate: [360, 180, 0], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                >
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </motion.svg>
+                <motion.svg 
+                  className="absolute top-1/2 -right-2 w-2 h-2 text-yellow-300" 
+                  fill="currentColor" 
+                  viewBox="0 0 24 24"
+                  animate={{ rotate: [0, -180, -360], scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 1 }}
+                >
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </motion.svg>
+              </motion.div>
+              <span className="text-xs font-medium text-white">ありがとう!</span>
+            </motion.button>
+          </motion.div>
         </div>
       ) : (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="text-6xl mb-4">💕</div>
-            <p className="text-lg text-neutral-600 mb-2">まだいいねがありません</p>
-            <p className="text-sm text-neutral-500 mb-6">
+        <div className="flex items-center justify-center min-h-[60vh] relative z-10">
+          <div className="text-center max-w-md mx-auto px-4 animate-fade-in">
+            <div className="text-8xl mb-8 animate-bounce" style={{ animationDuration: '2s' }}>💕</div>
+            <h2 className="text-3xl font-bold text-theme-gradient mb-4 animate-scale-in">
+              まだいいねがありません
+            </h2>
+            <p className="text-neutral-600 mb-10 leading-relaxed text-lg">
               ユーザーを探していいねを送ってみましょう
             </p>
             <Link href="/home">
-              <Button>ユーザーを探す</Button>
+              <button 
+                className="px-10 py-4 text-white rounded-full hover:opacity-90 transition-all duration-300 shadow-2xl shadow-theme-lg hover:shadow-theme hover:scale-110 active:scale-95 font-semibold text-lg relative overflow-hidden group"
+                style={{
+                  background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary}, ${theme.accent})`,
+                }}
+              >
+                <span className="relative z-10">ユーザーを探す</span>
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              </button>
             </Link>
           </div>
         </div>
@@ -285,20 +532,21 @@ export default function LikesPage() {
         />
       )}
 
-      <ProfilePreviewModal
-        userId={profilePreviewUserId}
-        isOpen={profilePreviewUserId !== null}
-        onClose={() => {
-          setProfilePreviewUserId(null)
-          setProfilePreviewInitial(undefined)
-        }}
-        initialData={
-          profilePreviewUserId && profilePreviewInitial
-            ? { id: profilePreviewUserId, ...profilePreviewInitial }
-            : undefined
-        }
-      />
-    </div>
+        <ProfilePreviewModal
+          userId={profilePreviewUserId}
+          isOpen={profilePreviewUserId !== null}
+          onClose={() => {
+            setProfilePreviewUserId(null)
+            setProfilePreviewInitial(undefined)
+          }}
+          initialData={
+            profilePreviewUserId && profilePreviewInitial
+              ? { id: profilePreviewUserId, ...profilePreviewInitial }
+              : undefined
+          }
+        />
+      </div>
+    </PageTransition>
   )
 }
 

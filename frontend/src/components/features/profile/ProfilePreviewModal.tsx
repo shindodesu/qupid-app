@@ -31,7 +31,7 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
   if (isLoading || !profile) {
     return (
       <div className="space-y-4 animate-pulse">
-        <div className="relative aspect-[3/4] overflow-hidden rounded-3xl bg-neutral-200" />
+        <div className="relative aspect-square overflow-hidden rounded-3xl bg-neutral-200" />
         <div className="space-y-3 px-2">
           <div className="h-6 bg-neutral-200 rounded-md w-1/2" />
           <div className="h-4 bg-neutral-200 rounded-md w-3/4" />
@@ -60,7 +60,7 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
 
   return (
     <div className="space-y-6">
-      <div className="relative aspect-[3/4] overflow-hidden rounded-3xl shadow-lg">
+      <div className="relative aspect-square overflow-hidden rounded-3xl shadow-lg">
         {heroImage && (
           <img
             src={heroImage}
@@ -79,17 +79,9 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
             }}
           />
         )}
-        <div className="absolute inset-x-0 top-4 flex items-center justify-between px-4">
+        <div className="absolute inset-x-0 top-4 flex items-center justify-start px-4">
           <div className="rounded-full bg-white/70 px-3 py-1 text-sm font-medium text-neutral-700">
             プロフィール
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-2xl shadow-md">
-              💕
-            </div>
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-500 text-white text-2xl shadow-lg">
-              ❤
-            </div>
           </div>
         </div>
         <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />

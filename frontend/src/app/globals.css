@@ -475,16 +475,16 @@ body {
   /* 背景グラデーション用 */
   .bg-theme-page {
     background: linear-gradient(to bottom right, 
-      color-mix(in srgb, var(--theme-primary) 5%, white),
-      color-mix(in srgb, var(--theme-secondary) 5%, white),
-      color-mix(in srgb, var(--theme-accent) 5%, white)
+      color-mix(in srgb, var(--theme-primary) 2%, white),
+      color-mix(in srgb, var(--theme-secondary) 2%, white),
+      color-mix(in srgb, var(--theme-accent) 2%, white)
     );
   }
   
   .bg-theme-header {
     background: linear-gradient(to right, 
       rgba(255, 255, 255, 0.8),
-      color-mix(in srgb, var(--theme-primary) 10%, white),
+      color-mix(in srgb, var(--theme-primary) 5%, white),
       rgba(255, 255, 255, 0.8)
     );
   }
@@ -492,8 +492,8 @@ body {
   .bg-theme-card {
     background: linear-gradient(to bottom right,
       rgba(255, 255, 255, 0.9),
-      color-mix(in srgb, var(--theme-primary) 5%, white),
-      color-mix(in srgb, var(--theme-secondary) 5%, white)
+      color-mix(in srgb, var(--theme-primary) 2%, white),
+      color-mix(in srgb, var(--theme-secondary) 2%, white)
     );
   }
 }
