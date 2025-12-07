@@ -5,6 +5,34 @@
 
 /* CSS変数 - デザイントークン */
 :root {
+  /* テーマカラー（動的に変更可能） */
+  --theme-primary: #E94057;
+  --theme-secondary: #E91E63;
+  --theme-accent: #F48FB1;
+  
+  /* Tailwind v4用のカラー変数（テーマカラーを参照） */
+  --color-pink-50: #fef2f2;
+  --color-pink-100: #fee2e2;
+  --color-pink-200: #fecaca;
+  --color-pink-300: #fca5a5;
+  --color-pink-400: #f87171;
+  --color-pink-500: var(--theme-primary, #E94057);
+  --color-pink-600: var(--theme-primary, #dc2626);
+  --color-pink-700: #b91c1c;
+  --color-pink-800: #991b1b;
+  --color-pink-900: #7f1d1d;
+  
+  --color-rose-50: #fff1f2;
+  --color-rose-100: #ffe4e6;
+  --color-rose-200: #fecdd3;
+  --color-rose-300: #fda4af;
+  --color-rose-400: #fb7185;
+  --color-rose-500: var(--theme-secondary, #E91E63);
+  --color-rose-600: var(--theme-secondary, #D81B60);
+  --color-rose-700: #be123c;
+  --color-rose-800: #9f1239;
+  --color-rose-900: #881337;
+  
   /* カラーパレット */
   --color-primary-50: #fef2f2;
   --color-primary-100: #fee2e2;
@@ -126,8 +154,8 @@
   --color-primary-200: #fecaca;
   --color-primary-300: #fca5a5;
   --color-primary-400: #f87171;
-  --color-primary-500: #E94057;
-  --color-primary-600: #dc2626;
+  --color-primary-500: var(--theme-primary, #E94057); /* テーマカラーを使用 */
+  --color-primary-600: var(--theme-primary, #dc2626);
   --color-primary-700: #b91c1c;
   --color-primary-800: #991b1b;
   --color-primary-900: #7f1d1d;
@@ -137,11 +165,40 @@
   --color-secondary-200: #FFCDD2;
   --color-secondary-300: #F8BBD9;
   --color-secondary-400: #F48FB1;
-  --color-secondary-500: #E91E63;
-  --color-secondary-600: #D81B60;
+  --color-secondary-500: var(--theme-secondary, #E91E63); /* テーマカラーを使用 */
+  --color-secondary-600: var(--theme-secondary, #D81B60);
   --color-secondary-700: #C2185B;
   --color-secondary-800: #AD1457;
   --color-secondary-900: #880E4F;
+  
+  /* pinkとroseもテーマカラーを使用 */
+  --color-pink-50: #fef2f2;
+  --color-pink-100: #fee2e2;
+  --color-pink-200: #fecaca;
+  --color-pink-300: #fca5a5;
+  --color-pink-400: #f87171;
+  --color-pink-500: var(--theme-primary, #E94057);
+  --color-pink-600: var(--theme-primary, #dc2626);
+  --color-pink-700: #b91c1c;
+  --color-pink-800: #991b1b;
+  --color-pink-900: #7f1d1d;
+  
+  --color-rose-50: #fff1f2;
+  --color-rose-100: #ffe4e6;
+  --color-rose-200: #fecdd3;
+  --color-rose-300: #fda4af;
+  --color-rose-400: #fb7185;
+  --color-rose-500: var(--theme-secondary, #E91E63);
+  --color-rose-600: var(--theme-secondary, #D81B60);
+  --color-rose-700: #be123c;
+  --color-rose-800: #9f1239;
+  --color-rose-900: #881337;
+  
+  /* pinkとroseもテーマカラーを使用 */
+  --color-pink-500: var(--theme-primary, #E94057);
+  --color-pink-600: var(--theme-primary, #dc2626);
+  --color-rose-500: var(--theme-secondary, #E91E63);
+  --color-rose-600: var(--theme-secondary, #D81B60);
   
   --color-neutral-50: #f9fafb;
   --color-neutral-100: #f3f4f6;
@@ -337,13 +394,13 @@ body {
     animation: scale-in 150ms ease-out;
   }
   
-  /* グラデーション */
+  /* グラデーション（テーマカラーを使用） */
   .gradient-primary {
-    background: linear-gradient(135deg, #E94057, #dc2626);
+    background: linear-gradient(135deg, var(--theme-primary), var(--theme-secondary));
   }
   
   .gradient-secondary {
-    background: linear-gradient(135deg, #E91E63, #D81B60);
+    background: linear-gradient(135deg, var(--theme-secondary), var(--theme-accent));
   }
   
   /* ガラスモーフィズム効果 */
@@ -368,6 +425,76 @@ body {
   
   .hover-scale:hover {
     transform: scale(1.05);
+  }
+  
+  /* テーマカラー用のユーティリティクラス */
+  .bg-theme-gradient {
+    background: linear-gradient(to right, var(--theme-primary), var(--theme-secondary));
+  }
+  
+  .bg-theme-gradient-br {
+    background: linear-gradient(to bottom right, var(--theme-primary), var(--theme-secondary));
+  }
+  
+  .bg-theme-gradient-radial {
+    background: radial-gradient(circle, var(--theme-primary), var(--theme-secondary));
+  }
+  
+  .text-theme-primary {
+    color: var(--theme-primary);
+  }
+  
+  .text-theme-secondary {
+    color: var(--theme-secondary);
+  }
+  
+  .text-theme-gradient {
+    background: linear-gradient(to right, var(--theme-primary), var(--theme-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+  }
+  
+  .border-theme-primary {
+    border-color: var(--theme-primary);
+  }
+  
+  .border-theme-secondary {
+    border-color: var(--theme-secondary);
+  }
+  
+  .shadow-theme {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px var(--theme-primary);
+  }
+  
+  .shadow-theme-lg {
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px var(--theme-primary);
+  }
+  
+  /* 背景グラデーション用 */
+  .bg-theme-page {
+    background: linear-gradient(to bottom right, 
+      color-mix(in srgb, var(--theme-primary) 5%, white),
+      color-mix(in srgb, var(--theme-secondary) 5%, white),
+      color-mix(in srgb, var(--theme-accent) 5%, white)
+    );
+  }
+  
+  .bg-theme-header {
+    background: linear-gradient(to right, 
+      rgba(255, 255, 255, 0.8),
+      color-mix(in srgb, var(--theme-primary) 10%, white),
+      rgba(255, 255, 255, 0.8)
+    );
+  }
+  
+  .bg-theme-card {
+    background: linear-gradient(to bottom right,
+      rgba(255, 255, 255, 0.9),
+      color-mix(in srgb, var(--theme-primary) 5%, white),
+      color-mix(in srgb, var(--theme-secondary) 5%, white)
+    );
   }
 }
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useIsAuthenticated, useUser, useAuthLoading } from '@/stores/auth'
 import { DashboardNav } from '@/components/layout/DashboardNav'
 import { FilterProvider } from '@/components/providers/FilterProvider'
+import { ThemeProvider } from '@/components/providers/ThemeProvider'
 
 export default function DashboardLayoutClient({
   children,
@@ -76,14 +77,16 @@ export default function DashboardLayoutClient({
 
   // 認証済み＆プロフィール完了
   return (
-    <FilterProvider>
-      <div className="min-h-screen bg-neutral-50">
-        <DashboardNav />
-        <main id="main-content" className="pb-20 md:pb-8" role="main">
-          {children}
-        </main>
-      </div>
-    </FilterProvider>
+    <ThemeProvider>
+      <FilterProvider>
+        <div className="min-h-screen bg-neutral-50">
+          <DashboardNav />
+          <main id="main-content" className="pb-20 md:pb-8" role="main">
+            {children}
+          </main>
+        </div>
+      </FilterProvider>
+    </ThemeProvider>
   )
 }
 

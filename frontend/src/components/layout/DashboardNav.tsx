@@ -4,31 +4,37 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useEffect, useState } from 'react'
+import { useTheme } from '@/hooks/useTheme'
 
 const navItems = [
   {
     name: '探す',
     href: '/home',
-    icon: '🔍',
+    icon: 'search',
   },
   {
     name: 'いいね',
     href: '/matches',
-    icon: '💕',
+    icon: 'likes',
   },
   {
     name: 'チャット',
     href: '/chat',
-    icon: '💬',
+    icon: 'chat',
   },
   {
     name: 'プロフィール',
     href: '/profile',
-    icon: '👤',
+    icon: 'profile',
   },
 ]
 
 const settingsItems = [
+  {
+    name: 'テーマ',
+    href: '/theme-settings',
+    icon: '🎨',
+  },
   {
     name: 'セーフティ',
     href: '/safety',
@@ -40,6 +46,7 @@ export function DashboardNav() {
   const pathname = usePathname()
   const router = useRouter()
   const [isPWA, setIsPWA] = useState(false)
+  const theme = useTheme()
 
   useEffect(() => {
     const checkPWAMode = () => {
@@ -86,14 +93,36 @@ export function DashboardNav() {
                 <button
                   key={item.href}
                   onClick={() => handleNavigation(item.href)}
-                  className={cn(
-                    'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
-                  )}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all',
+                      isActive
+                        ? 'text-theme-primary border border-theme-primary/30 shadow-sm'
+                        : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
+                    )}
+                    style={isActive ? {
+                      background: `linear-gradient(to right, ${theme.primary}10, ${theme.secondary}10)`,
+                    } : undefined}
                 >
-                  <span>{item.icon}</span>
+                  {item.icon === 'search' && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  )}
+                  {item.icon === 'likes' && (
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                    </svg>
+                  )}
+                  {item.icon === 'chat' && (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  )}
+                  {item.icon === 'profile' && (
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  )}
                   <span>{item.name}</span>
                 </button>
               )
@@ -108,11 +137,14 @@ export function DashboardNav() {
                     key={item.href}
                     onClick={() => handleNavigation(item.href)}
                     className={cn(
-                      'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors',
+                      'flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all',
                       isActive
-                        ? 'bg-primary-50 text-primary-700'
-                        : 'text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900'
+                        ? 'text-theme-primary border border-theme-primary/30 shadow-sm'
+                        : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
                     )}
+                    style={isActive ? {
+                      background: `linear-gradient(to right, ${theme.primary}10, ${theme.secondary}10)`,
+                    } : undefined}
                   >
                     <span>{item.icon}</span>
                     <span>{item.name}</span>
@@ -135,14 +167,83 @@ export function DashboardNav() {
                 key={item.href}
                 onClick={() => handleNavigation(item.href)}
                 className={cn(
-                  'flex flex-col items-center justify-center py-2 px-2 transition-colors flex-1',
+                  'flex flex-col items-center justify-center py-2 px-2 transition-colors flex-1 relative',
                   isActive
                     ? 'text-red-500'
                     : 'text-neutral-600'
                 )}
               >
-                <span className="text-2xl mb-1">{item.icon}</span>
-                <span className="text-xs">{item.name}</span>
+                {/* アイコン */}
+                <div className="relative mb-1">
+                  {item.icon === 'search' && (
+                    <svg 
+                      className={cn(
+                        'w-6 h-6',
+                        isActive ? 'text-red-500' : 'text-neutral-400'
+                      )}
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  )}
+                  {item.icon === 'likes' && (
+                    <div className="relative">
+                      {/* ピンクのハートアイコン（2つ重なっている） */}
+                      <svg 
+                        className={cn(
+                          'w-6 h-6',
+                          isActive ? 'text-theme-primary' : 'text-neutral-400'
+                        )}
+                        fill="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                      </svg>
+                      {/* 2つ目のハート（少しずらして重ねる） */}
+                      <svg 
+                        className={cn(
+                          'absolute top-0.5 left-0.5 w-5 h-5',
+                          isActive ? 'text-theme-primary' : 'text-neutral-300'
+                        )}
+                        fill="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                      </svg>
+                    </div>
+                  )}
+                  {item.icon === 'chat' && (
+                    <svg 
+                      className={cn(
+                        'w-6 h-6',
+                        isActive ? 'text-red-500' : 'text-neutral-400'
+                      )}
+                      fill="none" 
+                      stroke="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  )}
+                  {item.icon === 'profile' && (
+                    <svg 
+                      className={cn(
+                        'w-6 h-6',
+                        isActive ? 'text-blue-500' : 'text-neutral-400'
+                      )}
+                      fill="currentColor" 
+                      viewBox="0 0 24 24"
+                    >
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                  )}
+                </div>
+                <span className={cn(
+                  'text-xs',
+                  isActive ? 'text-red-500' : 'text-neutral-600'
+                )}>{item.name}</span>
               </button>
             )
           })}

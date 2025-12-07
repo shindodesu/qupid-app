@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { motion } from 'framer-motion'
 import { apiClient } from '@/lib/api'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
@@ -13,12 +14,16 @@ import { Badge } from '@/components/ui/Badge'
 import { useUser, useAuthStore } from '@/stores/auth'
 import { getAvatarUrl } from '@/lib/utils/image'
 import { ProfilePreviewCard, type ProfilePreviewData } from '@/components/features/profile/ProfilePreviewModal'
+import { cn } from '@/lib/utils'
+import { PageTransition, StaggerContainer, StaggerItem, AnimatedBackground } from '@/components/ui/PageTransition'
+import { useTheme } from '@/hooks/useTheme'
 
 export default function ProfilePage() {
   const router = useRouter()
   const user = useUser()
   const { updateUser } = useAuthStore()
   const queryClient = useQueryClient()
+  const theme = useTheme()
 
   const [isEditing, setIsEditing] = useState(false)
   const [avatarLoadError, setAvatarLoadError] = useState(false)
@@ -231,11 +236,13 @@ export default function ProfilePage() {
   // ローディング状態の表示
   if (isLoadingUserData && !displayUserData) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
-            <p className="text-neutral-600">プロフィール情報を読み込み中...</p>
+      <div className="min-h-screen bg-theme-page">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-pink-200 border-t-pink-500 mx-auto mb-4"></div>
+              <p className="text-neutral-600 font-medium">プロフィール情報を読み込み中...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -245,55 +252,71 @@ export default function ProfilePage() {
   // エラー状態の表示
   if (isErrorUserData && !displayUserData) {
     return (
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-            プロフィール
-          </h1>
-        </div>
-        <Card className="mb-6">
-          <CardContent className="pt-6">
-            <div className="text-center py-8">
-              <p className="text-red-500 mb-4">
-                プロフィール情報の読み込みに失敗しました
-              </p>
-              {userDataError && (
-                <p className="text-sm text-neutral-500 mb-4">
-                  {userDataError instanceof Error ? userDataError.message : 'エラーが発生しました'}
+      <div className="min-h-screen bg-theme-page">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-theme-gradient mb-2">
+              プロフィール
+            </h1>
+          </div>
+          <Card className="mb-6 border-theme-primary/15 shadow-lg shadow-theme bg-white/80 backdrop-blur-md">
+            <CardContent className="pt-6">
+              <div className="text-center py-8">
+                <p className="text-red-500 mb-4 font-medium">
+                  プロフィール情報の読み込みに失敗しました
                 </p>
-              )}
-              <Button onClick={() => refetchUserData()}>
-                再試行
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                {userDataError && (
+                  <p className="text-sm text-neutral-500 mb-4">
+                    {userDataError instanceof Error ? userDataError.message : 'エラーが発生しました'}
+                  </p>
+                )}
+                <Button 
+                  onClick={() => refetchUserData()}
+                  className="text-white shadow-lg shadow-theme hover:opacity-90 transition-all"
+                  style={theme.gradientStyle}
+                >
+                  再試行
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
-      {/* ヘッダー */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-          プロフィール
-        </h1>
-        <p className="text-neutral-600">
-          あなたのプロフィール情報を管理
-        </p>
-      </div>
+    <PageTransition variant="scale">
+      <div className="min-h-screen bg-theme-page relative overflow-hidden">
+        {/* 装飾的な背景要素 */}
+        <AnimatedBackground variant="bubbles" />
+        
+        <div className="container mx-auto px-4 py-8 max-w-4xl relative z-10">
+          {/* ヘッダー */}
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mb-8"
+          >
+            <h1 className="text-3xl font-bold text-theme-gradient mb-1">
+              プロフィール
+            </h1>
+            <p className="text-sm text-neutral-600">
+              あなたのプロフィール情報を管理
+            </p>
+          </motion.div>
 
-      {previewProfile && (
-        <div className="mb-8">
-          <ProfilePreviewCard profile={previewProfile} />
-        </div>
-      )}
+        {previewProfile && (
+          <div className="mb-8">
+            <ProfilePreviewCard profile={previewProfile} />
+          </div>
+        )}
 
-      {/* プロフィール画像 */}
-      <Card className="mb-6">
+        {/* プロフィール画像 */}
+        <Card className="mb-6 border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
         <CardHeader>
-          <CardTitle>プロフィール画像</CardTitle>
+          <CardTitle className="text-xl font-bold text-theme-gradient">プロフィール画像</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-6">
@@ -337,11 +360,11 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* プロフィール情報 */}
-      <Card className="mb-6">
+        {/* プロフィール情報 */}
+        <Card className="mb-6 border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>基本情報</CardTitle>
+            <CardTitle className="text-xl font-bold text-theme-gradient">基本情報</CardTitle>
             <Button
               variant="outline"
               size="sm"
@@ -617,10 +640,10 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* タグ */}
-      <Card className="mb-6">
+        {/* タグ */}
+        <Card className="mb-6 border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
         <CardHeader>
-          <CardTitle>タグ</CardTitle>
+          <CardTitle className="text-theme-gradient">タグ</CardTitle>
         </CardHeader>
         <CardContent>
           {/* 現在のタグ */}
@@ -633,7 +656,8 @@ export default function ProfilePage() {
                 {tagsData.tags.map((tag: any) => (
                   <div
                     key={tag.id}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full bg-primary-500 text-white"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full text-white shadow-md shadow-theme"
+                    style={theme.gradientStyle}
                   >
                     <span>{tag.name}</span>
                     <button
@@ -696,29 +720,51 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* セーフティ */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>セーフティ</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <Link href="/safety" className="flex-1">
-              <Button variant="outline" className="w-full">
-                🛡️ ブロック・通報管理
-              </Button>
-            </Link>
-          </div>
-          <p className="text-sm text-neutral-600 mt-3">
-            ブロックしたユーザーの管理や通報履歴を確認できます
-          </p>
-        </CardContent>
-      </Card>
+        {/* セーフティとテーマ設定 */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* セーフティ */}
+          <Card className="border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
+            <CardHeader>
+              <CardTitle className="text-theme-gradient">セーフティ</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-3">
+                <Link href="/safety" className="flex-1">
+                  <Button variant="outline" className="w-full">
+                    🛡️ ブロック・通報管理
+                  </Button>
+                </Link>
+              </div>
+              <p className="text-sm text-neutral-600 mt-3">
+                ブロックしたユーザーの管理や通報履歴を確認できます
+              </p>
+            </CardContent>
+          </Card>
 
-      {/* アカウント設定 */}
-      <Card>
+          {/* テーマ設定 */}
+          <Card className="border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
+            <CardHeader>
+              <CardTitle className="text-theme-gradient">テーマ設定</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-3">
+                <Link href="/theme-settings" className="flex-1">
+                  <Button variant="outline" className="w-full">
+                    🎨 テーマカラーを変更
+                  </Button>
+                </Link>
+              </div>
+              <p className="text-sm text-neutral-600 mt-3">
+                アプリのテーマカラーを選択できます
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* アカウント設定 */}
+        <Card className="border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
         <CardHeader>
-          <CardTitle>アカウント設定</CardTitle>
+          <CardTitle className="text-theme-gradient">アカウント設定</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <Button variant="destructive" className="w-full" onClick={handleLogout}>
@@ -727,8 +773,8 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      {/* セクシュアリティ選択モーダル */}
-      {showSexualityModal && (
+        {/* セクシュアリティ選択モーダル */}
+        {showSexualityModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end z-50">
           <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold mb-4 text-neutral-900">
@@ -876,8 +922,8 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 体の性別選択モーダル */}
-      {showGenderModal && (
+        {/* 体の性別選択モーダル */}
+        {showGenderModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end z-50">
           <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold mb-4 text-neutral-900">体の性別を選択</h3>
@@ -913,8 +959,8 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 探している関係選択モーダル */}
-      {showLookingForModal && (
+        {/* 探している関係選択モーダル */}
+        {showLookingForModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end z-50">
           <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold mb-4 text-neutral-900">探している関係を選択</h3>
@@ -990,8 +1036,10 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      )}
-    </div>
+        )}
+        </div>
+      </div>
+    </PageTransition>
   )
 }
 

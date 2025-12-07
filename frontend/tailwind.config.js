@@ -9,7 +9,7 @@ module.exports = {
   ],
   theme: {
     extend: {
-      // カラーパレット
+      // カラーパレット（CSS変数を使用）
       colors: {
         primary: {
           50: '#fef2f2',
@@ -17,7 +17,7 @@ module.exports = {
           200: '#fecaca',
           300: '#fca5a5',
           400: '#f87171',
-          500: '#E94057',
+          500: 'var(--theme-primary, #E94057)', // CSS変数を使用、フォールバック付き
           600: '#dc2626',
           700: '#b91c1c',
           800: '#991b1b',
@@ -29,11 +29,39 @@ module.exports = {
           200: '#FFCDD2',
           300: '#F8BBD9',
           400: '#F48FB1',
-          500: '#E91E63',
+          500: 'var(--theme-secondary, #E91E63)', // CSS変数を使用、フォールバック付き
           600: '#D81B60',
           700: '#C2185B',
           800: '#AD1457',
           900: '#880E4F',
+        },
+        accent: {
+          DEFAULT: 'var(--theme-accent, #F48FB1)', // CSS変数を使用、フォールバック付き
+        },
+        // pinkとroseもテーマカラーを使用
+        pink: {
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
+          500: 'var(--theme-primary, #E94057)', // テーマのprimaryカラーを使用
+          600: 'var(--theme-primary, #dc2626)',
+          700: '#b91c1c',
+          800: '#991b1b',
+          900: '#7f1d1d',
+        },
+        rose: {
+          50: '#fff1f2',
+          100: '#ffe4e6',
+          200: '#fecdd3',
+          300: '#fda4af',
+          400: '#fb7185',
+          500: 'var(--theme-secondary, #E91E63)', // テーマのsecondaryカラーを使用
+          600: 'var(--theme-secondary, #D81B60)',
+          700: '#be123c',
+          800: '#9f1239',
+          900: '#881337',
         },
         neutral: {
           50: '#f9fafb',
@@ -247,6 +275,41 @@ module.exports = {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
+        'bounce-soft': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-20px)' },
+        },
+        'glow': {
+          '0%, 100%': { boxShadow: '0 0 20px rgba(233, 64, 87, 0.3)' },
+          '50%': { boxShadow: '0 0 40px rgba(233, 64, 87, 0.6)' },
+        },
+        'slide-out-left': {
+          '0%': { transform: 'translateX(0) rotate(0deg)', opacity: '1' },
+          '100%': { transform: 'translateX(-150%) rotate(-30deg)', opacity: '0' },
+        },
+        'slide-out-right': {
+          '0%': { transform: 'translateX(0) rotate(0deg)', opacity: '1' },
+          '100%': { transform: 'translateX(150%) rotate(30deg)', opacity: '0' },
+        },
+        'scale-in-bounce': {
+          '0%': { transform: 'scale(0)', opacity: '0' },
+          '50%': { transform: 'scale(1.1)', opacity: '1' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        'confetti': {
+          '0%': { transform: 'translateY(0) rotate(0deg)', opacity: '1' },
+          '100%': { transform: 'translateY(-100vh) rotate(720deg)', opacity: '0' },
+        },
+        'heart-beat': {
+          '0%, 100%': { transform: 'scale(1)' },
+          '25%': { transform: 'scale(1.2)' },
+          '50%': { transform: 'scale(1)' },
+          '75%': { transform: 'scale(1.1)' },
+        },
       },
       
       animation: {
@@ -257,6 +320,14 @@ module.exports = {
         'scale-in': 'scale-in 0.2s ease-out',
         'pulse-soft': 'pulse-soft 2s ease-in-out infinite',
         'shimmer': 'shimmer 2s linear infinite',
+        'bounce-soft': 'bounce-soft 2s ease-in-out infinite',
+        'float': 'float 3s ease-in-out infinite',
+        'glow': 'glow 2s ease-in-out infinite',
+        'slide-out-left': 'slide-out-left 0.4s ease-in',
+        'slide-out-right': 'slide-out-right 0.4s ease-in',
+        'scale-in-bounce': 'scale-in-bounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+        'confetti': 'confetti 3s ease-out forwards',
+        'heart-beat': 'heart-beat 1s ease-in-out infinite',
       },
     },
   },
