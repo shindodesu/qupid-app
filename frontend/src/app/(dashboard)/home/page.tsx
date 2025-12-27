@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { searchApi } from '@/lib/api/search'
@@ -74,13 +74,33 @@ export default function DiscoverPage() {
     }
   }
 
-  const handleSkip = (userId: number) => {
-    // 処理済みユーザーに追加
-    setProcessedUserIds(prev => new Set([...prev, userId]))
-    
-    // ユーザーが少なくなったら再取得
-    if (users.length <= 8) {
-      refetch()
+  // スキップ送信ミューテーション
+  const skipMutation = useMutation({
+    mutationFn: (userId: number) => searchApi.sendSkip(userId),
+    onSuccess: () => {
+      // 処理済みユーザーに追加
+      // ユーザーが少なくなったら再取得
+      if (users.length <= 8) {
+        refetch()
+      }
+    },
+    onError: (error: any) => {
+      console.error('[Skip] Error sending skip:', error)
+      toast({
+        title: "エラーが発生しました",
+        description: error?.message || 'スキップの送信に失敗しました',
+        type: "error"
+      })
+    },
+  })
+
+  const handleSkip = async (userId: number) => {
+    try {
+      await skipMutation.mutateAsync(userId)
+      // 処理済みユーザーに追加
+      setProcessedUserIds(prev => new Set([...prev, userId]))
+    } catch (error) {
+      // エラーは既にtoastで表示されている
     }
   }
 

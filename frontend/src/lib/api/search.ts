@@ -204,5 +204,50 @@ export const searchApi = {
       )
     }
   },
+
+  /**
+   * スキップ送信
+   */
+  async sendSkip(userId: number): Promise<void> {
+    try {
+      await apiClient.post('/skips', { skipped_user_id: userId })
+    } catch (error: any) {
+      throw new SearchApiError(
+        error.message || 'スキップの送信に失敗しました',
+        error.status,
+        error.code
+      )
+    }
+  },
+
+  /**
+   * スキップ一覧取得
+   */
+  async getSkips(): Promise<any> {
+    try {
+      return await apiClient.get('/skips')
+    } catch (error: any) {
+      throw new SearchApiError(
+        error.message || 'スキップ一覧の取得に失敗しました',
+        error.status,
+        error.code
+      )
+    }
+  },
+
+  /**
+   * スキップ取り消し
+   */
+  async removeSkip(userId: number): Promise<void> {
+    try {
+      await apiClient.delete(`/skips/${userId}`)
+    } catch (error: any) {
+      throw new SearchApiError(
+        error.message || 'スキップの取り消しに失敗しました',
+        error.status,
+        error.code
+      )
+    }
+  },
 }
 

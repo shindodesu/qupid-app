@@ -110,23 +110,44 @@ export default function LikesPage() {
     }
   }
 
-  const handleSkip = () => {
-    if (isAnimating) return
+  // スキップ送信ミューテーション
+  const skipMutation = useMutation({
+    mutationFn: (userId: number) => searchApi.sendSkip(userId),
+    onSuccess: () => {
+      // いいね一覧を再取得（スキップしたユーザーが除外される）
+      queryClient.invalidateQueries({ queryKey: ['received-likes'] })
+    },
+    onError: (error: any) => {
+      console.error('Failed to send skip:', error)
+      alert('スキップの送信に失敗しました')
+    },
+  })
+
+  const handleSkip = async () => {
+    if (isAnimating || !currentUser) return
     
     setIsAnimating(true)
     setSwipeDirection('left')
     
-    // アニメーション完了後に次のユーザーに進む
-    setTimeout(() => {
-      if (likesData && likesData.likes && currentIndex < likesData.likes.length - 1) {
-        setCurrentIndex(currentIndex + 1)
-      } else {
-        queryClient.invalidateQueries({ queryKey: ['received-likes'] })
-        setCurrentIndex(0)
-      }
+    try {
+      // スキップを送信
+      await skipMutation.mutateAsync(currentUser.user.id)
+      
+      // アニメーション完了後に次のユーザーに進む
+      setTimeout(() => {
+        if (likesData && likesData.likes && currentIndex < likesData.likes.length - 1) {
+          setCurrentIndex(currentIndex + 1)
+        } else {
+          queryClient.invalidateQueries({ queryKey: ['received-likes'] })
+          setCurrentIndex(0)
+        }
+        setIsAnimating(false)
+        setSwipeDirection(null)
+      }, 400)
+    } catch (error) {
       setIsAnimating(false)
       setSwipeDirection(null)
-    }, 400)
+    }
   }
 
   // 現在表示中のユーザー
@@ -173,6 +194,7 @@ export default function LikesPage() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
+                className="flex-1"
               >
                 <h1 className="text-3xl font-bold text-theme-primary mb-1">
                   いいね
@@ -188,24 +210,41 @@ export default function LikesPage() {
                   </motion.p>
                 )}
               </motion.div>
-              {/* 通知バッジ（モバイル用） */}
-              {likesData && likesData.likes && likesData.likes.length > 0 ? (
-                <motion.div 
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ 
-                    type: 'spring',
-                    stiffness: 300,
-                    damping: 20,
-                    delay: 0.5
-                  }}
-                  className="md:hidden inline-block px-3 py-1.5 bg-theme-primary border border-theme-primary/30 rounded-lg shadow-lg shadow-theme"
-                >
-                  <span className="text-white text-xs font-medium">
-                    {likesData.likes.length}
-                  </span>
-                </motion.div>
-              ) : null}
+              {/* スキップ一覧への遷移ボタン */}
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="flex items-center gap-2"
+              >
+                <Link href="/skips">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-3 py-1.5 text-xs font-medium bg-neutral-200 hover:bg-neutral-300 text-neutral-700 rounded-lg transition-all duration-300 border border-neutral-300"
+                  >
+                    スキップ一覧
+                  </motion.button>
+                </Link>
+                {/* 通知バッジ（モバイル用） */}
+                {likesData && likesData.likes && likesData.likes.length > 0 ? (
+                  <motion.div 
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ 
+                      type: 'spring',
+                      stiffness: 300,
+                      damping: 20,
+                      delay: 0.5
+                    }}
+                    className="md:hidden inline-block px-3 py-1.5 bg-theme-primary border border-theme-primary/30 rounded-lg shadow-lg shadow-theme"
+                  >
+                    <span className="text-white text-xs font-medium">
+                      {likesData.likes.length}
+                    </span>
+                  </motion.div>
+                ) : null}
+              </motion.div>
             </div>
           </div>
         </motion.div>

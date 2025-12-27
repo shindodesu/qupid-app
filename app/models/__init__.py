@@ -5,6 +5,7 @@ from .conversation import Conversation, ConversationMember
 from .message import Message
 from .report import Report
 from .block import Block
+from .skip import Skip
 
 __all__ = [
     "User",
@@ -16,4 +17,5 @@ __all__ = [
     "Message",
     "Report",
     "Block",
+    "Skip",
 ]
