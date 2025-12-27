@@ -385,9 +385,6 @@ export default function LikesPage() {
                   </div>
                 )}
                 
-                {/* オーバーレイ（テキスト読みやすくするため） */}
-                <div className="absolute inset-0 bg-black/40"></div>
-                
                 {/* ユーザー情報（画像の上に重ねて表示） */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                   <motion.div

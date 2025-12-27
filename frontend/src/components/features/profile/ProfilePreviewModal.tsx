@@ -84,7 +84,6 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
             プロフィール
           </div>
         </div>
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-black/40" />
       </div>
 
       <div className="space-y-6 px-2">
