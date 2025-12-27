@@ -107,11 +107,32 @@ export interface SendLikeResponse {
     id: number
     user: {
       id: number
+      email?: string | null
       display_name: string
       bio?: string | null
+      avatar_url?: string | null
+      campus?: string | null
       faculty?: string | null
       grade?: string | null
+      birthday?: string | null
+      gender?: string | null
+      sexuality?: string | null
+      looking_for?: string | null
+      profile_completed?: boolean
+      is_active?: boolean
+      created_at?: string
+      show_faculty?: boolean
+      show_grade?: boolean
+      show_birthday?: boolean
+      show_age?: boolean
+      show_gender?: boolean
+      show_sexuality?: boolean
+      show_looking_for?: boolean
+      show_bio?: boolean
+      show_tags?: boolean
+      tags?: TagInfo[]
     }
+    matched_at: string
   } | null
 }
 

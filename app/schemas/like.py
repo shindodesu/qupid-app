@@ -1,5 +1,7 @@
 # app/schemas/like.py
 
+from __future__ import annotations
+
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
@@ -24,7 +26,7 @@ class LikeResponse(BaseModel):
     message: str | None = None
     like: LikeBase
     is_match: bool
-    match: Optional[dict] = None
+    match: Optional[MatchRead] = None
 
 
 class SentLikeRead(BaseModel):

@@ -102,6 +102,9 @@ async def send_like(
     db.add(new_like)
     await db.commit()
     await db.refresh(new_like)
+    
+    # コミット後にliked_userがexpiredになるのを防ぐため、明示的にリフレッシュ
+    await db.refresh(liked_user)
 
     # マッチング判定：相手も自分にいいねを送っているかチェック
     reverse_like_query = await db.execute(
@@ -125,21 +128,74 @@ async def send_like(
     )
 
     if is_match:
+        # マッチング成立日時を計算（後にいいねした方の日時）
+        # タイムゾーン情報を含むdatetimeオブジェクト同士の比較
+        matched_at = max(new_like.created_at, reverse_like.created_at)
+        
+        # ユーザーのタグ情報を取得
+        user_tags_query = await db.execute(
+            select(UserTag)
+            .where(UserTag.user_id == payload.liked_user_id)
+            .options(selectinload(UserTag.tag))
+        )
+        user_tags = user_tags_query.scalars().all()
+        
+        # タグ情報を辞書形式で構築（descriptionがNoneの場合も含む）
+        tags = [
+            {
+                "id": ut.tag.id,
+                "name": ut.tag.name,
+                "description": ut.tag.description,  # Noneの可能性があるが、そのまま含める
+            }
+            for ut in user_tags
+        ]
+        if not liked_user.show_tags:
+            tags = []
+        
+        # UserWithTagsオブジェクトを構築
+        # データ型の不一致を防ぐため、明示的に型を確認
+        user_with_tags = UserWithTags(
+            id=liked_user.id,
+            email=None,
+            display_name=liked_user.display_name,
+            bio=liked_user.bio if liked_user.show_bio else None,
+            avatar_url=liked_user.avatar_url,
+            campus=liked_user.campus,
+            faculty=liked_user.faculty if liked_user.show_faculty else None,
+            grade=liked_user.grade if liked_user.show_grade else None,
+            birthday=liked_user.birthday if liked_user.show_birthday else None,
+            gender=liked_user.gender if liked_user.show_gender else None,
+            sexuality=liked_user.sexuality if liked_user.show_sexuality else None,
+            looking_for=liked_user.looking_for if liked_user.show_looking_for else None,
+            profile_completed=liked_user.profile_completed,
+            is_active=liked_user.is_active,
+            created_at=liked_user.created_at,  # datetimeオブジェクト（タイムゾーン情報を含む）
+            show_faculty=liked_user.show_faculty,
+            show_grade=liked_user.show_grade,
+            show_birthday=liked_user.show_birthday,
+            show_age=liked_user.show_age,
+            show_gender=liked_user.show_gender,
+            show_sexuality=liked_user.show_sexuality,
+            show_looking_for=liked_user.show_looking_for,
+            show_bio=liked_user.show_bio,
+            show_tags=liked_user.show_tags,
+            tags=tags,  # List[dict]形式
+        )
+        
+        # MatchReadオブジェクトを構築
+        # matched_atはdatetimeオブジェクト（タイムゾーン情報を含む）
+        match = MatchRead(
+            id=payload.liked_user_id,
+            user=user_with_tags,
+            matched_at=matched_at,  # datetimeオブジェクト（タイムゾーン情報を含む）
+        )
+        
         # マッチング成立時のレスポンス
         return LikeResponse(
             message="Like sent successfully - It's a match!",
             like=like_base,
             is_match=True,
-            match={
-                "id": payload.liked_user_id,
-                "user": {
-                    "id": liked_user.id,
-                    "display_name": liked_user.display_name,
-                    "bio": liked_user.bio,
-                    "faculty": liked_user.faculty,
-                    "grade": liked_user.grade,
-                },
-            },
+            match=match,
         )
     else:
         # 通常のいいね送信
