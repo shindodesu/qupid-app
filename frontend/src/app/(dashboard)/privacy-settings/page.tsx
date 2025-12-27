@@ -94,14 +94,14 @@ export default function PrivacySettingsPage() {
   }
 
   const privacyItems = [
-    { key: 'show_faculty' as keyof PrivacySettings, label: '学部', description: 'あなたの所属学部を表示します' },
-    { key: 'show_grade' as keyof PrivacySettings, label: '学年', description: 'あなたの学年を表示します' },
-    { key: 'show_birthday' as keyof PrivacySettings, label: '誕生日', description: '生年月日を表示します（通常は非公開推奨）' },
-    { key: 'show_age' as keyof PrivacySettings, label: '年齢', description: 'あなたの年齢を表示します' },
-    { key: 'show_gender' as keyof PrivacySettings, label: '体の性別', description: 'あなたの体の性別を表示します' },
+    { key: 'show_bio' as keyof PrivacySettings, label: '自己紹介', description: 'あなたの自己紹介文を表示します' },
     { key: 'show_sexuality' as keyof PrivacySettings, label: 'セクシュアリティ', description: 'あなたのセクシュアリティを表示します' },
     { key: 'show_looking_for' as keyof PrivacySettings, label: '探している関係', description: 'あなたが探している関係を表示します' },
-    { key: 'show_bio' as keyof PrivacySettings, label: '自己紹介', description: 'あなたの自己紹介文を表示します' },
+    { key: 'show_faculty' as keyof PrivacySettings, label: '学部', description: 'あなたの所属学部を表示します' },
+    { key: 'show_grade' as keyof PrivacySettings, label: '学年', description: 'あなたの学年を表示します' },
+    { key: 'show_birthday' as keyof PrivacySettings, label: '生年月日', description: '生年月日を表示します（通常は非公開推奨）' },
+    { key: 'show_gender' as keyof PrivacySettings, label: '体の性別', description: 'あなたの体の性別を表示します' },
+    { key: 'show_age' as keyof PrivacySettings, label: '年齢', description: 'あなたの年齢を表示します' },
     { key: 'show_tags' as keyof PrivacySettings, label: 'タグ', description: 'あなたの興味・関心タグを表示します' },
   ]
 
