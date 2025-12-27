@@ -507,7 +507,7 @@ async def search_users(
 
 @router.get("/suggestions", response_model=UserSuggestionsResponse)
 async def get_user_suggestions(
-    limit: int = Query(10, ge=1, le=50, description="取得件数"),
+    limit: int = Query(10, ge=1, le=100, description="取得件数"),
     sexuality: Optional[str] = Query(None, description="セクシュアリティフィルター（カンマ区切り）"),
     relationship_goal: Optional[str] = Query(None, description="関係性目標フィルター（friends, dating, all）"),
     sex: Optional[str] = Query(None, description="性別フィルター（カンマ区切り、male, female, other）"),
@@ -677,9 +677,18 @@ async def get_user_suggestions(
                 )
             )
 
+        # すでにいいねをもらっているユーザーIDを取得（一度に取得して効率化）
+        received_likes_query = await db.execute(
+            select(Like.liker_id).where(Like.liked_id == current_user.id)
+        )
+        received_like_user_ids = {row[0] for row in received_likes_query.all()}
+        
         suggestions = []
         for user in fallback_users:
             tags = fallback_tags_dict.get(user.id, [])
+            # すでにいいねをもらっているかチェック
+            has_received_like = user.id in received_like_user_ids
+            
             suggestions.append(
                 UserSuggestion(
                     id=user.id,
@@ -690,6 +699,7 @@ async def get_user_suggestions(
                     tags=tags if user.show_tags else [],
                     match_score=0.0,
                     reason=reason,
+                    has_received_like=has_received_like,
                 )
             )
 
@@ -796,6 +806,12 @@ async def get_user_suggestions(
             )
         )
     
+    # すでにいいねをもらっているユーザーIDを取得（一度に取得して効率化）
+    received_likes_query = await db.execute(
+        select(Like.liker_id).where(Like.liked_id == current_user.id)
+    )
+    received_like_user_ids = {row[0] for row in received_likes_query.all()}
+    
     # レスポンス整形
     suggestions = []
     my_tag_count = len(my_tag_ids)
@@ -818,6 +834,9 @@ async def get_user_suggestions(
         else:
             reason = "おすすめのユーザーです"
         
+        # すでにいいねをもらっているかチェック
+        has_received_like = user.id in received_like_user_ids
+        
         suggestions.append(
             UserSuggestion(
                 id=user.id,
@@ -828,6 +847,7 @@ async def get_user_suggestions(
                 tags=user_tags if user.show_tags else [],
                 match_score=match_score,
                 reason=reason,
+                has_received_like=has_received_like,
             )
         )
     

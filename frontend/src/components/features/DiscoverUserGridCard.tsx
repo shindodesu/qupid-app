@@ -104,23 +104,41 @@ export function DiscoverUserGridCard({ user, onLike, onSkip, onImageClick }: Dis
         </h3>
       </div>
 
-      {/* ハートアイコンボタン（中央下部） */}
+      {/* ハートアイコンボタンまたはサムズアップボタン（中央下部） */}
       <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10">
-        <button
-          onClick={() => handleAction('like')}
-          disabled={isAnimating}
-          className="w-10 h-10 rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 disabled:opacity-50 shadow-xl shadow-theme hover:shadow-2xl hover:shadow-theme-lg hover:scale-125 active:scale-95 relative overflow-hidden group"
-          style={{
-            background: theme.primary,
-          }}
-          aria-label="いいね"
-        >
-          {/* リップル効果 */}
-          <span className="absolute inset-0 rounded-full bg-white/40 scale-0 group-active:scale-100 opacity-0 group-active:opacity-100 transition-all duration-300"></span>
-          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-          </svg>
-        </button>
+        {user.has_received_like ? (
+          <button
+            onClick={() => handleAction('like')}
+            disabled={isAnimating}
+            className="w-10 h-10 rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 disabled:opacity-50 shadow-xl shadow-theme hover:shadow-2xl hover:shadow-theme-lg hover:scale-125 active:scale-95 relative overflow-hidden group"
+            style={{
+              background: theme.primary,
+            }}
+            aria-label="ありがとう"
+          >
+            {/* リップル効果 */}
+            <span className="absolute inset-0 rounded-full bg-white/40 scale-0 group-active:scale-100 opacity-0 group-active:opacity-100 transition-all duration-300"></span>
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z"/>
+            </svg>
+          </button>
+        ) : (
+          <button
+            onClick={() => handleAction('like')}
+            disabled={isAnimating}
+            className="w-10 h-10 rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 disabled:opacity-50 shadow-xl shadow-theme hover:shadow-2xl hover:shadow-theme-lg hover:scale-125 active:scale-95 relative overflow-hidden group"
+            style={{
+              background: theme.primary,
+            }}
+            aria-label="いいね"
+          >
+            {/* リップル効果 */}
+            <span className="absolute inset-0 rounded-full bg-white/40 scale-0 group-active:scale-100 opacity-0 group-active:opacity-100 transition-all duration-300"></span>
+            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* アクション時のアニメーション */}

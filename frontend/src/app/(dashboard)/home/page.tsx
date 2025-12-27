@@ -31,7 +31,7 @@ export default function DiscoverPage() {
     queryKey: ['suggestions', filters],
     queryFn: () => {
       console.log('[Filter] API call with filters:', filters)
-      return searchApi.getSuggestions(20, filters)
+      return searchApi.getSuggestions(100, filters)
     },
   })
 

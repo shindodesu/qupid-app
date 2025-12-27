@@ -48,6 +48,7 @@ export interface UserSuggestion {
   tags: TagInfo[]
   match_score: number
   reason: string
+  has_received_like?: boolean
 }
 
 // おすすめユーザーレスポンス

@@ -64,6 +64,7 @@ class UserSuggestion(BaseModel):
     tags: List[TagInfo]
     match_score: float = Field(..., ge=0.0, le=1.0, description="マッチスコア（0.0～1.0）")
     reason: str = Field(..., description="おすすめ理由")
+    has_received_like: bool = Field(default=False, description="すでにいいねをもらっているか")
 
     class Config:
         from_attributes = True
