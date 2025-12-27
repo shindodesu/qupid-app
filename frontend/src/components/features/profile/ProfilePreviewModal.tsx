@@ -60,7 +60,7 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
 
   return (
     <div className="space-y-6">
-      <div className="relative aspect-square overflow-hidden rounded-3xl shadow-lg">
+      <div className="relative aspect-square overflow-hidden rounded-3xl shadow-none">
         {heroImage && (
           <img
             src={heroImage}
@@ -84,7 +84,7 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
             プロフィール
           </div>
         </div>
-        <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-32 bg-black/40" />
       </div>
 
       <div className="space-y-6 px-2">
@@ -253,7 +253,7 @@ export function ProfilePreviewModal({
       size="xl"
       className="max-w-md md:max-w-2xl bg-transparent shadow-none p-0"
     >
-      <div className="mx-auto w-full max-w-md md:max-w-2xl rounded-[32px] bg-white p-6 md:p-8 shadow-xl">
+      <div className="mx-auto w-full max-w-md md:max-w-2xl rounded-[32px] bg-white p-6 md:p-8 shadow-none">
         <ProfilePreviewContent profile={profile} isLoading={isLoading} actions={actions} />
         {footer && <div className="mt-6">{footer}</div>}
       </div>
@@ -269,7 +269,7 @@ interface ProfilePreviewCardProps {
 
 export function ProfilePreviewCard({ profile, actions, footer }: ProfilePreviewCardProps) {
   return (
-    <div className="rounded-[32px] bg-white p-6 shadow-lg">
+    <div className="rounded-[32px] bg-white p-6 shadow-none">
       <ProfilePreviewContent profile={profile} actions={actions} />
       {footer && <div className="mt-6">{footer}</div>}
     </div>

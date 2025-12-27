@@ -160,7 +160,8 @@ async def get_conversations(
         ConversationMember.user_id == current_user.id
     )
     
-    # 総数取得
+    # 総数取得（ブロックされたユーザーとの会話を除外するため、後で再計算）
+    # まずは全件数を取得（後でフィルタリング）
     count_query = select(func.count()).select_from(
         select(Conversation.id).where(
             Conversation.id.in_(my_conversations_query)
@@ -253,6 +254,41 @@ async def get_conversations(
     # 会話IDごとに未読数を整理
     unread_count_dict = {row[0]: row[1] for row in unread_counts}
     
+    # パフォーマンス最適化: ブロック状態を一括取得
+    all_other_user_ids = []
+    for conv in conversations:
+        members = members_dict.get(conv.id, [])
+        for member in members:
+            if member.user_id != current_user.id:
+                all_other_user_ids.append(member.user_id)
+                break
+    
+    # ブロック状態を一括取得
+    blocked_user_ids = set()
+    blocking_user_ids = set()
+    if all_other_user_ids:
+        # 自分がブロックしたユーザー
+        blocked_query = await db.execute(
+            select(Block.blocked_id).where(
+                and_(
+                    Block.blocker_id == current_user.id,
+                    Block.blocked_id.in_(all_other_user_ids)
+                )
+            )
+        )
+        blocked_user_ids = {row[0] for row in blocked_query.all()}
+        
+        # 自分をブロックしたユーザー
+        blocking_query = await db.execute(
+            select(Block.blocker_id).where(
+                and_(
+                    Block.blocked_id == current_user.id,
+                    Block.blocker_id.in_(all_other_user_ids)
+                )
+            )
+        )
+        blocking_user_ids = {row[0] for row in blocking_query.all()}
+    
     # レスポンス整形
     conversation_reads = []
     for conv in conversations:
@@ -266,6 +302,10 @@ async def get_conversations(
         
         if not other_user:
             continue  # 相手ユーザーがいない場合はスキップ
+        
+        # ブロック状態をチェック（ブロックされている場合はスキップ）
+        if other_user.id in blocked_user_ids or other_user.id in blocking_user_ids:
+            continue  # ブロックされている場合は会話を表示しない
         
         # 最後のメッセージ
         last_msg = latest_message_dict.get(conv.id)
@@ -302,9 +342,12 @@ async def get_conversations(
             )
         )
     
+    # 実際に表示される会話数に合わせてtotalを更新
+    actual_total = len(conversation_reads)
+    
     return ConversationListResponse(
         conversations=conversation_reads,
-        total=total,
+        total=actual_total,
         limit=limit,
         offset=offset,
     )

@@ -92,7 +92,7 @@ export function InAppPWAInstallPrompt({ onOpenModal }: InAppPWAInstallPromptProp
 
   return (
     <div className="animate-slide-in-up">
-      <div className="bg-gradient-to-r from-pink-500 to-purple-500 rounded-2xl shadow-2xl p-4 mb-6 relative overflow-hidden">
+      <div className="bg-pink-500 rounded-2xl shadow-2xl p-4 mb-6 relative overflow-hidden">
         {/* 装飾的な背景要素 */}
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>

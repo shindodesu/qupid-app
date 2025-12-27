@@ -95,7 +95,7 @@ export interface SendLikeRequest {
 
 // いいね送信レスポンス
 export interface SendLikeResponse {
-  message: string
+  message: string | null
   like: {
     id: number
     liker_id: number

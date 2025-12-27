@@ -81,7 +81,7 @@ export function DiscoverUserCard({ user, onLike, onSkip, onCardClick }: Discover
         )}
 
         {/* グラデーションオーバーレイ（下部のみ） */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-black/30" />
 
         {/* ユーザー情報（左下） */}
         <div className="absolute bottom-16 left-4 right-4 text-white">

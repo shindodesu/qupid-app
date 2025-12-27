@@ -255,7 +255,7 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-theme-page">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-theme-gradient mb-2">
+            <h1 className="text-3xl font-bold text-theme-primary mb-2">
               プロフィール
             </h1>
           </div>
@@ -273,7 +273,7 @@ export default function ProfilePage() {
                 <Button 
                   onClick={() => refetchUserData()}
                   className="text-white shadow-lg shadow-theme hover:opacity-90 transition-all"
-                  style={theme.gradientStyle}
+                  style={{ background: theme.primary }}
                 >
                   再試行
                 </Button>
@@ -299,7 +299,7 @@ export default function ProfilePage() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mb-8"
           >
-            <h1 className="text-3xl font-bold text-theme-gradient mb-1">
+            <h1 className="text-3xl font-bold text-theme-primary mb-1">
               プロフィール
             </h1>
             <p className="text-sm text-neutral-600">
@@ -316,7 +316,7 @@ export default function ProfilePage() {
         {/* プロフィール画像 */}
         <Card className="mb-6 border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
         <CardHeader>
-          <CardTitle className="text-xl font-bold text-theme-gradient">プロフィール画像</CardTitle>
+          <CardTitle className="text-xl font-bold text-theme-primary">プロフィール画像</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-6">
@@ -364,7 +364,7 @@ export default function ProfilePage() {
         <Card className="mb-6 border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-xl font-bold text-theme-gradient">基本情報</CardTitle>
+            <CardTitle className="text-xl font-bold text-theme-primary">基本情報</CardTitle>
             <Button
               variant="outline"
               size="sm"
@@ -432,6 +432,9 @@ export default function ProfilePage() {
                 >
                   {formData.sexuality || '選択してください'}
                 </button>
+                <p className="mt-2 text-sm text-neutral-500">
+                  記入は任意ですが、記入した方がマッチ率が上がります。
+                </p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-neutral-900 mb-2">
@@ -452,6 +455,9 @@ export default function ProfilePage() {
                 >
                   {formData.looking_for || '選択してください'}
                 </button>
+                <p className="mt-2 text-sm text-neutral-500">
+                  記入は任意ですが、記入した方がマッチ率が上がります。
+                </p>
               </div>
               <Select
                 label="キャンパス"
@@ -532,6 +538,9 @@ export default function ProfilePage() {
                 >
                   {formData.gender || '選択してください'}
                 </button>
+                <p className="mt-2 text-sm text-neutral-500">
+                  記入は任意ですが、記入した方がマッチ率が上がります。
+                </p>
               </div>
               <Button type="submit" disabled={updateMutation.isPending}>
                 {updateMutation.isPending ? '保存中...' : '保存'}
@@ -643,7 +652,7 @@ export default function ProfilePage() {
         {/* タグ */}
         <Card className="mb-6 border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
         <CardHeader>
-          <CardTitle className="text-theme-gradient">タグ</CardTitle>
+          <CardTitle className="text-theme-primary">タグ</CardTitle>
         </CardHeader>
         <CardContent>
           {/* 現在のタグ */}
@@ -657,7 +666,7 @@ export default function ProfilePage() {
                   <div
                     key={tag.id}
                     className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full text-white shadow-md shadow-theme"
-                    style={theme.gradientStyle}
+                    style={{ background: theme.primary }}
                   >
                     <span>{tag.name}</span>
                     <button
@@ -725,7 +734,7 @@ export default function ProfilePage() {
           {/* セーフティ */}
           <Card className="border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
             <CardHeader>
-              <CardTitle className="text-theme-gradient">セーフティ</CardTitle>
+              <CardTitle className="text-theme-primary">セーフティ</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-3">
@@ -744,7 +753,7 @@ export default function ProfilePage() {
           {/* テーマ設定 */}
           <Card className="border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
             <CardHeader>
-              <CardTitle className="text-theme-gradient">テーマ設定</CardTitle>
+              <CardTitle className="text-theme-primary">テーマ設定</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col gap-3">
@@ -764,7 +773,7 @@ export default function ProfilePage() {
         {/* アカウント設定 */}
         <Card className="border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
         <CardHeader>
-          <CardTitle className="text-theme-gradient">アカウント設定</CardTitle>
+          <CardTitle className="text-theme-primary">アカウント設定</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <Button variant="destructive" className="w-full" onClick={handleLogout}>

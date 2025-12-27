@@ -48,7 +48,7 @@ export default function ThemeSettingsPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="mb-8"
           >
-            <h1 className="text-3xl font-bold text-theme-gradient mb-1">
+            <h1 className="text-3xl font-bold text-theme-primary mb-1">
               テーマカラー設定
             </h1>
             <p className="text-sm text-neutral-600">
@@ -65,7 +65,7 @@ export default function ThemeSettingsPage() {
           >
             <Card className="border-pink-200/40 shadow-2xl shadow-pink-500/10 bg-white/80 backdrop-blur-md">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-theme-gradient">
+                <CardTitle className="text-xl font-bold text-theme-primary">
                   現在のテーマ
                 </CardTitle>
               </CardHeader>
@@ -87,11 +87,11 @@ export default function ThemeSettingsPage() {
                           style={{ backgroundColor: currentColors.accent }}
                         />
                       </div>
-                      {/* グラデーションプレビュー */}
+                      {/* カラープレビュー */}
                       <div 
                         className="flex-1 h-12 rounded-lg shadow-lg"
                         style={{
-                          background: `linear-gradient(to right, ${currentColors.gradient.join(', ')})`
+                          background: currentColors.primary
                         }}
                       />
                     </div>
@@ -108,7 +108,7 @@ export default function ThemeSettingsPage() {
           >
             <Card className="border-pink-200/40 shadow-2xl shadow-pink-500/10 bg-white/80 backdrop-blur-md">
               <CardHeader>
-                <CardTitle className="text-xl font-bold text-theme-gradient">
+                <CardTitle className="text-xl font-bold text-theme-primary">
                   テーマを選択
                 </CardTitle>
               </CardHeader>
@@ -128,11 +128,11 @@ export default function ThemeSettingsPage() {
                         }
                       `}
                     >
-                      {/* グラデーション背景 */}
+                      {/* 背景 */}
                       <div 
                         className="absolute inset-0 opacity-20"
                         style={{
-                          background: `linear-gradient(135deg, ${theme.gradient.join(', ')})`
+                          background: theme.primary
                         }}
                       />
                       
@@ -141,7 +141,7 @@ export default function ThemeSettingsPage() {
                         <div 
                           className="h-20 rounded-lg shadow-md"
                           style={{
-                            background: `linear-gradient(to right, ${theme.gradient.join(', ')})`
+                            background: theme.primary
                           }}
                         />
                         

@@ -36,7 +36,7 @@ export function PWADownloadModal({ isOpen, onClose }: PWADownloadModalProps) {
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[calc(100vh-2rem)] overflow-y-auto animate-slide-up">
         {/* ヘッダー */}
-        <div className="bg-gradient-to-r from-pink-500 to-purple-500 p-6 rounded-t-2xl">
+        <div className="bg-pink-500 p-6 rounded-t-2xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="bg-white/20 backdrop-blur-sm p-3 rounded-full">
@@ -61,7 +61,7 @@ export function PWADownloadModal({ isOpen, onClose }: PWADownloadModalProps) {
         <div className="p-6">
           {isIOS ? (
             <div className="space-y-4">
-              <div className="bg-gradient-to-br from-pink-50 to-purple-50 p-4 rounded-xl border border-pink-100">
+              <div className="bg-pink-50 p-4 rounded-xl border border-pink-100">
                 <p className="text-center text-neutral-700 font-medium mb-4">
                   iOS デバイスの場合
                 </p>
@@ -106,7 +106,7 @@ export function PWADownloadModal({ isOpen, onClose }: PWADownloadModalProps) {
             </div>
           ) : isAndroid ? (
             <div className="space-y-4">
-              <div className="bg-gradient-to-br from-green-50 to-blue-50 p-4 rounded-xl border border-green-100">
+              <div className="bg-green-50 p-4 rounded-xl border border-green-100">
                 <p className="text-center text-neutral-700 font-medium mb-4">
                   Android デバイスの場合
                 </p>
@@ -145,7 +145,7 @@ export function PWADownloadModal({ isOpen, onClose }: PWADownloadModalProps) {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100">
+              <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
                 <p className="text-center text-neutral-700 font-medium mb-4">
                   PC ブラウザの場合
                 </p>
@@ -208,7 +208,7 @@ export function PWADownloadModal({ isOpen, onClose }: PWADownloadModalProps) {
         <div className="px-6 pb-6">
           <button
             onClick={onClose}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white py-3 rounded-xl font-medium hover:from-pink-600 hover:to-purple-600 transition-all shadow-lg"
+            className="w-full bg-pink-500 text-white py-3 rounded-xl font-medium hover:bg-pink-600 transition-all shadow-lg"
           >
             閉じる
           </button>

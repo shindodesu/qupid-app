@@ -173,8 +173,8 @@ export default function InitialProfilePage() {
     
     console.log('[InitialProfile] Form submit triggered', formData)
     
-    // バリデーション
-    if (!formData.display_name || !formData.gender || !formData.sexuality || !formData.looking_for) {
+    // バリデーション（表示名のみ必須、その他は任意）
+    if (!formData.display_name) {
       console.log('[InitialProfile] Validation failed', {
         display_name: formData.display_name,
         gender: formData.gender,
@@ -183,7 +183,7 @@ export default function InitialProfilePage() {
       })
       toast({
         title: "入力エラー",
-        description: "すべての項目を入力してください",
+        description: "ニックネームを入力してください",
         type: "error"
       })
       return
@@ -283,6 +283,9 @@ export default function InitialProfilePage() {
                 {formData.gender || '体の性別を選択'}
               </span>
             </button>
+            <p className="mt-2 text-sm text-gray-500">
+              記入は任意ですが、記入した方がマッチ率が上がります。
+            </p>
           </div>
 
           {/* セクシュアリティ */}
@@ -313,6 +316,9 @@ export default function InitialProfilePage() {
                 {formData.sexuality || 'セクシュアリティを選択'}
               </span>
             </button>
+            <p className="mt-2 text-sm text-gray-500">
+              記入は任意ですが、記入した方がマッチ率が上がります。
+            </p>
           </div>
 
           {/* 探している関係 */}
@@ -340,6 +346,9 @@ export default function InitialProfilePage() {
                 {formData.looking_for || '探している関係を選択'}
               </span>
             </button>
+            <p className="mt-2 text-sm text-gray-500">
+              記入は任意ですが、記入した方がマッチ率が上がります。
+            </p>
           </div>
 
           {/* 確認ボタン */}

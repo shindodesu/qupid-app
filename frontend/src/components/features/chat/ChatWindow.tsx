@@ -266,7 +266,7 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
           >
             {/* プロフィール画像（グラデーションボーダー付き） */}
             <div className="relative">
-              <div className="h-12 w-12 rounded-full bg-gradient-to-r from-orange-400 to-purple-500 p-[3px]">
+              <div className="h-12 w-12 rounded-full bg-pink-500 p-[3px]">
                 <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-gray-200">
                   {otherUserAvatar ? (
                     <img

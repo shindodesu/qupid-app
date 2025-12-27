@@ -135,7 +135,7 @@ export function StaggerItem({ children, className = '' }: StaggerItemProps) {
  */
 interface AnimatedBackgroundProps {
   className?: string
-  variant?: 'bubbles' | 'particles' | 'gradient'
+  variant?: 'bubbles' | 'particles'
 }
 
 export function AnimatedBackground({ 

@@ -39,7 +39,7 @@ export default function ChatPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <h1 className="text-3xl font-bold text-theme-gradient mb-1">
+                <h1 className="text-3xl font-bold text-theme-primary mb-1">
                   チャット
                 </h1>
                 <p className="text-sm text-neutral-600">
@@ -57,7 +57,7 @@ export default function ChatPage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ type: 'spring', stiffness: 300, damping: 20 }}
-              className="bg-gradient-to-r from-red-50 to-pink-50 border border-red-200/50 text-red-700 px-4 py-3 rounded-lg mb-4 shadow-sm"
+              className="bg-red-50 border border-red-200/50 text-red-700 px-4 py-3 rounded-lg mb-4 shadow-sm"
             >
               <p className="font-medium">会話一覧の取得に失敗しました</p>
             </motion.div>
@@ -96,7 +96,7 @@ export default function ChatPage() {
                   transition={{ duration: 2, repeat: Infinity }}
                 >
                   未読メッセージ:{' '}
-                  <span className="font-semibold text-theme-gradient">
+                  <span className="font-semibold text-theme-primary">
                     {conversationsData.conversations.reduce(
                       (sum, conv) => sum + conv.unread_count,
                       0

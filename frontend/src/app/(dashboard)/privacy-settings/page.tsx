@@ -106,7 +106,7 @@ export default function PrivacySettingsPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-neutral-50">
+    <div className="min-h-screen bg-white">
       {/* ヘッダー */}
       <div className="bg-white border-b border-neutral-200 sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">

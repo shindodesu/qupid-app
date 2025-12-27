@@ -39,24 +39,24 @@ export function DiscoverUserGridCard({ user, onLike, onSkip, onImageClick }: Dis
     <div 
       className="relative w-full aspect-square rounded-2xl overflow-hidden shadow-xl shadow-theme border border-theme-primary/15 group hover:shadow-2xl hover:shadow-theme-lg transition-all duration-500 cursor-pointer transform hover:-translate-y-2"
       style={{
-        background: `linear-gradient(to bottom right, rgba(255, 255, 255, 0.9), ${theme.primary}08, ${theme.secondary}08)`,
+        background: `rgba(255, 255, 255, 0.9)`,
       }}
     >
-      {/* グラデーションオーバーレイ */}
+      {/* オーバーレイ */}
       <div 
         className="absolute inset-0 transition-all duration-500"
         style={{
-          background: `linear-gradient(to bottom right, ${theme.primary}00, transparent, ${theme.secondary}00)`,
+          background: 'transparent',
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.background = `linear-gradient(to bottom right, ${theme.primary}1A, transparent, ${theme.secondary}1A)`
+          e.currentTarget.style.background = `${theme.primary}1A`
         }}
         onMouseLeave={(e) => {
-          e.currentTarget.style.background = `linear-gradient(to bottom right, ${theme.primary}00, transparent, ${theme.secondary}00)`
+          e.currentTarget.style.background = 'transparent'
         }}
       ></div>
       {/* 光るエフェクト */}
-      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+      <div className="absolute inset-0 bg-white/30 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
       {/* プロフィール画像またはシルエット */}
       <div 
         className="absolute inset-0 flex items-center justify-center pt-8 z-0 cursor-pointer"
@@ -97,7 +97,7 @@ export function DiscoverUserGridCard({ user, onLike, onSkip, onImageClick }: Dis
         <h3 
           className="text-white text-sm font-bold text-center drop-shadow-lg px-3 py-1 rounded-full backdrop-blur-sm transition-all duration-300"
           style={{
-            background: `linear-gradient(to right, ${theme.primary}CC, ${theme.secondary}CC)`,
+            background: `${theme.primary}CC`,
           }}
         >
           {user.display_name}
@@ -111,7 +111,7 @@ export function DiscoverUserGridCard({ user, onLike, onSkip, onImageClick }: Dis
           disabled={isAnimating}
           className="w-10 h-10 rounded-full flex items-center justify-center hover:opacity-90 transition-all duration-300 disabled:opacity-50 shadow-xl shadow-theme hover:shadow-2xl hover:shadow-theme-lg hover:scale-125 active:scale-95 relative overflow-hidden group"
           style={{
-            background: `linear-gradient(to bottom right, ${theme.primary}, ${theme.secondary}, ${theme.accent})`,
+            background: theme.primary,
           }}
           aria-label="いいね"
         >

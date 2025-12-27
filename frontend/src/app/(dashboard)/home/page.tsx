@@ -141,7 +141,7 @@ export default function DiscoverPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <h1 className="text-3xl font-bold text-theme-gradient mb-1">
+                <h1 className="text-3xl font-bold text-theme-primary mb-1">
                   探す
                 </h1>
                 <p className="text-sm text-neutral-600">
@@ -162,8 +162,7 @@ export default function DiscoverPage() {
                   damping: 20,
                   delay: 0.4
                 }}
-                className="w-10 h-10 bg-theme-gradient rounded-full flex items-center justify-center text-white hover:opacity-90 transition-all shadow-lg shadow-theme hover:shadow-xl"
-                style={theme.gradientBRStyle}
+                className="w-10 h-10 bg-theme-primary rounded-full flex items-center justify-center text-white hover:opacity-90 transition-all shadow-lg shadow-theme hover:shadow-xl"
                 aria-label="検索フィルター"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,7 +246,7 @@ export default function DiscoverPage() {
               >
                 💔
               </motion.div>
-              <h2 className="text-2xl font-bold text-theme-gradient mb-3">
+              <h2 className="text-2xl font-bold text-theme-primary mb-3">
                 すべて見ました
               </h2>
               <p className="text-neutral-600 mb-8 leading-relaxed">
@@ -265,13 +264,10 @@ export default function DiscoverPage() {
                 }}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
-                className="px-10 py-4 bg-theme-gradient text-white rounded-full hover:opacity-90 transition-all duration-300 shadow-2xl shadow-theme-lg hover:shadow-theme font-semibold text-lg relative overflow-hidden group"
-                style={{
-                  background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary}, ${theme.accent})`,
-                }}
+                className="px-10 py-4 bg-theme-primary text-white rounded-full hover:opacity-90 transition-all duration-300 shadow-2xl shadow-theme-lg hover:shadow-theme font-semibold text-lg relative overflow-hidden group"
               >
                 <span className="relative z-10">更新する</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                <div className="absolute inset-0 bg-white/30 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               </motion.button>
             </motion.div>
           )}

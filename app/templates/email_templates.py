@@ -20,7 +20,7 @@ def get_verification_email_html(verification_code: str, app_name: str = "Qupid")
                 <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <!-- ヘッダー -->
                     <tr>
-                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+                        <td style="padding: 40px 40px 20px; text-align: center; background: #667eea; border-radius: 8px 8px 0 0;">
                             <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
                                 💌 {app_name}
                             </h1>
@@ -120,7 +120,7 @@ def get_welcome_email_html(display_name: str, app_name: str = "Qupid") -> str:
                 <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <!-- ヘッダー -->
                     <tr>
-                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+                        <td style="padding: 40px 40px 20px; text-align: center; background: #667eea; border-radius: 8px 8px 0 0;">
                             <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700;">
                                 🎉 ようこそ {app_name} へ！
                             </h1>
@@ -222,7 +222,7 @@ def get_password_reset_email_html(verification_code: str, app_name: str = "Qupid
                 <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <!-- ヘッダー -->
                     <tr>
-                        <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+                        <td style="padding: 40px 40px 20px; text-align: center; background: #667eea; border-radius: 8px 8px 0 0;">
                             <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700;">
                                 🔐 {app_name}
                             </h1>

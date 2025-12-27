@@ -174,7 +174,7 @@ export default function LikesPage() {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
-                <h1 className="text-3xl font-bold text-theme-gradient mb-1">
+                <h1 className="text-3xl font-bold text-theme-primary mb-1">
                   いいね
                 </h1>
                 {likesData && likesData.likes && likesData.likes.length > 0 && (
@@ -199,8 +199,7 @@ export default function LikesPage() {
                     damping: 20,
                     delay: 0.5
                   }}
-                  className="md:hidden inline-block px-3 py-1.5 bg-theme-gradient border border-theme-primary/30 rounded-lg shadow-lg shadow-theme"
-                  style={theme.gradientStyle}
+                  className="md:hidden inline-block px-3 py-1.5 bg-theme-primary border border-theme-primary/30 rounded-lg shadow-lg shadow-theme"
                 >
                   <span className="text-white text-xs font-medium">
                     {likesData.likes.length}
@@ -241,7 +240,7 @@ export default function LikesPage() {
                     transition={{ duration: 1.5, repeat: Infinity }}
                     className="absolute inset-0 rounded-full blur-3xl"
                     style={{
-                      background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary}, ${theme.accent})`,
+                      background: theme.primary,
                     }}
                   />
                   {/* メインメッセージ */}
@@ -251,7 +250,7 @@ export default function LikesPage() {
                     transition={{ type: 'spring', stiffness: 200, damping: 15 }}
                     className="relative rounded-3xl p-12 shadow-2xl"
                     style={{
-                      background: `linear-gradient(to bottom right, ${theme.primary}, ${theme.secondary}, ${theme.accent})`,
+                      background: theme.primary,
                     }}
                   >
                     <motion.div
@@ -310,15 +309,15 @@ export default function LikesPage() {
               }}
               className="bg-theme-card rounded-3xl mb-8 shadow-2xl shadow-theme border border-theme-primary/20 overflow-hidden relative group hover:shadow-theme-lg transition-all duration-500 backdrop-blur-sm"
             >
-              {/* グラデーションオーバーレイ */}
+              {/* オーバーレイ */}
               <div 
                 className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10"
                 style={{
-                  background: `linear-gradient(to bottom right, ${theme.primary}08, transparent, ${theme.secondary}08)`,
+                  background: `${theme.primary}08`,
                 }}
               ></div>
               {/* 光るエフェクト */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-10"></div>
+              <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-10"></div>
               
               {/* プロフィール画像 */}
               <div className="relative aspect-square overflow-hidden">
@@ -347,8 +346,8 @@ export default function LikesPage() {
                   </div>
                 )}
                 
-                {/* グラデーションオーバーレイ（テキスト読みやすくするため） */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+                {/* オーバーレイ（テキスト読みやすくするため） */}
+                <div className="absolute inset-0 bg-black/40"></div>
                 
                 {/* ユーザー情報（画像の上に重ねて表示） */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
@@ -416,7 +415,7 @@ export default function LikesPage() {
               disabled={isAnimating}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.95 }}
-              className="flex flex-col items-center justify-center gap-2 w-20 h-20 md:w-28 md:h-28 bg-gradient-to-br from-neutral-200 via-neutral-250 to-neutral-300 border-2 border-white/80 rounded-full hover:from-neutral-300 hover:via-neutral-350 hover:to-neutral-400 transition-all duration-300 shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
+              className="flex flex-col items-center justify-center gap-2 w-20 h-20 md:w-28 md:h-28 bg-neutral-200 border-2 border-white/80 rounded-full hover:bg-neutral-300 transition-all duration-300 shadow-xl hover:shadow-2xl disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group"
             >
               {/* リップル効果 */}
               <span className="absolute inset-0 rounded-full bg-white/30 scale-0 group-active:scale-100 opacity-0 group-active:opacity-100 transition-all duration-300"></span>
@@ -435,13 +434,13 @@ export default function LikesPage() {
               whileTap={{ scale: 0.95 }}
               className="flex flex-col items-center justify-center gap-2 w-24 h-24 md:w-32 md:h-32 border-2 border-white/80 rounded-full hover:opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed relative shadow-2xl shadow-theme-lg hover:shadow-theme overflow-hidden group"
               style={{
-                background: `linear-gradient(to bottom right, ${theme.primary}, ${theme.secondary}, ${theme.accent})`,
+                background: theme.primary,
               }}
             >
               {/* リップル効果 */}
               <span className="absolute inset-0 rounded-full bg-white/40 scale-0 group-active:scale-100 opacity-0 group-active:opacity-100 transition-all duration-300"></span>
               {/* 光るエフェクト */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+              <div className="absolute inset-0 bg-white/30 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               {/* キラキラした手のアイコン（親指を立てた手） */}
               <motion.div 
                 className="relative"
@@ -488,7 +487,7 @@ export default function LikesPage() {
         <div className="flex items-center justify-center min-h-[60vh] relative z-10">
           <div className="text-center max-w-md mx-auto px-4 animate-fade-in">
             <div className="text-8xl mb-8 animate-bounce" style={{ animationDuration: '2s' }}>💕</div>
-            <h2 className="text-3xl font-bold text-theme-gradient mb-4 animate-scale-in">
+            <h2 className="text-3xl font-bold text-theme-primary mb-4 animate-scale-in">
               まだいいねがありません
             </h2>
             <p className="text-neutral-600 mb-10 leading-relaxed text-lg">
@@ -498,11 +497,11 @@ export default function LikesPage() {
               <button 
                 className="px-10 py-4 text-white rounded-full hover:opacity-90 transition-all duration-300 shadow-2xl shadow-theme-lg hover:shadow-theme hover:scale-110 active:scale-95 font-semibold text-lg relative overflow-hidden group"
                 style={{
-                  background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary}, ${theme.accent})`,
+                  background: theme.primary,
                 }}
               >
                 <span className="relative z-10">ユーザーを探す</span>
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                <div className="absolute inset-0 bg-white/30 -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               </button>
             </Link>
           </div>

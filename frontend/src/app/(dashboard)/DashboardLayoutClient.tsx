@@ -42,7 +42,7 @@ export default function DashboardLayoutClient({
   // ローディング中
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
           <p className="mt-4 text-neutral-600">認証を確認中...</p>
@@ -54,7 +54,7 @@ export default function DashboardLayoutClient({
   // 未認証（リダイレクト待ち）
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
           <p className="mt-4 text-neutral-600">リダイレクト中...</p>
@@ -66,7 +66,7 @@ export default function DashboardLayoutClient({
   // プロフィール未完了（リダイレクト待ち）
   if (user && user.profile_completed === false) {
     return (
-      <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
           <p className="mt-4 text-neutral-600">プロフィール設定へ移動中...</p>
@@ -79,7 +79,7 @@ export default function DashboardLayoutClient({
   return (
     <ThemeProvider>
       <FilterProvider>
-        <div className="min-h-screen bg-neutral-50">
+        <div className="min-h-screen bg-white">
           <DashboardNav />
           <main id="main-content" className="pb-20 md:pb-8" role="main">
             {children}

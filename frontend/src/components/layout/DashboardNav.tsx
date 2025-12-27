@@ -100,7 +100,7 @@ export function DashboardNav() {
                         : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
                     )}
                     style={isActive ? {
-                      background: `linear-gradient(to right, ${theme.primary}10, ${theme.secondary}10)`,
+                      background: `${theme.primary}10`,
                     } : undefined}
                 >
                   {item.icon === 'search' && (
@@ -143,7 +143,7 @@ export function DashboardNav() {
                         : 'text-neutral-600 hover:bg-neutral-50 hover:text-neutral-900'
                     )}
                     style={isActive ? {
-                      background: `linear-gradient(to right, ${theme.primary}10, ${theme.secondary}10)`,
+                      background: `${theme.primary}10`,
                     } : undefined}
                   >
                     <span>{item.icon}</span>

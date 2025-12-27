@@ -41,8 +41,12 @@ async def send_like(
     - 既にいいねを送信している場合はエラー
     - 相手も自分にいいねを送っている場合はマッチング成立
     """
+    # 最初にcurrent_user.idを取得して、整数値として保持
+    # これにより、別のセッションコンテキストでの属性アクセスエラーを防ぐ
+    current_user_id = current_user.id
+    
     # 自分自身へのいいねをチェック
-    if payload.liked_user_id == current_user.id:
+    if payload.liked_user_id == current_user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot like yourself",
@@ -60,8 +64,8 @@ async def send_like(
     block_check_query = await db.execute(
         select(Block).where(
             or_(
-                and_(Block.blocker_id == current_user.id, Block.blocked_id == payload.liked_user_id),
-                and_(Block.blocker_id == payload.liked_user_id, Block.blocked_id == current_user.id)
+                and_(Block.blocker_id == current_user_id, Block.blocked_id == payload.liked_user_id),
+                and_(Block.blocker_id == payload.liked_user_id, Block.blocked_id == current_user_id)
             )
         )
     )
@@ -77,7 +81,7 @@ async def send_like(
     existing_like_query = await db.execute(
         select(Like).where(
             and_(
-                Like.liker_id == current_user.id,
+                Like.liker_id == current_user_id,
                 Like.liked_id == payload.liked_user_id,
             )
         )
@@ -92,7 +96,7 @@ async def send_like(
 
     # いいねを作成
     new_like = Like(
-        liker_id=current_user.id,
+        liker_id=current_user_id,
         liked_id=payload.liked_user_id,
     )
     db.add(new_like)
@@ -104,7 +108,7 @@ async def send_like(
         select(Like).where(
             and_(
                 Like.liker_id == payload.liked_user_id,
-                Like.liked_id == current_user.id,
+                Like.liked_id == current_user_id,
             )
         )
     )

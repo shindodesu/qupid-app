@@ -21,7 +21,7 @@ class LikeBase(BaseModel):
 
 
 class LikeResponse(BaseModel):
-    message: str
+    message: str | None = None
     like: LikeBase
     is_match: bool
     match: Optional[dict] = None

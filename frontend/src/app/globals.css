@@ -237,20 +237,22 @@
 }
 
 /* ダークモード対応（将来の拡張用） */
+/* 背景色は常に白を維持 */
 @media (prefers-color-scheme: dark) {
   :root {
-    --color-text-primary: var(--color-neutral-50);
-    --color-text-secondary: var(--color-neutral-300);
-    --color-text-tertiary: var(--color-neutral-400);
-    --color-text-inverse: var(--color-neutral-900);
+    --color-text-primary: var(--color-neutral-900);
+    --color-text-secondary: var(--color-neutral-600);
+    --color-text-tertiary: var(--color-neutral-500);
+    --color-text-inverse: var(--color-neutral-50);
     
-    --color-background-primary: var(--color-neutral-900);
-    --color-background-secondary: var(--color-neutral-800);
-    --color-background-tertiary: var(--color-neutral-700);
-    --color-background-inverse: #ffffff;
+    /* 背景色は常に白を維持 */
+    --color-background-primary: #ffffff;
+    --color-background-secondary: var(--color-neutral-50);
+    --color-background-tertiary: var(--color-neutral-100);
+    --color-background-inverse: var(--color-neutral-900);
     
-    --color-border-primary: var(--color-neutral-700);
-    --color-border-secondary: var(--color-neutral-600);
+    --color-border-primary: var(--color-neutral-200);
+    --color-border-secondary: var(--color-neutral-300);
   }
 }
 
@@ -394,15 +396,6 @@ body {
     animation: scale-in 150ms ease-out;
   }
   
-  /* グラデーション（テーマカラーを使用） */
-  .gradient-primary {
-    background: linear-gradient(135deg, var(--theme-primary), var(--theme-secondary));
-  }
-  
-  .gradient-secondary {
-    background: linear-gradient(135deg, var(--theme-secondary), var(--theme-accent));
-  }
-  
   /* ガラスモーフィズム効果 */
   .glass {
     background: rgba(255, 255, 255, 0.1);
@@ -428,16 +421,12 @@ body {
   }
   
   /* テーマカラー用のユーティリティクラス */
-  .bg-theme-gradient {
-    background: linear-gradient(to right, var(--theme-primary), var(--theme-secondary));
+  .bg-theme-primary {
+    background-color: var(--theme-primary);
   }
   
-  .bg-theme-gradient-br {
-    background: linear-gradient(to bottom right, var(--theme-primary), var(--theme-secondary));
-  }
-  
-  .bg-theme-gradient-radial {
-    background: radial-gradient(circle, var(--theme-primary), var(--theme-secondary));
+  .bg-theme-secondary {
+    background-color: var(--theme-secondary);
   }
   
   .text-theme-primary {
@@ -449,11 +438,7 @@ body {
   }
   
   .text-theme-gradient {
-    background: linear-gradient(to right, var(--theme-primary), var(--theme-secondary));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    color: transparent;
+    color: var(--theme-primary);
   }
   
   .border-theme-primary {
@@ -472,29 +457,17 @@ body {
     box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px var(--theme-primary);
   }
   
-  /* 背景グラデーション用 */
+  /* 背景用 */
   .bg-theme-page {
-    background: linear-gradient(to bottom right, 
-      color-mix(in srgb, var(--theme-primary) 2%, white),
-      color-mix(in srgb, var(--theme-secondary) 2%, white),
-      color-mix(in srgb, var(--theme-accent) 2%, white)
-    );
+    background-color: var(--color-background-primary);
   }
   
   .bg-theme-header {
-    background: linear-gradient(to right, 
-      rgba(255, 255, 255, 0.8),
-      color-mix(in srgb, var(--theme-primary) 5%, white),
-      rgba(255, 255, 255, 0.8)
-    );
+    background-color: rgba(255, 255, 255, 0.8);
   }
   
   .bg-theme-card {
-    background: linear-gradient(to bottom right,
-      rgba(255, 255, 255, 0.9),
-      color-mix(in srgb, var(--theme-primary) 2%, white),
-      color-mix(in srgb, var(--theme-secondary) 2%, white)
-    );
+    background-color: rgba(255, 255, 255, 0.9);
   }
 }
 
