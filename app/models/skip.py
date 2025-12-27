@@ -17,3 +17,4 @@ class Skip(Base, TimestampMixin):
     skipper = relationship("User", foreign_keys=[skipper_id], lazy="joined")
     skipped = relationship("User", foreign_keys=[skipped_id], lazy="joined")
 
+
