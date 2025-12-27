@@ -133,6 +133,7 @@ export interface SendLikeResponse {
       tags?: TagInfo[]
     }
     matched_at: string
+    conversation_id?: number | null
   } | null
 }
 

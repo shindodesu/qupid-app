@@ -29,6 +29,7 @@ export default function LikesPage() {
   const [isAnimating, setIsAnimating] = useState(false)
   const [swipeDirection, setSwipeDirection] = useState<'left' | 'right' | null>(null)
   const [showMatchCelebration, setShowMatchCelebration] = useState(false)
+  const [matchConversationId, setMatchConversationId] = useState<number | null>(null)
   
   const queryClient = useQueryClient()
   const router = useRouter()
@@ -99,8 +100,16 @@ export default function LikesPage() {
       }, 400)
       
       if (result.is_match) {
+        const conversationId = result.match?.conversation_id
+        console.log('Match result:', { match: result.match, conversationId })
+        setMatchConversationId(conversationId || null)
         setShowMatchCelebration(true)
-        setTimeout(() => setShowMatchCelebration(false), 3000)
+        // conversation_idがない場合は自動で閉じない
+        if (conversationId) {
+          setTimeout(() => setShowMatchCelebration(false), 5000)
+        } else {
+          setTimeout(() => setShowMatchCelebration(false), 3000)
+        }
       }
     } catch (error) {
       console.error('Failed to send like:', error)
@@ -269,7 +278,13 @@ export default function LikesPage() {
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+                className="fixed inset-0 z-50 flex items-center justify-center"
+                onClick={(e) => {
+                  // 背景クリックで閉じる（オプション）
+                  if (e.target === e.currentTarget) {
+                    setShowMatchCelebration(false)
+                  }
+                }}
               >
                 <div className="relative">
                   {/* 背景の光るエフェクト */}
@@ -287,7 +302,7 @@ export default function LikesPage() {
                     initial={{ scale: 0, rotate: -180 }}
                     animate={{ scale: 1, rotate: 0 }}
                     transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                    className="relative rounded-3xl p-12 shadow-2xl"
+                    className="relative rounded-3xl p-12 shadow-2xl pointer-events-auto"
                     style={{
                       background: theme.primary,
                     }}
@@ -300,7 +315,68 @@ export default function LikesPage() {
                       🎉
                     </motion.div>
                     <h2 className="text-4xl font-bold text-white text-center mb-2">マッチしました！</h2>
-                    <p className="text-white/90 text-lg text-center">チャットページから会話を始めましょう</p>
+                    <p className="text-white/90 text-lg text-center mb-6">トークルームで会話を始めましょう</p>
+                    {matchConversationId ? (
+                      <motion.button
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        onClick={async (e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          console.log('Button clicked, conversationId:', matchConversationId)
+                          setShowMatchCelebration(false)
+                          if (matchConversationId) {
+                            // 少し遅延を入れてモーダルが閉じるのを待つ
+                            setTimeout(() => {
+                              router.push(`/chat/${matchConversationId}`)
+                              // フォールバック: router.pushが動作しない場合
+                              setTimeout(() => {
+                                if (window.location.pathname !== `/chat/${matchConversationId}`) {
+                                  window.location.href = `/chat/${matchConversationId}`
+                                }
+                              }, 100)
+                            }, 100)
+                          }
+                        }}
+                        className="w-full py-4 px-8 bg-white text-theme-primary rounded-full font-bold text-lg hover:bg-white/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 cursor-pointer z-50 relative"
+                        type="button"
+                      >
+                        トークルームを開く
+                      </motion.button>
+                    ) : currentUser ? (
+                      <motion.button
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        onClick={async (e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          setShowMatchCelebration(false)
+                          try {
+                            const conversation = await startChatMutation.mutateAsync(currentUser.user.id)
+                            router.push(`/chat/${conversation.id}`)
+                          } catch (error) {
+                            console.error('Failed to create conversation:', error)
+                            alert('トークルームの作成に失敗しました')
+                          }
+                        }}
+                        disabled={startChatMutation.isPending}
+                        className="w-full py-4 px-8 bg-white text-theme-primary rounded-full font-bold text-lg hover:bg-white/90 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 active:scale-95 cursor-pointer z-50 relative disabled:opacity-50 disabled:cursor-not-allowed"
+                        type="button"
+                      >
+                        {startChatMutation.isPending ? '作成中...' : 'トークルームを作成'}
+                      </motion.button>
+                    ) : (
+                      <motion.p
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.5 }}
+                        className="text-white/80 text-sm text-center"
+                      >
+                        トークルームの準備中...
+                      </motion.p>
+                    )}
                   </motion.div>
                   {/* キラキラエフェクト */}
                   {[...Array(20)].map((_, i) => (

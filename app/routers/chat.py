@@ -137,6 +137,44 @@ async def get_existing_conversation(user1_id: int, user2_id: int, db: AsyncSessi
     return query.scalar_one_or_none()
 
 
+async def create_or_get_conversation(user1_id: int, user2_id: int, db: AsyncSession) -> Conversation:
+    """
+    2人のユーザー間の会話を作成または取得
+    
+    - 既存の会話がある場合はそれを返す
+    - 既存の会話がない場合は新規作成
+    - マッチしたユーザー間のみ作成可能（呼び出し側でチェック済みと仮定）
+    """
+    # 既存の会話をチェック
+    existing_conv = await get_existing_conversation(user1_id, user2_id, db)
+    if existing_conv:
+        return existing_conv
+    
+    # 新しい会話を作成
+    new_conversation = Conversation(
+        type=ConversationType.direct,
+    )
+    db.add(new_conversation)
+    await db.flush()  # IDを取得するためにflush
+    
+    # メンバーを追加
+    member1 = ConversationMember(
+        conversation_id=new_conversation.id,
+        user_id=user1_id,
+    )
+    member2 = ConversationMember(
+        conversation_id=new_conversation.id,
+        user_id=user2_id,
+    )
+    db.add(member1)
+    db.add(member2)
+    
+    await db.commit()
+    await db.refresh(new_conversation)
+    
+    return new_conversation
+
+
 # ==================== 会話一覧取得エンドポイント ====================
 
 @router.get("", response_model=ConversationListResponse)
@@ -400,51 +438,13 @@ async def create_conversation(
             detail="Can only create conversation with matched users",
         )
     
-    # 既存の会話をチェック
-    existing_conv = await get_existing_conversation(current_user.id, payload.other_user_id, db)
-    if existing_conv:
-        # 既存の会話を返す
-        return ConversationDetail(
-            id=existing_conv.id,
-            type=existing_conv.type,
-            title=existing_conv.title,
-            other_user=UserInfo(
-                id=other_user.id,
-                display_name=other_user.display_name,
-                bio=other_user.bio,
-                avatar_url=other_user.avatar_url,
-                is_online=other_user.is_online,
-                last_seen_at=other_user.last_seen_at,
-            ),
-            created_at=existing_conv.created_at,
-        )
-    
-    # 新しい会話を作成
-    new_conversation = Conversation(
-        type=ConversationType.direct,
-    )
-    db.add(new_conversation)
-    await db.flush()  # IDを取得するためにflush
-    
-    # メンバーを追加
-    member1 = ConversationMember(
-        conversation_id=new_conversation.id,
-        user_id=current_user.id,
-    )
-    member2 = ConversationMember(
-        conversation_id=new_conversation.id,
-        user_id=payload.other_user_id,
-    )
-    db.add(member1)
-    db.add(member2)
-    
-    await db.commit()
-    await db.refresh(new_conversation)
+    # 既存の会話をチェックまたは新規作成
+    conversation = await create_or_get_conversation(current_user.id, payload.other_user_id, db)
     
     return ConversationDetail(
-        id=new_conversation.id,
-        type=new_conversation.type,
-        title=new_conversation.title,
+        id=conversation.id,
+        type=conversation.type,
+        title=conversation.title,
         other_user=UserInfo(
             id=other_user.id,
             display_name=other_user.display_name,
@@ -453,7 +453,7 @@ async def create_conversation(
             is_online=other_user.is_online,
             last_seen_at=other_user.last_seen_at,
         ),
-        created_at=new_conversation.created_at,
+        created_at=conversation.created_at,
     )
 
 

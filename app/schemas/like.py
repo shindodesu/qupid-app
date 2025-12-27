@@ -60,6 +60,7 @@ class MatchRead(BaseModel):
     id: int
     user: UserWithTags
     matched_at: datetime
+    conversation_id: Optional[int] = Field(None, description="トークルームID（マッチ成立時に自動生成）")
 
     class Config:
         from_attributes = True

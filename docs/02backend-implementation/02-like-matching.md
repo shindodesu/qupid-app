@@ -9,6 +9,7 @@
 
 - ユーザーが他のユーザーにいいねを送信できる
 - 両想いの場合にマッチングが成立する
+- **マッチ成立時にトークルームを自動生成する**
 - マッチしたユーザー一覧を取得できる
 - いいねの履歴を管理できる
 - チャット機能への橋渡しを提供する
@@ -36,6 +37,8 @@ CREATE TABLE likes (
 1. ユーザーAがユーザーBにいいねを送信
 2. ユーザーBがユーザーAにいいねを送信
 3. 両方のいいねが存在する場合、マッチング成立
+4. **マッチ成立時に自動でトークルーム（Conversation）を作成**
+5. **既存のトークルームがある場合はそれを返す**
 
 ## 🔌 API仕様
 
@@ -96,7 +99,9 @@ Authorization: Bearer <token>
       "id": 123,
       "display_name": "ユーザーA",
       "bio": "よろしくお願いします"
-    }
+    },
+    "matched_at": "2024-01-01T00:00:00Z",
+    "conversation_id": 1
   }
 }
 ```
@@ -185,7 +190,8 @@ Authorization: Bearer <token>
           }
         ]
       },
-      "matched_at": "2024-01-01T00:00:00Z"
+      "matched_at": "2024-01-01T00:00:00Z",
+      "conversation_id": 1
     }
   ],
   "total": 1,
@@ -210,7 +216,8 @@ Authorization: Bearer <token>
       "id": 123,
       "display_name": "ユーザーA"
     },
-    "matched_at": "2024-01-01T00:00:00Z"
+    "matched_at": "2024-01-01T00:00:00Z",
+    "conversation_id": 1
   }
 }
 ```
@@ -274,6 +281,7 @@ class MatchRead(BaseModel):
     id: int
     user: UserRead
     matched_at: datetime
+    conversation_id: Optional[int] = Field(None, description="トークルームID（マッチ成立時に自動生成）")
 
     class Config:
         from_attributes = True
@@ -313,8 +321,9 @@ class MatchListResponse(BaseModel):
 
 ### Phase 4: マッチング機能実装
 1. マッチング判定ロジック
-2. マッチ一覧取得機能
-3. マッチ状況確認機能
+2. **マッチ成立時のトークルーム自動生成**
+3. マッチ一覧取得機能（トークルームIDを含む）
+4. マッチ状況確認機能（トークルームIDを含む）
 
 ### Phase 5: エラーハンドリング
 1. バリデーションエラー
@@ -369,6 +378,8 @@ class MatchListResponse(BaseModel):
 - ユーザー削除時のいいね関連レコードの自動削除（CASCADE）
 
 ### ビジネスロジック
+- **マッチング成立時にトークルームを自動生成**
+- **既存のトークルームがある場合は再利用**
 - マッチング成立時の通知機能（将来的に実装）
 - いいねの取り消しによるマッチング解除
 - ブロックユーザーへのいいね送信制限
@@ -376,7 +387,7 @@ class MatchListResponse(BaseModel):
 ### 将来の拡張性
 - いいねの種類（スーパーいいね等）
 - いいねの制限（1日あたりのいいね数）
-- マッチング後のアクション（チャット開始等）
+- **マッチング後のアクション（チャット開始等）** ✅実装済み
 
 ## 📊 成功指標
 
@@ -403,7 +414,9 @@ class MatchListResponse(BaseModel):
     ↓
 マッチング成立！
     ↓
-チャット開始可能
+トークルーム自動生成 ✅
+    ↓
+チャット開始可能（トークルームIDを返却）
 ```
 
 ## 📈 データフロー
@@ -417,6 +430,6 @@ class MatchListResponse(BaseModel):
 ---
 
 **作成日**: 2024年1月  
-**更新日**: 2024年1月  
+**更新日**: 2025年1月（マッチ成立時のトークルーム自動生成機能を追加）  
 **担当者**: Qupid開発チーム
 

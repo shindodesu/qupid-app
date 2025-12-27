@@ -11,6 +11,8 @@ from app.models.user import User
 from app.models.tag import UserTag
 from app.models.block import Block
 from app.models.skip import Skip
+from app.models.conversation import Conversation, ConversationMember
+from app.models.enums import ConversationType
 from app.schemas.like import (
     LikeCreate,
     LikeResponse,
@@ -184,12 +186,59 @@ async def send_like(
             tags=tags,  # List[dict]形式
         )
         
+        # マッチ成立時にトークルームを自動生成
+        # 既存のトークルームをチェック
+        user1_conversations_query = select(ConversationMember.conversation_id).where(
+            ConversationMember.user_id == current_user_id
+        )
+        user2_conversations_query = select(ConversationMember.conversation_id).where(
+            ConversationMember.user_id == payload.liked_user_id
+        )
+        existing_conv_query = await db.execute(
+            select(Conversation).where(
+                and_(
+                    Conversation.id.in_(user1_conversations_query),
+                    Conversation.id.in_(user2_conversations_query),
+                    Conversation.type == ConversationType.direct,
+                )
+            )
+        )
+        existing_conv = existing_conv_query.scalar_one_or_none()
+        
+        conversation_id = None
+        if existing_conv:
+            conversation_id = existing_conv.id
+        else:
+            # 新しいトークルームを作成
+            new_conversation = Conversation(
+                type=ConversationType.direct,
+            )
+            db.add(new_conversation)
+            await db.flush()  # IDを取得するためにflush
+            
+            # flush()の後であればIDは利用可能
+            conversation_id = new_conversation.id
+            
+            # メンバーを追加
+            member1 = ConversationMember(
+                conversation_id=conversation_id,
+                user_id=current_user_id,
+            )
+            member2 = ConversationMember(
+                conversation_id=conversation_id,
+                user_id=payload.liked_user_id,
+            )
+            db.add(member1)
+            db.add(member2)
+            await db.commit()
+        
         # MatchReadオブジェクトを構築
         # matched_atはdatetimeオブジェクト（タイムゾーン情報を含む）
         match = MatchRead(
             id=payload.liked_user_id,
             user=user_with_tags,
             matched_at=matched_at,  # datetimeオブジェクト（タイムゾーン情報を含む）
+            conversation_id=conversation_id,
         )
         
         # マッチング成立時のレスポンス
@@ -718,6 +767,42 @@ async def get_matches(
             }
         )
 
+    # パフォーマンス最適化：全てのトークルームを一度に取得（N+1問題解消）
+    # マッチしたユーザーとの既存トークルームを取得
+    user_conversations_dict = {}
+    if matched_user_ids:
+        # 現在のユーザーが参加しているトークルームIDを取得
+        user1_conversations_query = await db.execute(
+            select(ConversationMember.conversation_id).where(
+                ConversationMember.user_id == current_user.id
+            )
+        )
+        user1_conv_ids = user1_conversations_query.scalars().all()
+        
+        if user1_conv_ids:
+            # マッチしたユーザーが参加しているトークルームを一括取得
+            members_query = await db.execute(
+                select(ConversationMember).where(
+                    and_(
+                        ConversationMember.conversation_id.in_(user1_conv_ids),
+                        ConversationMember.user_id.in_(matched_user_ids),
+                    )
+                )
+            )
+            members = members_query.scalars().all()
+            
+            # 会話IDごとにマッチしたユーザーIDを整理
+            conv_to_user_dict = {}
+            for member in members:
+                if member.conversation_id not in conv_to_user_dict:
+                    conv_to_user_dict[member.conversation_id] = []
+                conv_to_user_dict[member.conversation_id].append(member.user_id)
+            
+            # 2人だけが参加しているトークルーム（1対1会話）を特定
+            for conv_id, user_ids in conv_to_user_dict.items():
+                if len(user_ids) == 1:  # 現在のユーザーとマッチしたユーザーの2人だけ
+                    user_conversations_dict[user_ids[0]] = conv_id
+
     # レスポンス整形
     matches = []
     for user in matched_users:
@@ -760,11 +845,15 @@ async def get_matches(
             tags=tags,
         )
 
+        # トークルームIDを取得
+        conversation_id = user_conversations_dict.get(user.id)
+
         matches.append(
             MatchRead(
                 id=user.id,
                 user=user_with_tags,
                 matched_at=matched_at,
+                conversation_id=conversation_id,
             )
         )
 
@@ -871,10 +960,30 @@ async def get_match_status(
             tags=tags,
         )
 
+        # トークルームIDを取得
+        user1_conversations_query = select(ConversationMember.conversation_id).where(
+            ConversationMember.user_id == current_user.id
+        )
+        user2_conversations_query = select(ConversationMember.conversation_id).where(
+            ConversationMember.user_id == user_id
+        )
+        conv_query = await db.execute(
+            select(Conversation).where(
+                and_(
+                    Conversation.id.in_(user1_conversations_query),
+                    Conversation.id.in_(user2_conversations_query),
+                    Conversation.type == ConversationType.direct,
+                )
+            )
+        )
+        conversation = conv_query.scalar_one_or_none()
+        conversation_id = conversation.id if conversation else None
+
         match = MatchRead(
             id=user_id,
             user=user_with_tags,
             matched_at=matched_at,
+            conversation_id=conversation_id,
         )
 
         return MatchStatus(
