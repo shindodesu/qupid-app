@@ -130,7 +130,10 @@ export default function SkipsPage() {
                   className="bg-theme-card rounded-2xl shadow-lg border border-theme-primary/20 overflow-hidden hover:shadow-xl transition-all duration-300"
                 >
                   {/* プロフィール画像 */}
-                  <div className="relative aspect-square overflow-hidden">
+                  <div 
+                    className="relative aspect-square overflow-hidden cursor-pointer"
+                    onClick={() => openProfilePreview(skip)}
+                  >
                     {skip.skipped_user.avatar_url ? (
                       <Image
                         src={getAvatarUrl(skip.skipped_user.avatar_url) || '/icon.png'}
@@ -149,8 +152,8 @@ export default function SkipsPage() {
                       </div>
                     )}
                     
-                    {/* オーバーレイ */}
-                    <div className="absolute inset-0 bg-black/40"></div>
+                    {/* グラデーションオーバーレイ（下部のみ、テキスト読みやすくするため） */}
+                    <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
                     
                     {/* ユーザー情報 */}
                     <div className="absolute bottom-0 left-0 right-0 p-4 z-20">
@@ -192,16 +195,12 @@ export default function SkipsPage() {
                     {/* アクションボタン */}
                     <div className="flex gap-2">
                       <button
-                        onClick={() => openProfilePreview(skip)}
-                        className="flex-1 px-3 py-2 text-sm bg-theme-primary text-white rounded-lg hover:opacity-90 transition-all duration-300"
-                        style={{ background: theme.primary }}
-                      >
-                        詳細を見る
-                      </button>
-                      <button
-                        onClick={() => handleRemoveSkip(skip.skipped_user.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemoveSkip(skip.skipped_user.id)
+                        }}
                         disabled={removeSkipMutation.isPending}
-                        className="px-3 py-2 text-sm bg-neutral-200 text-neutral-700 rounded-lg hover:bg-neutral-300 transition-all duration-300 disabled:opacity-50"
+                        className="flex-1 px-3 py-2 text-sm bg-neutral-200 text-neutral-700 rounded-lg hover:bg-neutral-300 transition-all duration-300 disabled:opacity-50"
                       >
                         取り消し
                       </button>

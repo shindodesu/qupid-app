@@ -206,7 +206,7 @@ export default function LikesPage() {
                     transition={{ delay: 0.4 }}
                     className="text-sm text-neutral-600"
                   >
-                    お相手からのいいね! {likesData.likes.length}件
+                    お相手からのいいね! {likesData.total && likesData.total >= 100 ? '99+' : (likesData.total || likesData.likes.length)}件
                   </motion.p>
                 )}
               </motion.div>
@@ -240,7 +240,7 @@ export default function LikesPage() {
                     className="md:hidden inline-block px-3 py-1.5 bg-theme-primary border border-theme-primary/30 rounded-lg shadow-lg shadow-theme"
                   >
                     <span className="text-white text-xs font-medium">
-                      {likesData.likes.length}
+                      {likesData.total && likesData.total >= 100 ? '99+' : (likesData.total || likesData.likes.length)}
                     </span>
                   </motion.div>
                 ) : null}
@@ -359,7 +359,10 @@ export default function LikesPage() {
               <div className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 z-10"></div>
               
               {/* プロフィール画像 */}
-              <div className="relative aspect-square overflow-hidden">
+              <div 
+                className="relative aspect-square overflow-hidden cursor-pointer"
+                onClick={openProfilePreview}
+              >
                 {currentUser.user.avatar_url ? (
                   <Image
                     src={getAvatarUrl(currentUser.user.avatar_url) || '/icon.png'}
@@ -385,6 +388,9 @@ export default function LikesPage() {
                   </div>
                 )}
                 
+                {/* グラデーションオーバーレイ（下部のみ、テキスト読みやすくするため） */}
+                <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
+                
                 {/* ユーザー情報（画像の上に重ねて表示） */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">
                   <motion.div
@@ -392,23 +398,15 @@ export default function LikesPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
                   >
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <h2 className="text-3xl font-bold text-white mb-1 drop-shadow-lg">
-                          {currentUser.user.display_name}
-                        </h2>
-                        {(currentUser.user.faculty || currentUser.user.grade) && (
-                          <p className="text-white/90 text-sm drop-shadow-md">
-                            {[currentUser.user.faculty, currentUser.user.grade].filter(Boolean).join(' · ')}
-                          </p>
-                        )}
-                      </div>
-                      <button
-                        onClick={openProfilePreview}
-                        className="px-4 py-2 bg-white/20 backdrop-blur-sm rounded-full text-white text-sm font-medium hover:bg-white/30 transition-all duration-300 border border-white/30"
-                      >
-                        詳細を見る
-                      </button>
+                    <div>
+                      <h2 className="text-3xl font-bold text-white mb-1 drop-shadow-lg">
+                        {currentUser.user.display_name}
+                      </h2>
+                      {(currentUser.user.faculty || currentUser.user.grade) && (
+                        <p className="text-white/90 text-sm drop-shadow-md">
+                          {[currentUser.user.faculty, currentUser.user.grade].filter(Boolean).join(' · ')}
+                        </p>
+                      )}
                     </div>
 
                     {/* タグ */}

@@ -213,7 +213,7 @@ async def send_like(
 
 @router.get("/sent", response_model=LikeListResponse)
 async def get_sent_likes(
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(99, ge=1, le=100),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -402,7 +402,7 @@ async def get_sent_likes(
 
 @router.get("/received", response_model=LikeListResponse)
 async def get_received_likes(
-    limit: int = Query(20, ge=1, le=100),
+    limit: int = Query(99, ge=1, le=100),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
