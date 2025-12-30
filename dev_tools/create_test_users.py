@@ -29,10 +29,10 @@ from app.models.user import User
 from app.models.email_verification import EmailVerification  # リレーション解決のため
 from app.models.tag import Tag, UserTag  # リレーション解決のため
 
-# テスト用の選択肢
-GENDERS = ['男性', '女性', 'インターセックス']
-SEXUALITIES = ['ゲイ', 'レズビアン', 'バイセクシュアル', 'トランスジェンダー', 'パンセクシュアル', 'アセクシュアル', 'その他', '回答しない']
-LOOKING_FOR_OPTIONS = ['恋愛関係', '友達', 'カジュアルな関係', '長期的な関係', 'その他']
+# テスト用の選択肢（英語のコード値）
+GENDERS = ['male', 'female', 'inter_sex']
+SEXUALITIES = ['gay', 'lesbian', 'bisexual', 'transgender', 'pansexual', 'asexual', 'other', 'prefer_not_to_say']
+LOOKING_FOR_OPTIONS = ['dating', 'friends', 'casual', 'long_term', 'other']
 FACULTIES = [
     '文学部', '教育学部', '法学部', '経済学部', '理学部', '医学部', 
     '歯学部', '薬学部', '工学部', '農学部', '芸術工学部', '共創学部'

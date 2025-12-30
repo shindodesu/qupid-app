@@ -23,11 +23,6 @@ export default function NotFound() {
                   ホームに戻る
                 </Button>
               </Link>
-              <Link href="/search" className="flex-1">
-                <Button variant="outline" className="w-full">
-                  ユーザーを探す
-                </Button>
-              </Link>
             </div>
           </div>
         </CardContent>

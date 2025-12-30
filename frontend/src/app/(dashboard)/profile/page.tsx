@@ -37,6 +37,58 @@ export default function ProfilePage() {
   const [otherSexualityText, setOtherSexualityText] = useState('')
   const [otherLookingForText, setOtherLookingForText] = useState('')
 
+  // 日本語から英語へのマッピング（表示用）
+  const genderDisplayMap: Record<string, string> = {
+    'male': '男性',
+    'female': '女性',
+    'inter_sex': 'インターセックス',
+  }
+  
+  const sexualityDisplayMap: Record<string, string> = {
+    'gay': 'ゲイ',
+    'lesbian': 'レズビアン',
+    'bisexual': 'バイセクシュアル',
+    'transgender': 'トランスジェンダー',
+    'pansexual': 'パンセクシュアル',
+    'asexual': 'アセクシュアル',
+    'other': 'その他',
+    'prefer_not_to_say': '回答しない',
+  }
+  
+  const lookingForDisplayMap: Record<string, string> = {
+    'dating': '恋愛関係',
+    'friends': '友達',
+    'casual': 'カジュアルな関係',
+    'long_term': '長期的な関係',
+    'other': 'その他',
+  }
+  
+  // 英語から日本語へのマッピング（保存用）
+  const genderValueMap: Record<string, string> = {
+    '男性': 'male',
+    '女性': 'female',
+    'インターセックス': 'inter_sex',
+  }
+  
+  const sexualityValueMap: Record<string, string> = {
+    'ゲイ': 'gay',
+    'レズビアン': 'lesbian',
+    'バイセクシュアル': 'bisexual',
+    'トランスジェンダー': 'transgender',
+    'パンセクシュアル': 'pansexual',
+    'アセクシュアル': 'asexual',
+    'その他': 'other',
+    '回答しない': 'prefer_not_to_say',
+  }
+  
+  const lookingForValueMap: Record<string, string> = {
+    '恋愛関係': 'dating',
+    '友達': 'friends',
+    'カジュアルな関係': 'casual',
+    '長期的な関係': 'long_term',
+    'その他': 'other',
+  }
+
   const genderOptions = ['男性', '女性', 'インターセックス']
   const [formData, setFormData] = useState({
     display_name: '',
@@ -105,9 +157,20 @@ export default function ProfilePage() {
   useEffect(() => {
     const sourceData = userData || user
     if (sourceData) {
-      const gender = sourceData.gender || ''
-      const sexuality = sourceData.sexuality || ''
-      const looking_for = sourceData.looking_for || ''
+      // データベースの値（英語）を日本語に変換して表示
+      const gender = sourceData.gender ? (genderDisplayMap[sourceData.gender] || sourceData.gender) : ''
+      let sexuality = sourceData.sexuality || ''
+      let looking_for = sourceData.looking_for ? (lookingForDisplayMap[sourceData.looking_for] || sourceData.looking_for) : ''
+      
+      // セクシュアリティが複数の場合（カンマ区切り）
+      if (sexuality.includes(',')) {
+        sexuality = sexuality.split(',').map(s => {
+          const trimmed = s.trim()
+          return sexualityDisplayMap[trimmed] || trimmed
+        }).join(', ')
+      } else if (sexuality) {
+        sexuality = sexualityDisplayMap[sexuality] || sexuality
+      }
       
       // 「その他:」で始まる値を抽出
       if (sexuality.startsWith('その他:')) {
@@ -172,7 +235,34 @@ export default function ProfilePage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    updateMutation.mutate(formData)
+    // 保存前に日本語の値を英語に変換
+    const dataToSave = {
+      ...formData,
+      gender: formData.gender ? (genderValueMap[formData.gender] || formData.gender) : '',
+      sexuality: formData.sexuality ? (() => {
+        // 複数のセクシュアリティが選択されている場合
+        if (formData.sexuality.includes(', ')) {
+          return formData.sexuality.split(', ').map(s => {
+            if (s.startsWith('その他:')) {
+              return `other: ${s.replace('その他: ', '')}`
+            }
+            return sexualityValueMap[s] || s
+          }).join(',')
+        }
+        // 「その他:」で始まる場合
+        if (formData.sexuality.startsWith('その他:')) {
+          return `other: ${formData.sexuality.replace('その他: ', '')}`
+        }
+        return sexualityValueMap[formData.sexuality] || formData.sexuality
+      })() : '',
+      looking_for: formData.looking_for ? (() => {
+        if (formData.looking_for.startsWith('その他:')) {
+          return `other: ${formData.looking_for.replace('その他: ', '')}`
+        }
+        return lookingForValueMap[formData.looking_for] || formData.looking_for
+      })() : '',
+    }
+    updateMutation.mutate(dataToSave)
   }
 
   const handleLogout = async () => {
@@ -576,7 +666,23 @@ export default function ProfilePage() {
                     セクシュアリティ
                   </label>
                   <p className="text-neutral-900">
-                    {displayUserData?.sexuality || '未設定'}
+                    {displayUserData?.sexuality ? (() => {
+                      // 複数のセクシュアリティが選択されている場合
+                      if (displayUserData.sexuality.includes(',')) {
+                        return displayUserData.sexuality.split(',').map(s => {
+                          const trimmed = s.trim()
+                          if (trimmed.startsWith('other:')) {
+                            return `その他: ${trimmed.replace('other:', '').trim()}`
+                          }
+                          return sexualityDisplayMap[trimmed] || trimmed
+                        }).join(', ')
+                      }
+                      // 「other:」で始まる場合
+                      if (displayUserData.sexuality.startsWith('other:')) {
+                        return `その他: ${displayUserData.sexuality.replace('other:', '').trim()}`
+                      }
+                      return sexualityDisplayMap[displayUserData.sexuality] || displayUserData.sexuality
+                    })() : '未設定'}
                   </p>
                 </div>
                 <div>
@@ -584,7 +690,12 @@ export default function ProfilePage() {
                     探している関係
                   </label>
                   <p className="text-neutral-900">
-                    {displayUserData?.looking_for || '未設定'}
+                    {displayUserData?.looking_for ? (() => {
+                      if (displayUserData.looking_for.startsWith('other:')) {
+                        return `その他: ${displayUserData.looking_for.replace('other:', '').trim()}`
+                      }
+                      return lookingForDisplayMap[displayUserData.looking_for] || displayUserData.looking_for
+                    })() : '未設定'}
                   </p>
                 </div>
               </div>
@@ -628,7 +739,7 @@ export default function ProfilePage() {
                     体の性別
                   </label>
                   <p className="text-neutral-900">
-                    {displayUserData?.gender || '未設定'}
+                    {displayUserData?.gender ? (genderDisplayMap[displayUserData.gender] || displayUserData.gender) : '未設定'}
                   </p>
                 </div>
               </div>
@@ -784,8 +895,14 @@ export default function ProfilePage() {
 
         {/* セクシュアリティ選択モーダル */}
         {showSexualityModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-end z-50"
+          onClick={() => setShowSexualityModal(false)}
+        >
+          <div 
+            className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-bold mb-4 text-neutral-900">
               {isMultipleSexualityMode ? 'セクシュアリティを選択（複数可）' : 'セクシュアリティを選択'}
             </h3>
@@ -933,8 +1050,14 @@ export default function ProfilePage() {
 
         {/* 体の性別選択モーダル */}
         {showGenderModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-end z-50"
+          onClick={() => setShowGenderModal(false)}
+        >
+          <div 
+            className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-bold mb-4 text-neutral-900">体の性別を選択</h3>
             <div className="space-y-2">
               {genderOptions.map((option) => (
@@ -970,8 +1093,14 @@ export default function ProfilePage() {
 
         {/* 探している関係選択モーダル */}
         {showLookingForModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-end z-50"
+          onClick={() => setShowLookingForModal(false)}
+        >
+          <div 
+            className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-bold mb-4 text-neutral-900">探している関係を選択</h3>
             <div className="space-y-2">
               {['恋愛関係', '友達', 'カジュアルな関係', '長期的な関係', 'その他'].map((option) => (

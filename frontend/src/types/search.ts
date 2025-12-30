@@ -61,19 +61,23 @@ export interface UserSuggestionsResponse {
 // 並び順
 export type SortOrder = 'recent' | 'popular' | 'alphabetical'
 
-// フィルター関連の型定義
-export type Sexuality = 'lesbian' | 'bisexual' | 'transgender' | 'gay' | 'asexual' | 'pansexual' | 'other'
+// フィルター関連の型定義（データベースの値は英語、表示は日本語）
+export type Sexuality = 'gay' | 'lesbian' | 'bisexual' | 'transgender' | 'pansexual' | 'asexual' | 'other' | 'prefer_not_to_say'
 export type Gender = 'man' | 'woman' | 'non-binary' | 'transgender' | 'other'
-export type RelationshipGoal = 'friends' | 'dating' | 'all'
-export type Sex = 'male' | 'female' | 'other'
+export type RelationshipGoal = 'dating' | 'friends' | 'casual' | 'long_term' | 'other'
+export type Sex = 'male' | 'female' | 'inter_sex'
 
-// Discoverフィルター
+// Discoverフィルター（検索機能も含む）
 export interface DiscoverFilters {
+  // おすすめフィルター
   sexuality?: Sexuality[]
-  relationship_goal?: RelationshipGoal
+  relationship_goal?: RelationshipGoal[] // 複数選択可能に変更
+  campus?: string[] // 複数選択可能に変更
+  faculty?: string[] // 複数選択可能に変更
+  grade?: string[] // 複数選択可能に変更
   sex?: Sex[]
-  age_min?: number
-  age_max?: number
+  // 検索フィルター
+  tags?: string[]
 }
 
 // 検索フィルター

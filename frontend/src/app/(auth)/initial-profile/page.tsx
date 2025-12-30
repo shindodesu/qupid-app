@@ -48,6 +48,32 @@ export default function InitialProfilePage() {
   const [otherSexualityText, setOtherSexualityText] = useState('')
   const [otherLookingForText, setOtherLookingForText] = useState('')
 
+  // 日本語から英語へのマッピング（保存用）
+  const genderValueMap: Record<string, string> = {
+    '男性': 'male',
+    '女性': 'female',
+    'インターセックス': 'inter_sex',
+  }
+  
+  const sexualityValueMap: Record<string, string> = {
+    'ゲイ': 'gay',
+    'レズビアン': 'lesbian',
+    'バイセクシュアル': 'bisexual',
+    'トランスジェンダー': 'transgender',
+    'パンセクシュアル': 'pansexual',
+    'アセクシュアル': 'asexual',
+    'その他': 'other',
+    '回答しない': 'prefer_not_to_say',
+  }
+  
+  const lookingForValueMap: Record<string, string> = {
+    '恋愛関係': 'dating',
+    '友達': 'friends',
+    'カジュアルな関係': 'casual',
+    '長期的な関係': 'long_term',
+    'その他': 'other',
+  }
+
   const completeProfileMutation = useMutation({
     mutationFn: async (data: InitialProfileData) => {
       console.log('[InitialProfile] Submitting profile data:', JSON.stringify(data, null, 2))
@@ -189,8 +215,36 @@ export default function InitialProfilePage() {
       return
     }
 
-    console.log('[InitialProfile] Validation passed, submitting...')
-    completeProfileMutation.mutate(formData)
+    // 保存前に日本語の値を英語に変換
+    const dataToSave = {
+      ...formData,
+      gender: formData.gender ? (genderValueMap[formData.gender] || formData.gender) : '',
+      sexuality: formData.sexuality ? (() => {
+        // 複数のセクシュアリティが選択されている場合
+        if (formData.sexuality.includes(', ')) {
+          return formData.sexuality.split(', ').map(s => {
+            if (s.startsWith('その他:')) {
+              return `other: ${s.replace('その他: ', '')}`
+            }
+            return sexualityValueMap[s] || s
+          }).join(',')
+        }
+        // 「その他:」で始まる場合
+        if (formData.sexuality.startsWith('その他:')) {
+          return `other: ${formData.sexuality.replace('その他: ', '')}`
+        }
+        return sexualityValueMap[formData.sexuality] || formData.sexuality
+      })() : '',
+      looking_for: formData.looking_for ? (() => {
+        if (formData.looking_for.startsWith('その他:')) {
+          return `other: ${formData.looking_for.replace('その他: ', '')}`
+        }
+        return lookingForValueMap[formData.looking_for] || formData.looking_for
+      })() : '',
+    }
+
+    console.log('[InitialProfile] Validation passed, submitting...', dataToSave)
+    completeProfileMutation.mutate(dataToSave)
   }
 
   const genderOptions = [
@@ -368,8 +422,14 @@ export default function InitialProfilePage() {
 
       {/* 体の性別選択モーダル */}
       {showGenderModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-end z-50"
+          onClick={() => setShowGenderModal(false)}
+        >
+          <div 
+            className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-bold mb-4 text-gray-900">体の性別を選択</h3>
             <div className="space-y-2">
               {genderOptions.map((option) => (
@@ -403,8 +463,14 @@ export default function InitialProfilePage() {
 
       {/* セクシュアリティ選択モーダル */}
       {showSexualityModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-end z-50"
+          onClick={() => setShowSexualityModal(false)}
+        >
+          <div 
+            className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-bold mb-4 text-gray-900">
               {isMultipleSexualityMode ? 'セクシュアリティを選択（複数可）' : 'セクシュアリティを選択'}
             </h3>
@@ -547,8 +613,14 @@ export default function InitialProfilePage() {
 
       {/* 探している関係選択モーダル */}
       {showLookingForModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-end z-50">
-          <div className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto">
+        <div 
+          className="fixed inset-0 bg-black/50 flex items-end z-50"
+          onClick={() => setShowLookingForModal(false)}
+        >
+          <div 
+            className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
             <h3 className="text-lg font-bold mb-4 text-gray-900">探している関係を選択（複数可）</h3>
             <div className="space-y-2">
               {lookingForOptions.map((option) => {

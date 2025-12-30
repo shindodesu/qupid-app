@@ -34,14 +34,19 @@ export const searchApi = {
         params.append('tags', filters.tags.join(','))
       }
       
-      // 学部
-      if (filters.faculty) {
-        params.append('faculty', filters.faculty)
+      // キャンパス（カンマ区切り）
+      if (filters.campus && filters.campus.length > 0) {
+        params.append('campus', filters.campus.join(','))
       }
       
-      // 学年
-      if (filters.grade) {
-        params.append('grade', filters.grade)
+      // 学部（カンマ区切り）
+      if (filters.faculty && filters.faculty.length > 0) {
+        params.append('faculty', filters.faculty.join(','))
+      }
+      
+      // 学年（カンマ区切り）
+      if (filters.grade && filters.grade.length > 0) {
+        params.append('grade', filters.grade.join(','))
       }
       
       // フリーテキスト検索
@@ -92,24 +97,29 @@ export const searchApi = {
           console.log('[Filter API] Added sexuality:', filters.sexuality.join(','))
         }
         
-        if (filters.relationship_goal) {
-          params.append('relationship_goal', filters.relationship_goal)
-          console.log('[Filter API] Added relationship_goal:', filters.relationship_goal)
+        if (filters.relationship_goal && filters.relationship_goal.length > 0) {
+          params.append('relationship_goal', filters.relationship_goal.join(','))
+          console.log('[Filter API] Added relationship_goal:', filters.relationship_goal.join(','))
+        }
+        
+        if (filters.campus && filters.campus.length > 0) {
+          params.append('campus', filters.campus.join(','))
+          console.log('[Filter API] Added campus:', filters.campus.join(','))
+        }
+        
+        if (filters.faculty && filters.faculty.length > 0) {
+          params.append('faculty', filters.faculty.join(','))
+          console.log('[Filter API] Added faculty:', filters.faculty.join(','))
+        }
+        
+        if (filters.grade && filters.grade.length > 0) {
+          params.append('grade', filters.grade.join(','))
+          console.log('[Filter API] Added grade:', filters.grade.join(','))
         }
         
         if (filters.sex && filters.sex.length > 0) {
           params.append('sex', filters.sex.join(','))
           console.log('[Filter API] Added sex:', filters.sex.join(','))
-        }
-        
-        if (filters.age_min !== undefined) {
-          params.append('age_min', String(filters.age_min))
-          console.log('[Filter API] Added age_min:', filters.age_min)
-        }
-        
-        if (filters.age_max !== undefined) {
-          params.append('age_max', String(filters.age_max))
-          console.log('[Filter API] Added age_max:', filters.age_max)
         }
       } else {
         console.log('[Filter API] No filters provided')

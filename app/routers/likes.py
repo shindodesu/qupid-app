@@ -4,15 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import selectinload
-from sqlalchemy.exc import ProgrammingError
 from app.db.session import get_db
 from app.models.like import Like
 from app.models.user import User
 from app.models.tag import UserTag
 from app.models.block import Block
-from app.models.skip import Skip
-from app.models.conversation import Conversation, ConversationMember
-from app.models.enums import ConversationType
 from app.schemas.like import (
     LikeCreate,
     LikeResponse,
@@ -186,59 +182,12 @@ async def send_like(
             tags=tags,  # List[dict]形式
         )
         
-        # マッチ成立時にトークルームを自動生成
-        # 既存のトークルームをチェック
-        user1_conversations_query = select(ConversationMember.conversation_id).where(
-            ConversationMember.user_id == current_user_id
-        )
-        user2_conversations_query = select(ConversationMember.conversation_id).where(
-            ConversationMember.user_id == payload.liked_user_id
-        )
-        existing_conv_query = await db.execute(
-            select(Conversation).where(
-                and_(
-                    Conversation.id.in_(user1_conversations_query),
-                    Conversation.id.in_(user2_conversations_query),
-                    Conversation.type == ConversationType.direct,
-                )
-            )
-        )
-        existing_conv = existing_conv_query.scalar_one_or_none()
-        
-        conversation_id = None
-        if existing_conv:
-            conversation_id = existing_conv.id
-        else:
-            # 新しいトークルームを作成
-            new_conversation = Conversation(
-                type=ConversationType.direct,
-            )
-            db.add(new_conversation)
-            await db.flush()  # IDを取得するためにflush
-            
-            # flush()の後であればIDは利用可能
-            conversation_id = new_conversation.id
-            
-            # メンバーを追加
-            member1 = ConversationMember(
-                conversation_id=conversation_id,
-                user_id=current_user_id,
-            )
-            member2 = ConversationMember(
-                conversation_id=conversation_id,
-                user_id=payload.liked_user_id,
-            )
-            db.add(member1)
-            db.add(member2)
-            await db.commit()
-        
         # MatchReadオブジェクトを構築
         # matched_atはdatetimeオブジェクト（タイムゾーン情報を含む）
         match = MatchRead(
             id=payload.liked_user_id,
             user=user_with_tags,
             matched_at=matched_at,  # datetimeオブジェクト（タイムゾーン情報を含む）
-            conversation_id=conversation_id,
         )
         
         # マッチング成立時のレスポンス
@@ -262,110 +211,48 @@ async def send_like(
 
 @router.get("/sent", response_model=LikeListResponse)
 async def get_sent_likes(
-    limit: int = Query(99, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    送信したいいね一覧を取得（マッチしたユーザーとスキップしたユーザーは除外）
+    送信したいいね一覧を取得
     """
-    # まず、全送信いいねを取得してマッチしたユーザーIDを特定
-    all_sent_likes_query = await db.execute(
-        select(Like.liked_id).where(Like.liker_id == current_user.id)
+    # 総数取得
+    count_query = select(func.count()).select_from(Like).where(
+        Like.liker_id == current_user.id
     )
-    all_liked_user_ids = all_sent_likes_query.scalars().all()
-    
-    # マッチしたユーザーIDを取得（相手も自分にいいねを送っている場合）
-    if all_liked_user_ids:
-        reverse_likes_query = await db.execute(
-            select(Like.liker_id).where(
-                and_(
-                    Like.liker_id.in_(all_liked_user_ids),
-                    Like.liked_id == current_user.id,
-                )
-            )
-        )
-        matched_user_ids = {like_id for like_id in reverse_likes_query.scalars().all()}
-    else:
-        matched_user_ids = set()
-    
-    # スキップしたユーザーIDを取得（テーブルが存在しない場合は空のセットを返す）
-    try:
-        skipped_query = await db.execute(
-            select(Skip.skipped_id).where(Skip.skipper_id == current_user.id)
-        )
-        skipped_user_ids = {skip_id for skip_id in skipped_query.scalars().all()}
-    except ProgrammingError as e:
-        # テーブルが存在しない場合（マイグレーション未実行時）は空のセットを返す
-        if "does not exist" in str(e):
-            skipped_user_ids = set()
-        else:
-            raise
-    
-    # 除外するユーザーID（マッチしたユーザー + スキップしたユーザー）
-    excluded_user_ids = matched_user_ids | skipped_user_ids
-    
-    # マッチしていない、かつスキップしていないいいねの総数を取得
-    if excluded_user_ids:
-        count_query = select(func.count()).select_from(Like).where(
-            and_(
-                Like.liker_id == current_user.id,
-                ~Like.liked_id.in_(excluded_user_ids)
-            )
-        )
-    else:
-        count_query = select(func.count()).select_from(Like).where(
-            Like.liker_id == current_user.id
-        )
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
 
-    # いいね一覧取得（マッチしたユーザーとスキップしたユーザーは除外）
-    if excluded_user_ids:
-        query = (
-            select(Like)
-            .where(
-                and_(
-                    Like.liker_id == current_user.id,
-                    ~Like.liked_id.in_(excluded_user_ids)
-                )
-            )
-            .options(selectinload(Like.liked))
-            .order_by(Like.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
-    else:
-        query = (
-            select(Like)
-            .where(Like.liker_id == current_user.id)
-            .options(selectinload(Like.liked))
-            .order_by(Like.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
+    # いいね一覧取得
+    query = (
+        select(Like)
+        .where(Like.liker_id == current_user.id)
+        .options(selectinload(Like.liked))
+        .order_by(Like.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
     result = await db.execute(query)
     likes = result.scalars().all()
 
     # パフォーマンス最適化：全ての相手からのいいねを一度に取得（N+1問題解消）
     liked_user_ids = [like.liked_id for like in likes]
     
-    if liked_user_ids:
-        reverse_likes_query = await db.execute(
-            select(Like).where(
-                and_(
-                    Like.liker_id.in_(liked_user_ids),
-                    Like.liked_id == current_user.id,
-                )
+    reverse_likes_query = await db.execute(
+        select(Like).where(
+            and_(
+                Like.liker_id.in_(liked_user_ids),
+                Like.liked_id == current_user.id,
             )
         )
-        reverse_likes = reverse_likes_query.scalars().all()
-        
-        # マッチング状態を高速に判定するための辞書を作成（念のため再計算）
-        matched_user_ids = {like.liker_id for like in reverse_likes}
-    else:
-        matched_user_ids = set()
+    )
+    reverse_likes = reverse_likes_query.scalars().all()
+    
+    # マッチング状態を高速に判定するための辞書を作成
+    matched_user_ids = {like.liker_id for like in reverse_likes}
 
     # タグ情報を一括取得
     if liked_user_ids:
@@ -389,15 +276,9 @@ async def get_sent_likes(
         )
 
     # マッチング状態をチェックして整形
-    # マッチしたユーザーは除外する
     likes_read = []
     for like in likes:
         is_matched = like.liked_id in matched_user_ids
-        
-        # マッチしたユーザーは除外
-        if is_matched:
-            continue
-            
         tags = user_tags_dict.get(like.liked_id, [])
         if not like.liked.show_tags:
             tags = []
@@ -435,7 +316,7 @@ async def get_sent_likes(
                 id=like.id,
                 liked_user=liked_user,
                 created_at=like.created_at,
-                is_matched=False,  # マッチしていないユーザーのみ表示するため常にFalse
+                is_matched=is_matched,
             )
         )
 
@@ -451,110 +332,48 @@ async def get_sent_likes(
 
 @router.get("/received", response_model=LikeListResponse)
 async def get_received_likes(
-    limit: int = Query(99, ge=1, le=100),
+    limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """
-    受け取ったいいね一覧を取得（マッチしたユーザーとスキップしたユーザーは除外）
+    受け取ったいいね一覧を取得
     """
-    # まず、全受信いいねを取得してマッチしたユーザーIDを特定
-    all_received_likes_query = await db.execute(
-        select(Like.liker_id).where(Like.liked_id == current_user.id)
+    # 総数取得
+    count_query = select(func.count()).select_from(Like).where(
+        Like.liked_id == current_user.id
     )
-    all_liker_user_ids = all_received_likes_query.scalars().all()
-    
-    # マッチしたユーザーIDを取得（自分も相手にいいねを送っている場合）
-    if all_liker_user_ids:
-        my_likes_query = await db.execute(
-            select(Like.liked_id).where(
-                and_(
-                    Like.liker_id == current_user.id,
-                    Like.liked_id.in_(all_liker_user_ids),
-                )
-            )
-        )
-        matched_user_ids = {like_id for like_id in my_likes_query.scalars().all()}
-    else:
-        matched_user_ids = set()
-    
-    # スキップしたユーザーIDを取得（テーブルが存在しない場合は空のセットを返す）
-    try:
-        skipped_query = await db.execute(
-            select(Skip.skipped_id).where(Skip.skipper_id == current_user.id)
-        )
-        skipped_user_ids = {skip_id for skip_id in skipped_query.scalars().all()}
-    except ProgrammingError as e:
-        # テーブルが存在しない場合（マイグレーション未実行時）は空のセットを返す
-        if "does not exist" in str(e):
-            skipped_user_ids = set()
-        else:
-            raise
-    
-    # 除外するユーザーID（マッチしたユーザー + スキップしたユーザー）
-    excluded_user_ids = matched_user_ids | skipped_user_ids
-    
-    # マッチしていない、かつスキップしていないいいねの総数を取得
-    if excluded_user_ids:
-        count_query = select(func.count()).select_from(Like).where(
-            and_(
-                Like.liked_id == current_user.id,
-                ~Like.liker_id.in_(excluded_user_ids)
-            )
-        )
-    else:
-        count_query = select(func.count()).select_from(Like).where(
-            Like.liked_id == current_user.id
-        )
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
 
-    # いいね一覧取得（マッチしたユーザーとスキップしたユーザーは除外）
-    if excluded_user_ids:
-        query = (
-            select(Like)
-            .where(
-                and_(
-                    Like.liked_id == current_user.id,
-                    ~Like.liker_id.in_(excluded_user_ids)
-                )
-            )
-            .options(selectinload(Like.liker))
-            .order_by(Like.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
-    else:
-        query = (
-            select(Like)
-            .where(Like.liked_id == current_user.id)
-            .options(selectinload(Like.liker))
-            .order_by(Like.created_at.desc())
-            .limit(limit)
-            .offset(offset)
-        )
+    # いいね一覧取得
+    query = (
+        select(Like)
+        .where(Like.liked_id == current_user.id)
+        .options(selectinload(Like.liker))
+        .order_by(Like.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
     result = await db.execute(query)
     likes = result.scalars().all()
 
     # パフォーマンス最適化：全ての自分からのいいねを一度に取得（N+1問題解消）
     liker_user_ids = [like.liker_id for like in likes]
     
-    if liker_user_ids:
-        my_likes_query = await db.execute(
-            select(Like).where(
-                and_(
-                    Like.liker_id == current_user.id,
-                    Like.liked_id.in_(liker_user_ids),
-                )
+    my_likes_query = await db.execute(
+        select(Like).where(
+            and_(
+                Like.liker_id == current_user.id,
+                Like.liked_id.in_(liker_user_ids),
             )
         )
-        my_likes = my_likes_query.scalars().all()
-        
-        # マッチング状態を高速に判定するための辞書を作成（念のため再計算）
-        matched_user_ids = {like.liked_id for like in my_likes}
-    else:
-        matched_user_ids = set()
+    )
+    my_likes = my_likes_query.scalars().all()
+    
+    # マッチング状態を高速に判定するための辞書を作成
+    matched_user_ids = {like.liked_id for like in my_likes}
 
     # パフォーマンス最適化：全てのユーザータグを一度に取得
     if liker_user_ids:
@@ -579,15 +398,9 @@ async def get_received_likes(
         )
 
     # マッチング状態をチェックして整形
-    # マッチしたユーザーは除外する
     likes_read = []
     for like in likes:
         is_matched = like.liker_id in matched_user_ids
-        
-        # マッチしたユーザーは除外
-        if is_matched:
-            continue
-            
         tags = user_tags_dict.get(like.liker_id, [])
         if not like.liker.show_tags:
             tags = []
@@ -625,7 +438,7 @@ async def get_received_likes(
                 id=like.id,
                 user=liker_user,
                 created_at=like.created_at,
-                is_matched=False,  # マッチしていないユーザーのみ表示するため常にFalse
+                is_matched=is_matched,
             )
         )
 
@@ -767,42 +580,6 @@ async def get_matches(
             }
         )
 
-    # パフォーマンス最適化：全てのトークルームを一度に取得（N+1問題解消）
-    # マッチしたユーザーとの既存トークルームを取得
-    user_conversations_dict = {}
-    if matched_user_ids:
-        # 現在のユーザーが参加しているトークルームIDを取得
-        user1_conversations_query = await db.execute(
-            select(ConversationMember.conversation_id).where(
-                ConversationMember.user_id == current_user.id
-            )
-        )
-        user1_conv_ids = user1_conversations_query.scalars().all()
-        
-        if user1_conv_ids:
-            # マッチしたユーザーが参加しているトークルームを一括取得
-            members_query = await db.execute(
-                select(ConversationMember).where(
-                    and_(
-                        ConversationMember.conversation_id.in_(user1_conv_ids),
-                        ConversationMember.user_id.in_(matched_user_ids),
-                    )
-                )
-            )
-            members = members_query.scalars().all()
-            
-            # 会話IDごとにマッチしたユーザーIDを整理
-            conv_to_user_dict = {}
-            for member in members:
-                if member.conversation_id not in conv_to_user_dict:
-                    conv_to_user_dict[member.conversation_id] = []
-                conv_to_user_dict[member.conversation_id].append(member.user_id)
-            
-            # 2人だけが参加しているトークルーム（1対1会話）を特定
-            for conv_id, user_ids in conv_to_user_dict.items():
-                if len(user_ids) == 1:  # 現在のユーザーとマッチしたユーザーの2人だけ
-                    user_conversations_dict[user_ids[0]] = conv_id
-
     # レスポンス整形
     matches = []
     for user in matched_users:
@@ -845,15 +622,11 @@ async def get_matches(
             tags=tags,
         )
 
-        # トークルームIDを取得
-        conversation_id = user_conversations_dict.get(user.id)
-
         matches.append(
             MatchRead(
                 id=user.id,
                 user=user_with_tags,
                 matched_at=matched_at,
-                conversation_id=conversation_id,
             )
         )
 
@@ -960,30 +733,10 @@ async def get_match_status(
             tags=tags,
         )
 
-        # トークルームIDを取得
-        user1_conversations_query = select(ConversationMember.conversation_id).where(
-            ConversationMember.user_id == current_user.id
-        )
-        user2_conversations_query = select(ConversationMember.conversation_id).where(
-            ConversationMember.user_id == user_id
-        )
-        conv_query = await db.execute(
-            select(Conversation).where(
-                and_(
-                    Conversation.id.in_(user1_conversations_query),
-                    Conversation.id.in_(user2_conversations_query),
-                    Conversation.type == ConversationType.direct,
-                )
-            )
-        )
-        conversation = conv_query.scalar_one_or_none()
-        conversation_id = conversation.id if conversation else None
-
         match = MatchRead(
             id=user_id,
             user=user_with_tags,
             matched_at=matched_at,
-            conversation_id=conversation_id,
         )
 
         return MatchStatus(
