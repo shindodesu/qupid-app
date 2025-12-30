@@ -13,7 +13,7 @@ import { ReportDialog, BlockConfirm } from '@/components/features/safety'
 import { ProfilePreviewModal, type ProfilePreviewData } from '@/components/features/profile/ProfilePreviewModal'
 import { Badge } from '@/components/ui/Badge'
 import type { TagInfo } from '@/types/search'
-import { PageTransition, AnimatedBackground } from '@/components/ui/PageTransition'
+import { PageTransition } from '@/components/ui/PageTransition'
 import { useTheme } from '@/hooks/useTheme'
 
 export default function LikesPage() {
@@ -187,9 +187,6 @@ export default function LikesPage() {
   return (
     <PageTransition variant="bounce">
       <div className="min-h-screen bg-theme-page relative overflow-hidden">
-        {/* 装飾的な背景要素 */}
-        <AnimatedBackground variant="bubbles" />
-        
         {/* ヘッダー */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
@@ -463,9 +460,6 @@ export default function LikesPage() {
                     <div className="w-64 h-32 bg-neutral-300 rounded-t-full"></div>
                   </div>
                 )}
-                
-                {/* グラデーションオーバーレイ（下部のみ、テキスト読みやすくするため） */}
-                <div className="absolute inset-x-0 bottom-0 h-64 bg-gradient-to-t from-black/50 to-transparent z-10"></div>
                 
                 {/* ユーザー情報（画像の上に重ねて表示） */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 z-20">

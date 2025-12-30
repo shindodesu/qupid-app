@@ -472,10 +472,10 @@ async def search_users(
                     filters_applied["faculty"] = faculty_list
                     # OR条件で複数の学部に一致するユーザーを検索（プライバシー設定を考慮）
                     faculty_conditions = [
-                        and_(
+                    and_(
                             User.faculty.ilike(f"%{f}%"),
-                            User.show_faculty == True
-                        )
+                        User.show_faculty == True
+                    )
                         for f in faculty_list
                     ]
                     query = query.where(or_(*faculty_conditions))
@@ -497,10 +497,10 @@ async def search_users(
                     filters_applied["grade"] = grade_list
                     # OR条件で複数の学年に一致するユーザーを検索（プライバシー設定を考慮）
                     grade_conditions = [
-                        and_(
+                    and_(
                             User.grade.ilike(f"%{g}%"),
-                            User.show_grade == True
-                        )
+                        User.show_grade == True
+                    )
                         for g in grade_list
                     ]
                     query = query.where(or_(*grade_conditions))
@@ -844,13 +844,13 @@ async def get_user_suggestions(
                     if "all" in relationship_goal_list:
                         logger.info(f"[Suggestions Debug] Relationship goal contains 'all', skipping filter")
                         print(f"[Suggestions Debug] Relationship goal contains 'all', skipping filter", file=sys.stderr)
-                    else:
+                else:
                         # 複数の関係性目標に一致するユーザーを検索（プライバシー設定を考慮）
                         relationship_goal_conditions = [
-                            and_(
+                        and_(
                                 User.looking_for == goal,
-                                User.show_looking_for == True
-                            )
+                            User.show_looking_for == True
+                        )
                             for goal in relationship_goal_list
                         ]
                         filter_conditions.append(or_(*relationship_goal_conditions))

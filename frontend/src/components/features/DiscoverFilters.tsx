@@ -255,37 +255,37 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
         <div>
           <label className="block text-sm text-neutral-600 mb-3">セクシュアリティ</label>
           <div className="relative" ref={sexualityPickerRef}>
-            <div 
-              className="w-full p-4 bg-white border border-neutral-300 rounded-xl flex items-center justify-between cursor-pointer hover:bg-neutral-50"
-              onClick={() => setShowSexualityPicker(!showSexualityPicker)}
+          <div 
+            className="w-full p-4 bg-white border border-neutral-300 rounded-xl flex items-center justify-between cursor-pointer hover:bg-neutral-50"
+            onClick={() => setShowSexualityPicker(!showSexualityPicker)}
+          >
+            <span className="text-neutral-900">{getSexualityDisplayText()}</span>
+            <svg 
+              className={`w-5 h-5 text-neutral-400 transition-transform ${showSexualityPicker ? 'rotate-180' : ''}`}
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
             >
-              <span className="text-neutral-900">{getSexualityDisplayText()}</span>
-              <svg 
-                className={`w-5 h-5 text-neutral-400 transition-transform ${showSexualityPicker ? 'rotate-180' : ''}`}
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
           
           {showSexualityPicker && (
             <div className="absolute z-20 w-full mt-2 bg-white border border-neutral-300 rounded-xl shadow-lg max-h-60 overflow-y-auto">
               <div className="p-3 space-y-2">
-                {sexualityOptions.map((option) => (
+              {sexualityOptions.map((option) => (
                   <label
                     key={option.value}
                     className="flex items-center space-x-3 cursor-pointer hover:bg-neutral-50 p-2 rounded"
                   >
-                    <input
-                      type="checkbox"
-                      checked={filters.sexuality?.includes(option.value) || false}
-                      onChange={() => handleSexualityToggle(option.value)}
-                      className="w-4 h-4 text-pink-500 border-neutral-300 rounded focus:ring-pink-500"
-                    />
-                    <span className="text-neutral-900">{option.label}</span>
-                  </label>
+                  <input
+                    type="checkbox"
+                    checked={filters.sexuality?.includes(option.value) || false}
+                    onChange={() => handleSexualityToggle(option.value)}
+                    className="w-4 h-4 text-pink-500 border-neutral-300 rounded focus:ring-pink-500"
+                  />
+                  <span className="text-neutral-900">{option.label}</span>
+                </label>
                 ))}
               </div>
             </div>
@@ -333,7 +333,7 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
             {showRelationshipGoalPicker && (
               <div className="absolute z-20 w-full mt-2 bg-white border border-neutral-300 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                 <div className="p-3 space-y-2">
-                  {relationshipGoalOptions.map((option) => (
+            {relationshipGoalOptions.map((option) => (
                     <label
                       key={option.value}
                       className="flex items-center space-x-3 cursor-pointer hover:bg-neutral-50 p-2 rounded"
@@ -419,7 +419,7 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
                   className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-pink-100 text-pink-700"
                 >
                   {campus}
-                  <button
+              <button
                     type="button"
                     onClick={() => handleCampusToggle(campus)}
                     className="ml-2 text-pink-700 hover:text-pink-900"
@@ -485,9 +485,9 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
                     className="ml-2 text-pink-700 hover:text-pink-900"
                   >
                     ×
-                  </button>
+              </button>
                 </span>
-              ))}
+            ))}
             </div>
           )}
         </div>
@@ -573,21 +573,21 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
             {showSexPicker && (
               <div className="absolute z-20 w-full mt-2 bg-white border border-neutral-300 rounded-xl shadow-lg max-h-60 overflow-y-auto">
                 <div className="p-3 space-y-2">
-                  {sexOptions.map((option) => (
+            {sexOptions.map((option) => (
                     <label
                       key={option.value}
                       className="flex items-center space-x-3 cursor-pointer hover:bg-neutral-50 p-2 rounded"
                     >
-                      <input
-                        type="checkbox"
-                        checked={filters.sex?.includes(option.value) || false}
-                        onChange={() => handleSexToggle(option.value)}
-                        className="w-4 h-4 text-pink-500 border-neutral-300 rounded focus:ring-pink-500"
-                      />
-                      <span className="text-neutral-900">{option.label}</span>
-                    </label>
-                  ))}
-                </div>
+                <input
+                  type="checkbox"
+                  checked={filters.sex?.includes(option.value) || false}
+                  onChange={() => handleSexToggle(option.value)}
+                  className="w-4 h-4 text-pink-500 border-neutral-300 rounded focus:ring-pink-500"
+                />
+                <span className="text-neutral-900">{option.label}</span>
+              </label>
+            ))}
+          </div>
               </div>
             )}
           </div>

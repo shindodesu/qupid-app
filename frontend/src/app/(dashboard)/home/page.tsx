@@ -13,7 +13,7 @@ import { ToastContainer } from '@/components/common/ToastContainer'
 import { DiscoverFilters as DiscoverFiltersType, UserSuggestion, UserSearchResult, SortOrder } from '@/types/search'
 import { ProfilePreviewModal, type ProfilePreviewData } from '@/components/features/profile/ProfilePreviewModal'
 import { getAvatarUrl } from '@/lib/utils/image'
-import { PageTransition, StaggerContainer, StaggerItem, AnimatedBackground } from '@/components/ui/PageTransition'
+import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/PageTransition'
 import { useTheme } from '@/hooks/useTheme'
 
 export default function DiscoverPage() {
@@ -244,15 +244,12 @@ export default function DiscoverPage() {
   return (
     <PageTransition variant="bounce">
       <div className="min-h-screen bg-theme-page relative overflow-hidden">
-        {/* 装飾的な背景要素 */}
-        <AnimatedBackground variant="bubbles" />
-        
         {/* ヘッダー */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-theme-header border-b border-theme-primary/20 sticky top-0 z-10 backdrop-blur-md shadow-sm"
+          className="bg-theme-header border-b border-theme-primary/20 sticky top-0 z-30 backdrop-blur-md shadow-sm"
         >
           <div className="container mx-auto px-4 py-4">
             <div className="flex items-center justify-between">
@@ -273,7 +270,7 @@ export default function DiscoverPage() {
               {/* フィルターボタンと並び替えボタン */}
               <div className="flex items-center gap-2">
                 {/* 並び替えボタン */}
-                <div className="relative" ref={sortMenuRef}>
+                <div className="relative z-50" ref={sortMenuRef}>
                   <motion.button
                     onClick={() => setShowSortMenu(!showSortMenu)}
                     whileHover={{ scale: 1.1 }}
@@ -294,7 +291,7 @@ export default function DiscoverPage() {
                     </svg>
                   </motion.button>
                   {showSortMenu && (
-                    <div className="absolute right-0 mt-2 w-32 bg-white border border-neutral-300 rounded-xl shadow-lg z-20">
+                    <div className="absolute right-0 mt-2 w-32 bg-white border border-neutral-300 rounded-xl shadow-lg z-50">
                       <div className="py-2">
                         {(['recent', 'alphabetical', 'popular'] as SortOrder[]).map((sortOption) => (
                           <button
@@ -344,7 +341,7 @@ export default function DiscoverPage() {
         </motion.div>
 
         {/* メインコンテンツ */}
-        <div className="container mx-auto px-4 py-6 relative z-10">
+        <div className="container mx-auto px-4 py-6 relative z-0">
           {/* インストールプロンプトバナー */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}

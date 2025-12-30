@@ -7,7 +7,7 @@ import { chatApi } from '@/lib/api/chat'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { ConversationList } from '@/components/features/chat'
-import { PageTransition, AnimatedBackground } from '@/components/ui/PageTransition'
+import { PageTransition } from '@/components/ui/PageTransition'
 import { useTheme } from '@/hooks/useTheme'
 
 export default function ChatPage() {
@@ -22,9 +22,6 @@ export default function ChatPage() {
   return (
     <PageTransition variant="slide">
       <div className="min-h-screen bg-theme-page relative overflow-hidden">
-        {/* 装飾的な背景要素 */}
-        <AnimatedBackground variant="particles" />
-        
         <div className="container mx-auto px-4 py-8 max-w-4xl relative z-10">
           {/* ヘッダー */}
           <motion.div 

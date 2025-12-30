@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useThemeStore, THEME_PRESETS, type ThemeColors } from '@/stores/theme'
-import { PageTransition, AnimatedBackground } from '@/components/ui/PageTransition'
+import { PageTransition } from '@/components/ui/PageTransition'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { useTheme } from '@/hooks/useTheme'
@@ -38,8 +38,6 @@ export default function ThemeSettingsPage() {
   return (
     <PageTransition variant="scale">
       <div className="min-h-screen bg-theme-page relative overflow-hidden">
-        <AnimatedBackground variant="bubbles" />
-        
         <div className="container mx-auto px-4 py-8 max-w-4xl relative z-10">
           {/* ヘッダー */}
           <motion.div 

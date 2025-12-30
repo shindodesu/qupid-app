@@ -15,7 +15,7 @@ import { useUser, useAuthStore } from '@/stores/auth'
 import { getAvatarUrl } from '@/lib/utils/image'
 import { ProfilePreviewCard, type ProfilePreviewData } from '@/components/features/profile/ProfilePreviewModal'
 import { cn } from '@/lib/utils'
-import { PageTransition, StaggerContainer, StaggerItem, AnimatedBackground } from '@/components/ui/PageTransition'
+import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/PageTransition'
 import { useTheme } from '@/hooks/useTheme'
 
 export default function ProfilePage() {
@@ -378,9 +378,6 @@ export default function ProfilePage() {
   return (
     <PageTransition variant="scale">
       <div className="min-h-screen bg-theme-page relative overflow-hidden">
-        {/* 装飾的な背景要素 */}
-        <AnimatedBackground variant="bubbles" />
-        
         <div className="container mx-auto px-4 py-8 max-w-4xl relative z-10">
           {/* ヘッダー */}
           <motion.div 
