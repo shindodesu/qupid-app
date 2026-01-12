@@ -61,8 +61,9 @@ export function authMiddleware(request: NextRequest) {
       console.log(`[Middleware] Root path, authenticated, redirecting to home`)
       return NextResponse.redirect(new URL('/home', request.url))
     } else {
-      console.log(`[Middleware] Root path, not authenticated, redirecting to login`)
-      return NextResponse.redirect(new URL('/auth/login', request.url))
+      // 未認証ユーザーにはランディングページを表示（リダイレクトしない）
+      console.log(`[Middleware] Root path, not authenticated, showing landing page`)
+      return NextResponse.next()
     }
   }
 
