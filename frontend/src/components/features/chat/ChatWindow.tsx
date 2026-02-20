@@ -242,15 +242,6 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      {/* グローバルアクションボタン（画像の上部中央の赤い紙飛行機） */}
-      <div className="flex justify-center pt-2 pb-1">
-        <button className="w-10 h-10 bg-red-500 rounded-lg flex items-center justify-center shadow-lg">
-          <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-          </svg>
-        </button>
-      </div>
-
       {/* ヘッダー */}
       <div className="border-b border-neutral-200 bg-white px-4 py-3">
         <div className="flex items-center justify-between">
@@ -287,10 +278,6 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
               <h2 className="text-lg font-bold text-neutral-900">
                 {otherUserName}
               </h2>
-              <div className="flex items-center gap-1">
-                <div className="h-2 w-2 rounded-full bg-red-500"></div>
-                <span className="text-sm text-gray-500">Online</span>
-              </div>
             </div>
           </div>
           
