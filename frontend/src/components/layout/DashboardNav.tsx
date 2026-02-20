@@ -31,6 +31,11 @@ const navItems = [
 
 const settingsItems = [
   {
+    name: 'プライバシー設定',
+    href: '/privacy-settings',
+    icon: '🔒',
+  },
+  {
     name: 'テーマ',
     href: '/theme-settings',
     icon: '🎨',

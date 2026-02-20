@@ -84,11 +84,14 @@ export const searchApi = {
   /**
    * おすすめユーザー取得
    */
-  async getSuggestions(limit: number = 10, filters?: DiscoverFilters): Promise<UserSuggestionsResponse> {
+  async getSuggestions(limit: number = 10, filters?: DiscoverFilters, sort?: import('@/types/search').SortOrder): Promise<UserSuggestionsResponse> {
     try {
       const params = new URLSearchParams()
       params.append('limit', String(limit))
-      
+      if (sort) {
+        params.append('sort', sort)
+      }
+
       // Discoverフィルターの追加
       if (filters) {
         console.log('[Filter API] Building request with filters:', filters)

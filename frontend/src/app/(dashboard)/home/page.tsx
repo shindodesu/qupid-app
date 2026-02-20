@@ -65,9 +65,9 @@ export default function DiscoverPage() {
 
   // 検索条件がある場合は/users/search、ない場合は/users/suggestionsを使用
   const { data: suggestionsData, isLoading: isLoadingSuggestions, refetch: refetchSuggestions } = useQuery({
-    queryKey: ['suggestions', filters],
+    queryKey: ['suggestions', filters, sort],
     queryFn: () => {
-      console.log('[Filter] API call with suggestions filters:', filters)
+      console.log('[Filter] API call with suggestions filters:', filters, 'sort:', sort)
       const discoverFilters = {
         sexuality: filters.sexuality,
         relationship_goal: filters.relationship_goal,
@@ -76,7 +76,7 @@ export default function DiscoverPage() {
         grade: filters.grade,
         sex: filters.sex,
       }
-      return searchApi.getSuggestions(100, discoverFilters)
+      return searchApi.getSuggestions(100, discoverFilters, sort)
     },
     enabled: !hasSearchFilters, // 検索条件がない場合のみ実行
   })
@@ -117,6 +117,7 @@ export default function DiscoverPage() {
           id: user.id,
           display_name: user.display_name,
           bio: user.bio,
+          avatar_url: user.avatar_url,
           faculty: user.faculty,
           grade: user.grade,
           tags: user.tags,
@@ -164,9 +165,17 @@ export default function DiscoverPage() {
       if (users.length <= 8) {
         refetch()
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      const isAlreadyLiked =
+        message.includes('already liked') || message.includes('既にいいね')
+      if (isAlreadyLiked) {
+        setProcessedUserIds((prev) => new Set([...prev, userId]))
+        if (users.length <= 8) refetch()
+        return
+      }
       console.error('[Like] Error sending like:', error)
-      const errorMessage = error?.message || 'いいねの送信に失敗しました'
+      const errorMessage = error instanceof Error ? error.message : 'いいねの送信に失敗しました'
       toast({
         title: "エラーが発生しました",
         description: errorMessage,

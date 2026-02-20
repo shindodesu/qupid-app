@@ -117,9 +117,15 @@ docker-compose exec db psql -U user -d mydatabase -f dev_tools/check_like_schema
 ### ステップ4: レスポンスの検証
 バックエンドのログを確認して、実際に返されているレスポンスの構造を確認します。
 
-## 推奨される修正
+## 実施した修正（フロントエンド）
 
-`app/routers/likes.py`の127-143行目を修正して、`MatchRead`スキーマに準拠したレスポンスを返すようにする必要があります。
+- **いいね返信時の誤ったエラー表示**: 既にいいね済みのユーザーに再度いいねを送った場合（二重送信・表示遅延など）、バックエンドは 400 "You have already liked this user" を返すが、実際には1件目で送信は成功している。このためフロントエンドで「既にいいね済み」の 400 を成功扱いとする修正を行った。
+  - **マッチページ**（`frontend/src/app/(dashboard)/matches/page.tsx`）: `handleLikeBack` の catch で、エラーメッセージに "already liked" / "既にいいね" が含まれる場合はアラートを出さず、受け取ったいいね一覧・マッチ一覧を再取得して次のカードへ進む。
+  - **ホーム**（`frontend/src/app/(dashboard)/home/page.tsx`）: `handleLike` の catch で同様に「既にいいね済み」の場合はエラートーストを出さず、処理済みとして扱う。
+
+## 推奨される修正（バックエンド・参考）
+
+`app/routers/likes.py`の127-143行目を修正して、`MatchRead`スキーマに準拠したレスポンスを返すようにする必要があります（※既に `MatchRead` を用いた実装に更新済みの場合は不要）。
 
 ```python
 # 修正前（現在の実装）

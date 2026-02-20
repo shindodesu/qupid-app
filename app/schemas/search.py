@@ -35,6 +35,7 @@ class UserSearchResult(BaseModel):
     id: int
     display_name: str
     bio: Optional[str]
+    avatar_url: Optional[str] = None
     faculty: Optional[str]
     grade: Optional[str]
     tags: List[TagInfo]
@@ -59,6 +60,7 @@ class UserSuggestion(BaseModel):
     id: int
     display_name: str
     bio: Optional[str]
+    avatar_url: Optional[str] = None
     faculty: Optional[str]
     grade: Optional[str]
     tags: List[TagInfo]

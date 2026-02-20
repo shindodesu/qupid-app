@@ -10,6 +10,7 @@ import { ToastContainer } from '@/components/common/ToastContainer'
 import type { User } from '@/types/user'
 
 interface PrivacySettings {
+  show_campus: boolean
   show_faculty: boolean
   show_grade: boolean
   show_birthday: boolean
@@ -27,6 +28,7 @@ export default function PrivacySettingsPage() {
   const queryClient = useQueryClient()
   
   const [settings, setSettings] = useState<PrivacySettings>({
+    show_campus: true,
     show_faculty: true,
     show_grade: true,
     show_birthday: false,
@@ -48,6 +50,7 @@ export default function PrivacySettingsPage() {
   useEffect(() => {
     if (userData) {
       setSettings({
+        show_campus: userData.show_campus ?? true,
         show_faculty: userData.show_faculty ?? true,
         show_grade: userData.show_grade ?? true,
         show_birthday: userData.show_birthday ?? false,
@@ -97,10 +100,11 @@ export default function PrivacySettingsPage() {
     { key: 'show_bio' as keyof PrivacySettings, label: '自己紹介', description: 'あなたの自己紹介文を表示します' },
     { key: 'show_sexuality' as keyof PrivacySettings, label: 'セクシュアリティ', description: 'あなたのセクシュアリティを表示します' },
     { key: 'show_looking_for' as keyof PrivacySettings, label: '探している関係', description: 'あなたが探している関係を表示します' },
+    { key: 'show_campus' as keyof PrivacySettings, label: 'キャンパス', description: 'あなたのキャンパスを表示します' },
     { key: 'show_faculty' as keyof PrivacySettings, label: '学部', description: 'あなたの所属学部を表示します' },
     { key: 'show_grade' as keyof PrivacySettings, label: '学年', description: 'あなたの学年を表示します' },
     { key: 'show_birthday' as keyof PrivacySettings, label: '生年月日', description: '生年月日を表示します（通常は非公開推奨）' },
-    { key: 'show_gender' as keyof PrivacySettings, label: '体の性別', description: 'あなたの体の性別を表示します' },
+    { key: 'show_gender' as keyof PrivacySettings, label: '体の性別', description: 'あなたの体の性別を表示します。非表示にすると、フィルターの「体の性別」にも引っかからず、検索結果に表示されにくくなります。' },
     { key: 'show_age' as keyof PrivacySettings, label: '年齢', description: 'あなたの年齢を表示します' },
     { key: 'show_tags' as keyof PrivacySettings, label: 'タグ', description: 'あなたの興味・関心タグを表示します' },
   ]
@@ -129,7 +133,7 @@ export default function PrivacySettingsPage() {
               プロフィール情報の公開設定
             </h2>
             <p className="text-sm text-neutral-600">
-              他のユーザーに表示する情報を選択できます。非公開にした項目は検索結果にも表示されません。
+              他のユーザーに表示する情報を選択できます。非公開にした項目はプロフィールに表示されず、フィルター検索にも引っかからなくなります。
             </p>
           </div>
 

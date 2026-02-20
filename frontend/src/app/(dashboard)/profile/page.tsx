@@ -164,7 +164,7 @@ export default function ProfilePage() {
       
       // セクシュアリティが複数の場合（カンマ区切り）
       if (sexuality.includes(',')) {
-        sexuality = sexuality.split(',').map(s => {
+        sexuality = sexuality.split(',').map((s: string) => {
           const trimmed = s.trim()
           return sexualityDisplayMap[trimmed] || trimmed
         }).join(', ')
@@ -256,10 +256,14 @@ export default function ProfilePage() {
         return sexualityValueMap[formData.sexuality] || formData.sexuality
       })() : '',
       looking_for: formData.looking_for ? (() => {
-        if (formData.looking_for.startsWith('その他:')) {
-          return `other: ${formData.looking_for.replace('その他: ', '')}`
-        }
-        return lookingForValueMap[formData.looking_for] || formData.looking_for
+        // 複数選択時はカンマ区切りで送信（APIは英語のカンマ区切りを受け付ける）
+        const parts = formData.looking_for.split(',').map((s) => s.trim()).filter(Boolean)
+        const encoded = parts.map((p) => {
+          if (p.startsWith('その他:')) return `other: ${p.replace('その他: ', '')}`
+          if (p === 'その他') return 'other'
+          return lookingForValueMap[p] || p
+        })
+        return encoded.join(',')
       })() : '',
     }
     updateMutation.mutate(dataToSave)
@@ -530,17 +534,21 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={() => {
-                    // 既に「その他:」で始まる値が設定されている場合、テキストを抽出
-                    if (formData.looking_for?.startsWith('その他:')) {
-                      setOtherLookingForText(formData.looking_for.replace('その他: ', ''))
-                    } else {
-                      setOtherLookingForText('')
-                    }
+                    const parts = (formData.looking_for || '').split(',').map((s) => s.trim()).filter(Boolean)
+                    const otherPart = parts.find((p) => p === 'other' || p.startsWith('other:'))
+                    setOtherLookingForText(otherPart?.startsWith('other:') ? otherPart.replace('other:', '').trim() : '')
                     setShowLookingForModal(true)
                   }}
                   className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm text-left hover:bg-neutral-50"
                 >
-                  {formData.looking_for || '選択してください'}
+                  {formData.looking_for ? (() => {
+                    const parts = formData.looking_for.split(',').map((s) => s.trim()).filter(Boolean)
+                    return parts.map((p) => {
+                      if (p.startsWith('other:')) return `その他: ${p.replace('other:', '').trim()}`
+                      if (p === 'other') return 'その他'
+                      return lookingForDisplayMap[p] || p
+                    }).join(', ')
+                  })() : '選択してください'}
                 </button>
                 <p className="mt-2 text-sm text-neutral-500">
                   記入は任意ですが、記入した方がマッチ率が上がります。
@@ -666,7 +674,7 @@ export default function ProfilePage() {
                     {displayUserData?.sexuality ? (() => {
                       // 複数のセクシュアリティが選択されている場合
                       if (displayUserData.sexuality.includes(',')) {
-                        return displayUserData.sexuality.split(',').map(s => {
+                        return displayUserData.sexuality.split(',').map((s: string) => {
                           const trimmed = s.trim()
                           if (trimmed.startsWith('other:')) {
                             return `その他: ${trimmed.replace('other:', '').trim()}`
@@ -688,10 +696,11 @@ export default function ProfilePage() {
                   </label>
                   <p className="text-neutral-900">
                     {displayUserData?.looking_for ? (() => {
-                      if (displayUserData.looking_for.startsWith('other:')) {
-                        return `その他: ${displayUserData.looking_for.replace('other:', '').trim()}`
-                      }
-                      return lookingForDisplayMap[displayUserData.looking_for] || displayUserData.looking_for
+                      const parts = displayUserData.looking_for.split(',').map((s: string) => s.trim()).filter(Boolean)
+                      return parts.map((p: string) => {
+                        if (p.startsWith('other:')) return `その他: ${p.replace('other:', '').trim()}`
+                        return lookingForDisplayMap[p] || p
+                      }).join(', ') || '未設定'
                     })() : '未設定'}
                   </p>
                 </div>
@@ -1088,7 +1097,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-        {/* 探している関係選択モーダル */}
+        {/* 探している関係選択モーダル（複数選択可） */}
         {showLookingForModal && (
         <div 
           className="fixed inset-0 bg-black/50 flex items-end z-50"
@@ -1098,75 +1107,76 @@ export default function ProfilePage() {
             className="w-full bg-white rounded-t-2xl p-4 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold mb-4 text-neutral-900">探している関係を選択</h3>
+            <h3 className="text-lg font-bold mb-4 text-neutral-900">探している関係を選択（複数可）</h3>
             <div className="space-y-2">
-              {['恋愛関係', '友達', 'カジュアルな関係', '長期的な関係', 'その他'].map((option) => (
-                <button
-                  key={option}
-                  onClick={() => {
-                    if (option === 'その他') {
-                      setFormData({ ...formData, looking_for: 'その他' })
-                    } else {
-                      setFormData({ ...formData, looking_for: option })
-                      setOtherLookingForText('')
-                      setShowLookingForModal(false)
-                    }
-                  }}
-                  className={`w-full p-3 text-left hover:bg-neutral-50 rounded-lg ${
-                    (formData.looking_for === option || (option === 'その他' && formData.looking_for?.startsWith('その他'))) && option !== 'その他'
-                      ? 'bg-primary-50 text-primary-600 font-medium'
-                      : 'text-neutral-900'
-                  }`}
-                >
-                  {option}
-                </button>
-              ))}
+              {([
+                { label: '恋愛関係', value: 'dating' },
+                { label: '友達', value: 'friends' },
+                { label: 'カジュアルな関係', value: 'casual' },
+                { label: '長期的な関係', value: 'long_term' },
+                { label: 'その他', value: 'other' },
+              ]).map(({ label, value }) => {
+                const currentParts = (formData.looking_for || '').split(',').map((s) => s.trim()).filter(Boolean)
+                const isOther = value === 'other'
+                const isSelected = isOther
+                  ? currentParts.some((p) => p === 'other' || p.startsWith('other:'))
+                  : currentParts.includes(value)
+                return (
+                  <label
+                    key={value}
+                    className="flex items-center gap-3 p-3 hover:bg-neutral-50 rounded-lg cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!isSelected}
+                      onChange={() => {
+                        if (isOther) {
+                          if (isSelected) {
+                            const next = currentParts.filter((p) => p !== 'other' && !p.startsWith('other:'))
+                            setFormData({ ...formData, looking_for: next.join(',') })
+                            setOtherLookingForText('')
+                          } else {
+                            setFormData({ ...formData, looking_for: [...currentParts, 'other'].filter(Boolean).join(',') })
+                          }
+                        } else {
+                          const next = isSelected
+                            ? currentParts.filter((p) => p !== value)
+                            : [...currentParts, value]
+                          setFormData({ ...formData, looking_for: next.join(',') })
+                        }
+                      }}
+                      className="w-4 h-4 text-primary-500 rounded border-neutral-300"
+                    />
+                    <span className="text-neutral-900">{label}</span>
+                  </label>
+                )
+              })}
             </div>
-            {(formData.looking_for === 'その他' || formData.looking_for?.startsWith('その他')) && (
+            {(formData.looking_for || '').split(',').map((s) => s.trim()).some((p) => p === 'other' || p.startsWith('other:')) && (
               <div className="mt-4">
                 <label className="block text-sm font-medium text-neutral-900 mb-2">
-                  具体的に入力してください
+                  その他：具体的に入力（任意）
                 </label>
                 <input
                   type="text"
                   value={otherLookingForText}
                   onChange={(e) => {
                     setOtherLookingForText(e.target.value)
-                    setFormData({ 
-                      ...formData, 
-                      looking_for: e.target.value ? `その他: ${e.target.value}` : 'その他'
-                    })
+                    const rest = (formData.looking_for || '').split(',').map((s) => s.trim()).filter((p) => p !== 'other' && !p.startsWith('other:'))
+                    const otherVal = e.target.value.trim() ? `other: ${e.target.value.trim()}` : 'other'
+                    setFormData({ ...formData, looking_for: [...rest, otherVal].join(',') })
                   }}
                   placeholder="例: ビジネスパートナーなど"
                   className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm"
-                  autoFocus
                 />
               </div>
             )}
             <div className="flex gap-2 mt-4">
-              {(formData.looking_for === 'その他' || formData.looking_for?.startsWith('その他')) && (
-                <Button
-                  onClick={() => {
-                    if (otherLookingForText.trim()) {
-                      setShowLookingForModal(false)
-                    }
-                  }}
-                  className="flex-1 bg-primary-500 text-white"
-                  disabled={!otherLookingForText.trim()}
-                >
-                  確定
-                </Button>
-              )}
               <Button
-                onClick={() => {
-                  setShowLookingForModal(false)
-                  if ((formData.looking_for === 'その他' || formData.looking_for?.startsWith('その他')) && !otherLookingForText.trim()) {
-                    setFormData({ ...formData, looking_for: '' })
-                  }
-                }}
-                className={`${(formData.looking_for === 'その他' || formData.looking_for?.startsWith('その他')) ? 'flex-1' : 'w-full'} bg-neutral-200 text-neutral-900`}
+                onClick={() => setShowLookingForModal(false)}
+                className="w-full bg-primary-500 text-white"
               >
-                キャンセル
+                確定
               </Button>
             </div>
           </div>

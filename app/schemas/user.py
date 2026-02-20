@@ -31,6 +31,7 @@ class UserRead(BaseModel):
     created_at: Optional[datetime] = None
     
     # プライバシー設定
+    show_campus: Optional[bool] = True
     show_faculty: Optional[bool] = True
     show_grade: Optional[bool] = True
     show_birthday: Optional[bool] = False
@@ -64,6 +65,7 @@ class UserWithTags(UserRead):
 
 # プライバシー設定更新用スキーマ
 class PrivacySettingsUpdate(BaseModel):
+    show_campus: Optional[bool] = None
     show_faculty: Optional[bool] = None
     show_grade: Optional[bool] = None
     show_birthday: Optional[bool] = None

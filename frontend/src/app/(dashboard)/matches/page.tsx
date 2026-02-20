@@ -111,7 +111,24 @@ export default function LikesPage() {
           setTimeout(() => setShowMatchCelebration(false), 3000)
         }
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error)
+      // 既にいいね済みの場合は実際には送信できているため、成功扱いにする（二重送信・表示の遅延などで400になる場合）
+      const isAlreadyLiked =
+        message.includes('already liked') ||
+        message.includes('既にいいね')
+      if (isAlreadyLiked) {
+        queryClient.invalidateQueries({ queryKey: ['received-likes'] })
+        queryClient.invalidateQueries({ queryKey: ['matches'] })
+        if (likesData?.likes && currentIndex < likesData.likes.length - 1) {
+          setCurrentIndex(currentIndex + 1)
+        } else {
+          setCurrentIndex(0)
+        }
+        setIsAnimating(false)
+        setSwipeDirection(null)
+        return
+      }
       console.error('Failed to send like:', error)
       alert('いいねの送信に失敗しました')
       setIsAnimating(false)

@@ -149,6 +149,8 @@ async def update_privacy_settings(
     プライバシー設定を更新
     """
     # 各フィールドが指定されている場合のみ更新
+    if payload.show_campus is not None:
+        current_user.show_campus = payload.show_campus
     if payload.show_faculty is not None:
         current_user.show_faculty = payload.show_faculty
     if payload.show_grade is not None:
@@ -396,12 +398,13 @@ async def search_users(
                             logger.info(f"[Search Debug] Found {len(tag_ids)} tag IDs for '{tag_name}': {tag_ids}")
                             
                             if not tag_ids:
-                                logger.warning(f"[Search Debug] No tags found matching '{tag_name}'")
+                                logger.warning(f"[Search Debug] No tags found matching '{tag_name}', skipping this tag")
+                                continue
                             
                             # そのタグを持つユーザーIDを取得（タグを公開しているユーザーのみ）
                             user_with_tag_subquery = select(UserTag.user_id).where(
                                 and_(
-                                    UserTag.tag_id.in_(tag_subquery),
+                                    UserTag.tag_id.in_(tag_ids),
                                     UserTag.user_id.in_(select(User.id).where(User.show_tags == True))
                                 )
                             )
@@ -675,6 +678,7 @@ async def search_users(
                         id=user.id,
                         display_name=user.display_name,
                         bio=user.bio if user.show_bio else None,
+                        avatar_url=user.avatar_url,
                         faculty=user.faculty if user.show_faculty else None,
                         grade=user.grade if user.show_grade else None,
                         tags=user_tags_dict.get(user.id, []) if user.show_tags else [],
@@ -729,6 +733,7 @@ async def get_user_suggestions(
     sex: Optional[str] = Query(None, description="性別フィルター（カンマ区切り、male, female, inter_sex）"),
     age_min: Optional[int] = Query(None, ge=0, le=150, description="最小年齢"),
     age_max: Optional[int] = Query(None, ge=0, le=150, description="最大年齢"),
+    sort: SortOrder = Query(SortOrder.RECENT, description="並び順（recent, alphabetical, popular）"),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -845,26 +850,36 @@ async def get_user_suggestions(
                         logger.info(f"[Suggestions Debug] Relationship goal contains 'all', skipping filter")
                         print(f"[Suggestions Debug] Relationship goal contains 'all', skipping filter", file=sys.stderr)
                 else:
-                        # 複数の関係性目標に一致するユーザーを検索（プライバシー設定を考慮）
-                        relationship_goal_conditions = [
-                        and_(
+                        # 複数の関係性目標に一致するユーザーを検索（looking_forは単一またはカンマ区切り複数、プライバシー考慮）
+                        def _looking_for_matches(goal: str):
+                            return or_(
                                 User.looking_for == goal,
-                            User.show_looking_for == True
-                        )
+                                User.looking_for.like(f"{goal},%"),
+                                User.looking_for.like(f"%,{goal},%"),
+                                User.looking_for.like(f"%,{goal}"),
+                            )
+                        relationship_goal_conditions = [
+                            and_(
+                                _looking_for_matches(goal),
+                                User.show_looking_for == True,
+                            )
                             for goal in relationship_goal_list
                         ]
                         filter_conditions.append(or_(*relationship_goal_conditions))
                         logger.info(f"[Suggestions Debug] Relationship goal filter applied: {relationship_goal_list} (with privacy check)")
                         print(f"[Suggestions Debug] Relationship goal filter applied: {relationship_goal_list} (with privacy check)", file=sys.stderr)
             
-            # キャンパスフィルター（複数選択対応）
+            # キャンパスフィルター（複数選択対応、プライバシー設定を考慮）
             if campus:
                 logger.info(f"[Suggestions Debug] Processing campus filter: {campus}")
                 campus_list = [c.strip() for c in campus.split(",") if c.strip()]
                 logger.info(f"[Suggestions Debug] Parsed campus list: {campus_list}")
                 if campus_list:
-                    # OR条件で複数のキャンパスに一致するユーザーを検索
-                    campus_conditions = [User.campus.ilike(f"%{c}%") for c in campus_list]
+                    # OR条件で複数のキャンパスに一致するユーザーを検索（show_campusがTrueのユーザーのみ）
+                    campus_conditions = [
+                        and_(User.campus.ilike(f"%{c}%"), User.show_campus == True)
+                        for c in campus_list
+                    ]
                     filter_conditions.append(or_(*campus_conditions))
                     logger.info(f"[Suggestions Debug] Campus filter applied: {campus_list}")
                     print(f"[Suggestions Debug] Campus filter applied: {campus_list}", file=sys.stderr)
@@ -1049,6 +1064,7 @@ async def get_user_suggestions(
                             id=user.id,
                             display_name=user.display_name,
                             bio=user.bio if user.show_bio else None,
+                            avatar_url=user.avatar_url,
                             faculty=user.faculty if user.show_faculty else None,
                             grade=user.grade if user.show_grade else None,
                             tags=tags if user.show_tags else [],
@@ -1057,6 +1073,14 @@ async def get_user_suggestions(
                             has_received_like=has_received_like,
                         )
                     )
+
+                # 並び替え（fallback）
+                if sort == SortOrder.ALPHABETICAL:
+                    suggestions.sort(key=lambda x: (x.display_name or "").lower())
+                elif sort == SortOrder.POPULAR:
+                    suggestions.sort(key=lambda x: (x.display_name or "").lower())
+                else:
+                    pass  # RECENT: fallbackは既にcreated_at.desc()で取得済み
 
                 logger.info(f"[Suggestions Debug] Fallback response built with {len(suggestions)} suggestions")
                 return UserSuggestionsResponse(
@@ -1262,6 +1286,7 @@ async def get_user_suggestions(
                             id=user.id,
                             display_name=user.display_name,
                             bio=user.bio if user.show_bio else None,
+                            avatar_url=user.avatar_url,
                             faculty=user.faculty if user.show_faculty else None,
                             grade=user.grade if user.show_grade else None,
                             tags=user_tags if user.show_tags else [],
@@ -1275,8 +1300,14 @@ async def get_user_suggestions(
                     # 個別ユーザーの処理エラーはスキップして続行
                     continue
             
-            # スコア順にソート（既にクエリでソート済みだが念のため）
-            suggestions.sort(key=lambda x: x.match_score, reverse=True)
+            # 並び替え: sort パラメータに応じてソート（recent=スコア優先のまま, alphabetical=名前順, popular=スコア優先）
+            if sort == SortOrder.ALPHABETICAL:
+                suggestions.sort(key=lambda x: (x.display_name or "").lower())
+            elif sort == SortOrder.POPULAR:
+                suggestions.sort(key=lambda x: (x.match_score, (x.display_name or "").lower()), reverse=True)
+            else:
+                # RECENT: スコア順を維持（既存の共通タグベースの並び）
+                suggestions.sort(key=lambda x: x.match_score, reverse=True)
             logger.info(f"[Suggestions Debug] Response built with {len(suggestions)} suggestions")
             logger.info(f"[Suggestions Debug] ========== Suggestions Request Completed ==========")
             
@@ -1343,7 +1374,7 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
         display_name=user.display_name,
         bio=user.bio if user.show_bio else None,
         avatar_url=user.avatar_url,
-        campus=user.campus,
+        campus=user.campus if user.show_campus else None,
         faculty=user.faculty if user.show_faculty else None,
         grade=user.grade if user.show_grade else None,
         birthday=user.birthday if user.show_birthday else None,
@@ -1353,6 +1384,7 @@ async def get_user(user_id: int, db: AsyncSession = Depends(get_db)):
         profile_completed=user.profile_completed,
         is_active=user.is_active,
         created_at=user.created_at,
+        show_campus=user.show_campus,
         show_faculty=user.show_faculty,
         show_grade=user.show_grade,
         show_birthday=user.show_birthday,

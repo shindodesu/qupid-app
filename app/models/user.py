@@ -39,6 +39,7 @@ class User(Base, TimestampMixin):
     profile_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     # プライバシー設定（各項目の公開/非公開）
+    show_campus: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     show_faculty: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     show_grade: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     show_birthday: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)  # デフォルトは非公開

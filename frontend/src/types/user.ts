@@ -19,6 +19,7 @@ export type User = {
   updated_at?: string
   
   // プライバシー設定
+  show_campus?: boolean
   show_faculty?: boolean
   show_grade?: boolean
   show_birthday?: boolean
@@ -50,6 +51,7 @@ export type LoginPayload = {
 }
 
 export type PrivacySettings = {
+  show_campus?: boolean
   show_faculty?: boolean
   show_grade?: boolean
   show_birthday?: boolean

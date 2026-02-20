@@ -55,8 +55,19 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
     galleryFirst: profile.gallery?.[0],
   })
 
-  const wantOptions = ['友人', '恋人', 'その他']
-  const lookingForValue = profile.looking_for || ''
+  // APIは英語のカンマ区切り（dating, friends, casual, long_term, other または other: xxx）
+  const lookingForDisplayMap: Record<string, string> = {
+    dating: '恋愛関係',
+    friends: '友達',
+    casual: 'カジュアルな関係',
+    long_term: '長期的な関係',
+    other: 'その他',
+  }
+  const lookingForLabels = (profile.looking_for || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .map((p) => (p.startsWith('other:') ? `その他: ${p.replace('other:', '').trim()}` : lookingForDisplayMap[p] || p))
 
   return (
     <div className="space-y-6">
@@ -121,26 +132,20 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
         </div>
 
         <div className="space-y-2">
-          <h3 className="text-sm font-semibold text-neutral-500">wanting</h3>
+          <h3 className="text-sm font-semibold text-neutral-500">探している関係</h3>
           <div className="flex flex-wrap gap-2">
-            {wantOptions.map((option) => {
-              const isActive = lookingForValue.includes(option)
-              return (
-                <button
-                  key={option}
-                  type="button"
-                  className={`rounded-full border px-4 py-1 text-sm ${
-                    isActive
-                      ? 'border-primary-300 bg-primary-50 text-primary-600'
-                      : 'border-neutral-200 bg-white text-neutral-600'
-                  }`}
-                  disabled
+            {lookingForLabels.length > 0 ? (
+              lookingForLabels.map((label) => (
+                <span
+                  key={label}
+                  className="rounded-full border border-primary-300 bg-primary-50 px-4 py-1 text-sm text-primary-600"
                 >
-                  {isActive ? '✓ ' : '　'}
-                  {option}
-                </button>
-              )
-            })}
+                  {label}
+                </span>
+              ))
+            ) : (
+              <span className="text-sm text-neutral-500">非公開</span>
+            )}
           </div>
         </div>
 
@@ -252,7 +257,19 @@ export function ProfilePreviewModal({
       size="xl"
       className="max-w-md md:max-w-2xl bg-transparent shadow-none p-0"
     >
-      <div className="mx-auto w-full max-w-md md:max-w-2xl rounded-[32px] bg-white p-6 md:p-8 shadow-none">
+      <div className="mx-auto w-full max-w-md md:max-w-2xl rounded-[32px] bg-white p-6 md:p-8 shadow-none relative">
+        {/* 戻るボタン（目立つように上部に配置） */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-medium text-neutral-700 shadow-md hover:bg-neutral-50 border border-neutral-200 mb-4"
+          aria-label="閉じる"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+          戻る
+        </button>
         <ProfilePreviewContent profile={profile} isLoading={isLoading} actions={actions} />
         {footer && <div className="mt-6">{footer}</div>}
       </div>

@@ -21,6 +21,7 @@ export interface UserSearchResult {
   id: number
   display_name: string
   bio?: string
+  avatar_url?: string
   faculty?: string
   grade?: string
   tags: TagInfo[]
