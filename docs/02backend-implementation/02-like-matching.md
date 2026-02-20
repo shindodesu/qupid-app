@@ -37,7 +37,7 @@ CREATE TABLE likes (
 1. ユーザーAがユーザーBにいいねを送信
 2. ユーザーBがユーザーAにいいねを送信
 3. 両方のいいねが存在する場合、マッチング成立
-4. **マッチ成立時に自動でトークルーム（Conversation）を作成**
+4. **マッチ成立時に自動でトークルーム（Conversation）を作成**（✅ POST /likes 内で create_or_get_conversation を呼び出し）
 5. **既存のトークルームがある場合はそれを返す**
 
 ## 🔌 API仕様

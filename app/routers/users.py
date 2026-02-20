@@ -321,6 +321,7 @@ async def search_users(
     - いいね状態を含む
     - ブロックユーザーを除外
     - 自分自身を除外
+    - すでにいいねを送ったユーザーを除外（探す画面に表示しない）
     """
     try:
         # ========== リクエストパラメータのログ出力 ==========
@@ -371,6 +372,25 @@ async def search_users(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"ブロックユーザー取得エラー: {str(e)}"
+            )
+
+        # ========== すでにいいねを送ったユーザーを除外（探す画面に表示しない） ==========
+        try:
+            logger.info(f"[Search Debug] Fetching sent like user IDs...")
+            sent_likes_query = await db.execute(
+                select(Like.liked_id).where(Like.liker_id == current_user.id)
+            )
+            sent_like_user_ids = {row[0] for row in sent_likes_query.all()}
+            logger.info(f"[Search Debug] Sent like user IDs: {len(sent_like_user_ids)} users")
+            if sent_like_user_ids:
+                excluded_user_ids = excluded_user_ids | sent_like_user_ids
+                query = query.where(User.id.not_in(sent_like_user_ids))
+                logger.info(f"[Search Debug] Excluded already-liked users from search results")
+        except Exception as e:
+            logger.error(f"[Search Debug] Error fetching sent likes: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"いいね取得エラー: {str(e)}"
             )
         
         # ========== フィルター条件の構築 ==========
@@ -744,7 +764,7 @@ async def get_user_suggestions(
     - マッチスコア付き
     - ブロックユーザーを除外
     - 自分自身を除外
-    - 既にマッチしているユーザーを除外
+    - すでにいいねを送ったユーザーを除外（探す画面に表示しない）
     - フィルター対応（sexuality, relationship_goal, campus, faculty, grade, sex, age_min, age_max）
     """
     try:
@@ -792,26 +812,18 @@ async def get_user_suggestions(
                 detail=f"ブロックユーザー取得エラー: {str(e)}"
             )
 
-        # ========== 既にマッチしているユーザーを除外 ==========
+        # ========== いいね送信済みユーザーを除外（探す画面に表示しない） ==========
         try:
-            logger.info(f"[Suggestions Debug] Fetching matched users...")
-            my_likes_query = select(Like.liked_id).where(Like.liker_id == current_user.id)
-            received_likes_query = select(Like.liker_id).where(Like.liked_id == current_user.id)
-
-            matched_users_query = select(User.id).where(
-                and_(
-                    User.id.in_(my_likes_query),
-                    User.id.in_(received_likes_query),
-                )
+            logger.info(f"[Suggestions Debug] Fetching sent like user IDs...")
+            sent_likes_query = await db.execute(
+                select(Like.liked_id).where(Like.liker_id == current_user.id)
             )
+            sent_like_user_ids = {row[0] for row in sent_likes_query.all()}
+            logger.info(f"[Suggestions Debug] Sent like user IDs: {len(sent_like_user_ids)} users")
 
-            matched_users_result = await db.execute(matched_users_query)
-            matched_user_ids = {row[0] for row in matched_users_result.all()}
-            logger.info(f"[Suggestions Debug] Matched user IDs: {len(matched_user_ids)} users")
-
-            excluded_user_ids |= matched_user_ids
+            excluded_user_ids |= sent_like_user_ids  # いいね送信済みを除外（マッチ含む）
             excluded_user_ids.add(current_user.id)  # 自分自身も除外
-            logger.info(f"[Suggestions Debug] Total excluded user IDs (including matched and self): {len(excluded_user_ids)}")
+            logger.info(f"[Suggestions Debug] Total excluded user IDs (including sent likes and self): {len(excluded_user_ids)}")
         except Exception as e:
             logger.error(f"[Suggestions Debug] Error fetching matched users: {str(e)}", exc_info=True)
             raise HTTPException(

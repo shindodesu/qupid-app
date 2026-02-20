@@ -23,7 +23,10 @@ from app.schemas.like import (
 )
 from app.schemas.user import UserRead, UserWithTags
 from app.core.security import get_current_user
+from app.routers.chat import create_or_get_conversation
+import logging
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/likes", tags=["likes"])
 
 # ==================== いいね送信エンドポイント ====================
@@ -118,6 +121,14 @@ async def send_like(
     reverse_like = reverse_like_query.scalar_one_or_none()
 
     is_match = reverse_like is not None
+
+    # マッチ成立時はトークルームを自動生成（要件: マッチ成立時にトークルームを自動生成）
+    if is_match:
+        try:
+            await create_or_get_conversation(current_user_id, payload.liked_user_id, db)
+        except Exception as e:
+            # 会話作成失敗時もいいね・マッチは成立済みのため、レスポンスは返す
+            logger.warning("Auto-create conversation on match failed: %s", e, exc_info=True)
 
     # レスポンスの準備
     like_base = LikeBase(
