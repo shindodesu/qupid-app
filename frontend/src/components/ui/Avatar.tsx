@@ -32,6 +32,10 @@ const Avatar = forwardRef<HTMLDivElement, AvatarProps>(
             src={src}
             alt={alt}
             className="aspect-square h-full w-full object-cover"
+            onError={(e) => {
+              // 壊れた画像URLでも常に視認可能なフォールバックに切り替える
+              e.currentTarget.src = '/initial_icon.svg'
+            }}
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-primary-500 text-white font-medium">
