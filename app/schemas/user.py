@@ -1,9 +1,10 @@
 # app/schemas/user.py
 # User schema definition: minimal example
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 from typing import Optional, List
 from datetime import datetime, date
+from app.schemas.avatar_utils import normalize_avatar_url
 
 
 class userBase(BaseModel):
@@ -41,6 +42,11 @@ class UserRead(BaseModel):
     show_looking_for: Optional[bool] = True
     show_bio: Optional[bool] = True
     show_tags: Optional[bool] = True
+
+    @field_validator("avatar_url", mode="before")
+    @classmethod
+    def validate_avatar_url(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_avatar_url(value)
 
     class Config:
         from_attributes = True
