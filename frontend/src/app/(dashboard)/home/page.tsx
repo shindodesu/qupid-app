@@ -47,7 +47,6 @@ export default function DiscoverPage() {
   // 検索条件があるかチェック
   const hasSearchFilters = useMemo(() => {
     return !!(
-      (filters.tags && filters.tags.length > 0) ||
       (filters.campus && filters.campus.length > 0) ||
       (filters.faculty && filters.faculty.length > 0) ||
       (filters.grade && filters.grade.length > 0)
@@ -86,7 +85,6 @@ export default function DiscoverPage() {
     queryFn: () => {
       console.log('[Filter] API call with search filters:', filters)
       const searchFilters = {
-        tags: filters.tags,
         campus: filters.campus,
         faculty: filters.faculty,
         grade: filters.grade,
@@ -244,7 +242,8 @@ export default function DiscoverPage() {
       avatar_url: user.avatar_url ? getAvatarUrl(user.avatar_url) : undefined,
       faculty: user.faculty,
       grade: user.grade,
-      tags: user.tags || [],
+      // タグ機能は一時停止中
+      tags: [],
     }
     setProfilePreviewUserId(user.id)
     setProfilePreviewInitial(previewData)
@@ -271,9 +270,7 @@ export default function DiscoverPage() {
                 <h1 className="text-3xl font-bold text-theme-primary mb-1">
                   探す
                 </h1>
-                <p className="text-sm text-neutral-600">
-                  新しい出会いを見つけましょう
-                </p>
+                {/* <p className="text-sm text-neutral-600">新しい出会いを見つけましょう</p> */}
               </motion.div>
               
               {/* フィルターボタンと並び替えボタン */}

@@ -7,6 +7,7 @@ from sqlalchemy import select, func, and_
 from sqlalchemy.orm import selectinload
 from app.db.session import get_db
 from app.models.skip import Skip
+from app.models.like import Like
 from app.models.user import User
 from app.models.tag import UserTag
 from app.schemas.skip import (
@@ -91,18 +92,30 @@ async def get_skips(
 ):
     """
     スキップしたユーザー一覧を取得
+
+    表示対象:
+    - 自分がスキップしたユーザー
+    - かつ、自分がまだいいねしていないユーザー
     """
-    # 総数取得
-    count_query = select(func.count()).select_from(Skip).where(
-        Skip.skipper_id == current_user.id
+    # すでに自分がいいねしたユーザーID（マッチ済みも含む）
+    my_liked_users_result = await db.execute(
+        select(Like.liked_id).where(Like.liker_id == current_user.id)
     )
+    my_liked_user_ids = {row[0] for row in my_liked_users_result.all()}
+
+    skip_filters = [Skip.skipper_id == current_user.id]
+    if my_liked_user_ids:
+        skip_filters.append(Skip.skipped_id.not_in(my_liked_user_ids))
+
+    # 総数取得
+    count_query = select(func.count()).select_from(Skip).where(and_(*skip_filters))
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
     
     # スキップ一覧取得
     query = (
         select(Skip)
-        .where(Skip.skipper_id == current_user.id)
+        .where(and_(*skip_filters))
         .options(selectinload(Skip.skipped))
         .order_by(Skip.created_at.desc())
         .limit(limit)

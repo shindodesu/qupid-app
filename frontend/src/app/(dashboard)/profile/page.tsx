@@ -10,7 +10,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Select } from '@/components/ui/Select'
 import { Button } from '@/components/ui/Button'
-import { Badge } from '@/components/ui/Badge'
 import { useUser, useAuthStore } from '@/stores/auth'
 import { getAvatarUrl } from '@/lib/utils/image'
 import { ProfilePreviewCard, type ProfilePreviewData } from '@/components/features/profile/ProfilePreviewModal'
@@ -127,11 +126,11 @@ export default function ProfilePage() {
     retryDelay: 1000, // 再試行の間隔は1秒
   })
 
-  // 自分のタグ取得（previewProfileより前に定義する必要がある）
-  const { data: tagsData } = useQuery({
-    queryKey: ['user', 'me', 'tags'],
-    queryFn: () => apiClient.getUserTags(),
-  })
+  // タグ機能は一時停止中
+  // const { data: tagsData } = useQuery({
+  //   queryKey: ['user', 'me', 'tags'],
+  //   queryFn: () => apiClient.getUserTags(),
+  // })
 
   // userDataまたはuserストアからデータを取得（フォールバック対応）
   const displayUserData = userData || user
@@ -149,9 +148,11 @@ export default function ProfilePage() {
       grade: displayUserData.show_grade ? displayUserData.grade || undefined : undefined,
       sexuality: displayUserData.show_sexuality ? displayUserData.sexuality || undefined : undefined,
       looking_for: displayUserData.show_looking_for ? displayUserData.looking_for || undefined : undefined,
-      tags: displayUserData.show_tags ? tagsData?.tags ?? [] : [],
+      // タグ機能は一時停止中
+      // tags: displayUserData.show_tags ? tagsData?.tags ?? [] : [],
+      tags: [],
     }
-  }, [displayUserData, tagsData])
+  }, [displayUserData])
 
   // ページマウント時にクエリキャッシュを無効化（必要に応じて）
   useEffect(() => {
@@ -219,11 +220,11 @@ export default function ProfilePage() {
     }
   }, [userData, user])
 
-  // 全タグ取得
-  const { data: allTagsData } = useQuery({
-    queryKey: ['tags'],
-    queryFn: () => apiClient.getTags(),
-  })
+  // タグ機能は一時停止中
+  // const { data: allTagsData } = useQuery({
+  //   queryKey: ['tags'],
+  //   queryFn: () => apiClient.getTags(),
+  // })
 
   // プロフィール更新
   const updateMutation = useMutation({
@@ -235,21 +236,21 @@ export default function ProfilePage() {
     },
   })
 
-  // タグ追加
-  const addTagMutation = useMutation({
-    mutationFn: (tagId: number) => apiClient.addUserTag(tagId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user', 'me', 'tags'] })
-    },
-  })
+  // タグ機能は一時停止中
+  // const addTagMutation = useMutation({
+  //   mutationFn: (tagId: number) => apiClient.addUserTag(tagId),
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ['user', 'me', 'tags'] })
+  //   },
+  // })
 
-  // タグ削除
-  const removeTagMutation = useMutation({
-    mutationFn: (tagId: number) => apiClient.removeUserTag(tagId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user', 'me', 'tags'] })
-    },
-  })
+  // タグ機能は一時停止中
+  // const removeTagMutation = useMutation({
+  //   mutationFn: (tagId: number) => apiClient.removeUserTag(tagId),
+  //   onSuccess: () => {
+  //     queryClient.invalidateQueries({ queryKey: ['user', 'me', 'tags'] })
+  //   },
+  // })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -411,9 +412,7 @@ export default function ProfilePage() {
             <h1 className="text-3xl font-bold text-theme-primary mb-1">
               プロフィール
             </h1>
-            <p className="text-sm text-neutral-600">
-              あなたのプロフィール情報を管理
-            </p>
+            {/* <p className="text-sm text-neutral-600">あなたのプロフィール情報を管理</p> */}
           </motion.div>
 
         {previewProfile && (
@@ -784,85 +783,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-        {/* タグ */}
-        <Card className="mb-6 border-theme-primary/20 shadow-2xl shadow-theme bg-white/80 backdrop-blur-md hover:shadow-theme-lg transition-all duration-300">
-        <CardHeader>
-          <CardTitle className="text-theme-primary">タグ</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* 現在のタグ */}
-          <div className="mb-4">
-            <label className="text-sm font-medium text-neutral-900 mb-2 block">
-              設定中のタグ
-            </label>
-            {tagsData && tagsData.tags && tagsData.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {tagsData.tags.map((tag: any) => (
-                  <div
-                    key={tag.id}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-full text-white shadow-md shadow-theme"
-                    style={{ background: theme.primary }}
-                  >
-                    <span>{tag.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeTagMutation.mutate(tag.id)}
-                      className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
-                      disabled={removeTagMutation.isPending}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        className="h-4 w-4"
-                        viewBox="0 0 20 20"
-                        fill="currentColor"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-neutral-600">タグが設定されていません</p>
-            )}
-          </div>
-
-          {/* タグを追加 */}
-          <div>
-            <label className="text-sm font-medium text-neutral-900 mb-2 block">
-              タグを追加
-            </label>
-            {allTagsData && allTagsData.tags && allTagsData.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {allTagsData.tags
-                  .filter(
-                    (tag: any) =>
-                      !tagsData?.tags?.some((userTag: any) => userTag.id === tag.id)
-                  )
-                  .map((tag: any) => (
-                    <button
-                      key={tag.id}
-                      type="button"
-                      onClick={() => addTagMutation.mutate(tag.id)}
-                      className="px-3 py-1.5 text-sm rounded-full bg-white text-neutral-700 border border-neutral-200 hover:border-primary-300 hover:bg-primary-50 transition-colors"
-                      disabled={addTagMutation.isPending}
-                    >
-                      + {tag.name}
-                    </button>
-                  ))}
-              </div>
-            ) : (
-              <p className="text-neutral-600 text-sm">
-                利用可能なタグがありません
-              </p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        {/* タグ機能は一時停止中 */}
 
         {/* セーフティとテーマ設定 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
