@@ -30,6 +30,16 @@ function getApiUrl(): string {
 }
 
 /**
+ * URL/パス文字列から改行・タブなどの制御文字と余分な空白を除去
+ */
+function sanitizeUrlLike(value: string): string {
+  return value
+    .replace(/[\r\n\t]/g, '') // 改行・タブ除去
+    .replace(/\s+/g, ' ') // 連続空白は1つへ
+    .trim()
+}
+
+/**
  * デフォルトアバター画像のパス
  */
 export const DEFAULT_AVATAR_PATH = '/initial_icon.svg'
@@ -49,8 +59,10 @@ export function getAvatarUrl(avatarUrl: string | null | undefined, useDefault: b
     return null
   }
   
+  const sanitizedAvatarUrl = sanitizeUrlLike(avatarUrl)
+
   // 空文字列の場合はnullを返す（またはデフォルト画像）
-  if (avatarUrl.trim() === '') {
+  if (sanitizedAvatarUrl === '') {
     console.log('[getAvatarUrl] Empty avatar URL provided')
     if (useDefault) {
       return DEFAULT_AVATAR_PATH
@@ -59,16 +71,17 @@ export function getAvatarUrl(avatarUrl: string | null | undefined, useDefault: b
   }
   
   console.log('[getAvatarUrl] Input:', avatarUrl)
+  console.log('[getAvatarUrl] Sanitized input:', sanitizedAvatarUrl)
   
   // 既に完全なURLの場合はそのまま返す
-  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://')) {
-    console.log('[getAvatarUrl] Already full URL, returning as-is:', avatarUrl)
-    return avatarUrl
+  if (sanitizedAvatarUrl.startsWith('http://') || sanitizedAvatarUrl.startsWith('https://')) {
+    console.log('[getAvatarUrl] Already full URL, returning as-is:', sanitizedAvatarUrl)
+    return sanitizedAvatarUrl
   }
   
   // 相対パスの場合、APIのベースURLを追加
   // 先頭のスラッシュを削除して結合
-  const cleanPath = avatarUrl.startsWith('/') ? avatarUrl.slice(1) : avatarUrl
+  const cleanPath = sanitizedAvatarUrl.startsWith('/') ? sanitizedAvatarUrl.slice(1) : sanitizedAvatarUrl
   const apiUrl = getApiUrl()
   
   // API URLが正しく設定されているか確認
@@ -102,15 +115,17 @@ export function getAvatarUrl(avatarUrl: string | null | undefined, useDefault: b
  * @returns 完全なURL
  */
 export function getImageUrl(filePath: string | null | undefined): string | null {
-  if (!filePath || filePath.trim() === '') return null
+  if (!filePath) return null
+  const sanitizedFilePath = sanitizeUrlLike(filePath)
+  if (sanitizedFilePath === '') return null
   
   // 既に完全なURLの場合はそのまま返す
-  if (filePath.startsWith('http://') || filePath.startsWith('https://')) {
-    return filePath
+  if (sanitizedFilePath.startsWith('http://') || sanitizedFilePath.startsWith('https://')) {
+    return sanitizedFilePath
   }
   
   // 相対パスの場合、APIのベースURLを追加
-  const cleanPath = filePath.startsWith('/') ? filePath.slice(1) : filePath
+  const cleanPath = sanitizedFilePath.startsWith('/') ? sanitizedFilePath.slice(1) : sanitizedFilePath
   const apiUrl = getApiUrl()
   
   // API URLが正しく設定されているか確認
