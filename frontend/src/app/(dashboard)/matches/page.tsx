@@ -455,7 +455,7 @@ export default function LikesPage() {
               >
                 {currentUser.user.avatar_url ? (
                   <Image
-                    src={getAvatarUrl(currentUser.user.avatar_url) || '/icon.png'}
+                    src={getAvatarUrl(currentUser.user.avatar_url, true) || '/initial_icon.svg'}
                     alt={currentUser.user.display_name}
                     fill
                     unoptimized
@@ -466,7 +466,7 @@ export default function LikesPage() {
                         avatarUrl: currentUser.user.avatar_url,
                       })
                       // エラー時はデフォルト画像にフォールバック
-                      e.currentTarget.src = '/initial_icon.png'
+                      e.currentTarget.src = '/initial_icon.svg'
                     }}
                   />
                 ) : (

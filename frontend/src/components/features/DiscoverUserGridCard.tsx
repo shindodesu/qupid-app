@@ -11,9 +11,10 @@ interface DiscoverUserGridCardProps {
   onLike: () => void
   onSkip: () => void
   onImageClick?: () => void
+  priority?: boolean
 }
 
-export function DiscoverUserGridCard({ user, onLike, onSkip, onImageClick }: DiscoverUserGridCardProps) {
+export function DiscoverUserGridCard({ user, onLike, onSkip, onImageClick, priority = false }: DiscoverUserGridCardProps) {
   const [isAnimating, setIsAnimating] = useState(false)
   const [action, setAction] = useState<'like' | 'skip' | null>(null)
   const theme = useTheme()
@@ -68,9 +69,10 @@ export function DiscoverUserGridCard({ user, onLike, onSkip, onImageClick }: Dis
       >
         {user.avatar_url ? (
           <Image
-            src={getAvatarUrl(user.avatar_url) || '/initial_icon.png'}
+            src={getAvatarUrl(user.avatar_url, true) || '/initial_icon.svg'}
             alt={user.display_name}
             fill
+            priority={priority}
             unoptimized
             className="object-cover group-hover:scale-110 transition-transform duration-700"
             onError={(e) => {
@@ -79,7 +81,7 @@ export function DiscoverUserGridCard({ user, onLike, onSkip, onImageClick }: Dis
                 avatarUrl: user.avatar_url,
               })
               // エラー時はデフォルト画像にフォールバック
-              e.currentTarget.src = '/initial_icon.png'
+              e.currentTarget.src = '/initial_icon.svg'
             }}
           />
         ) : (

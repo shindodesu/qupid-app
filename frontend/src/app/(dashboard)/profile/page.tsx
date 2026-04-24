@@ -18,6 +18,13 @@ import { cn } from '@/lib/utils'
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/PageTransition'
 import { useTheme } from '@/hooks/useTheme'
 
+const normalizeCsvField = (value: unknown): string => {
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) return value.map((item) => String(item)).join(',')
+  if (value == null) return ''
+  return String(value)
+}
+
 export default function ProfilePage() {
   const router = useRouter()
   const user = useUser()
@@ -128,6 +135,8 @@ export default function ProfilePage() {
 
   // userDataまたはuserストアからデータを取得（フォールバック対応）
   const displayUserData = userData || user
+  const sexualityRaw = normalizeCsvField((displayUserData as { sexuality?: unknown } | undefined)?.sexuality)
+  const lookingForRaw = normalizeCsvField((displayUserData as { looking_for?: unknown } | undefined)?.looking_for)
   const previewProfile = useMemo<ProfilePreviewData | undefined>(() => {
     if (!displayUserData) return undefined
     return {
@@ -159,8 +168,17 @@ export default function ProfilePage() {
     if (sourceData) {
       // データベースの値（英語）を日本語に変換して表示
       const gender = sourceData.gender ? (genderDisplayMap[sourceData.gender] || sourceData.gender) : ''
-      let sexuality = sourceData.sexuality || ''
-      let looking_for = sourceData.looking_for ? (lookingForDisplayMap[sourceData.looking_for] || sourceData.looking_for) : ''
+      let sexuality = normalizeCsvField((sourceData as { sexuality?: unknown }).sexuality)
+      let looking_for = normalizeCsvField((sourceData as { looking_for?: unknown }).looking_for)
+      if (looking_for) {
+        looking_for = looking_for
+          .split(',')
+          .map((item: string) => {
+            const trimmed = item.trim()
+            return lookingForDisplayMap[trimmed] || trimmed
+          })
+          .join(', ')
+      }
       
       // セクシュアリティが複数の場合（カンマ区切り）
       if (sexuality.includes(',')) {
@@ -413,12 +431,12 @@ export default function ProfilePage() {
           <div className="flex items-center gap-6">
             <div className="relative">
               <img
-                src={getAvatarUrl(displayUserData?.avatar_url, true) || '/initial_icon.png'}
+                src={getAvatarUrl(displayUserData?.avatar_url, true) || '/initial_icon.svg'}
                 alt="プロフィール画像"
                 className="w-24 h-24 rounded-full object-cover"
                 onError={(e) => {
                   // 画像の読み込みに失敗した場合はデフォルト画像にフォールバック
-                  e.currentTarget.src = '/initial_icon.png'
+                  e.currentTarget.src = '/initial_icon.svg'
                   setAvatarLoadError(true)
                 }}
               />
@@ -671,10 +689,10 @@ export default function ProfilePage() {
                     セクシュアリティ
                   </label>
                   <p className="text-neutral-900">
-                    {displayUserData?.sexuality ? (() => {
+                    {sexualityRaw ? (() => {
                       // 複数のセクシュアリティが選択されている場合
-                      if (displayUserData.sexuality.includes(',')) {
-                        return displayUserData.sexuality.split(',').map((s: string) => {
+                      if (sexualityRaw.includes(',')) {
+                        return sexualityRaw.split(',').map((s: string) => {
                           const trimmed = s.trim()
                           if (trimmed.startsWith('other:')) {
                             return `その他: ${trimmed.replace('other:', '').trim()}`
@@ -683,10 +701,10 @@ export default function ProfilePage() {
                         }).join(', ')
                       }
                       // 「other:」で始まる場合
-                      if (displayUserData.sexuality.startsWith('other:')) {
-                        return `その他: ${displayUserData.sexuality.replace('other:', '').trim()}`
+                      if (sexualityRaw.startsWith('other:')) {
+                        return `その他: ${sexualityRaw.replace('other:', '').trim()}`
                       }
-                      return sexualityDisplayMap[displayUserData.sexuality] || displayUserData.sexuality
+                      return sexualityDisplayMap[sexualityRaw] || sexualityRaw
                     })() : '未設定'}
                   </p>
                 </div>
@@ -695,8 +713,8 @@ export default function ProfilePage() {
                     探している関係
                   </label>
                   <p className="text-neutral-900">
-                    {displayUserData?.looking_for ? (() => {
-                      const parts = displayUserData.looking_for.split(',').map((s: string) => s.trim()).filter(Boolean)
+                    {lookingForRaw ? (() => {
+                      const parts = lookingForRaw.split(',').map((s: string) => s.trim()).filter(Boolean)
                       return parts.map((p: string) => {
                         if (p.startsWith('other:')) return `その他: ${p.replace('other:', '').trim()}`
                         return lookingForDisplayMap[p] || p

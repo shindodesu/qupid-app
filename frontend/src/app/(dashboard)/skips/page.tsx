@@ -133,13 +133,13 @@ export default function SkipsPage() {
                   >
                     {skip.skipped_user.avatar_url ? (
                       <Image
-                        src={getAvatarUrl(skip.skipped_user.avatar_url) || '/icon.png'}
+                        src={getAvatarUrl(skip.skipped_user.avatar_url, true) || '/initial_icon.svg'}
                         alt={skip.skipped_user.display_name}
                         fill
                         unoptimized
                         className="object-cover"
                         onError={(e) => {
-                          e.currentTarget.src = '/initial_icon.png'
+                          e.currentTarget.src = '/initial_icon.svg'
                         }}
                       />
                     ) : (

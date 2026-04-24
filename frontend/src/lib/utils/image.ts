@@ -32,7 +32,7 @@ function getApiUrl(): string {
 /**
  * デフォルトアバター画像のパス
  */
-export const DEFAULT_AVATAR_PATH = '/initial_icon.png'
+export const DEFAULT_AVATAR_PATH = '/initial_icon.svg'
 
 /**
  * アバター画像のURLを取得

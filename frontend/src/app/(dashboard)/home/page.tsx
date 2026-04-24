@@ -386,6 +386,7 @@ export default function DiscoverPage() {
                         onLike={() => handleLike(user.id)}
                         onSkip={() => handleSkip(user.id)}
                         onImageClick={() => handleImageClick(user)}
+                        priority={index < 4}
                       />
                     </motion.div>
                   </StaggerItem>

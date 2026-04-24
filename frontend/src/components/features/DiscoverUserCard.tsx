@@ -75,7 +75,7 @@ export function DiscoverUserCard({ user, onLike, onSkip, onCardClick }: Discover
             className="absolute inset-0 w-full h-full object-cover"
             onError={(e) => {
               // 画像読み込みエラー時はデフォルト画像にフォールバック
-              e.currentTarget.src = '/initial_icon.png'
+              e.currentTarget.src = '/initial_icon.svg'
             }}
           />
         )}
