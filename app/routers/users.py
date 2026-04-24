@@ -9,6 +9,7 @@ from app.models.user import User
 from app.models.tag import Tag, UserTag
 from app.models.like import Like
 from app.models.block import Block
+from app.models.skip import Skip
 from app.schemas.user import UserCreate, UserRead, UserWithTags, InitialProfileCreate, PrivacySettingsUpdate
 from app.schemas.tag import (
     UserTagAdd,
@@ -391,6 +392,25 @@ async def search_users(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"いいね取得エラー: {str(e)}"
+            )
+
+        # ========== 自分がスキップしたユーザーを除外（探す画面に再表示しない） ==========
+        try:
+            logger.info(f"[Search Debug] Fetching skipped user IDs...")
+            skipped_users_query = await db.execute(
+                select(Skip.skipped_id).where(Skip.skipper_id == current_user.id)
+            )
+            skipped_user_ids = {row[0] for row in skipped_users_query.all()}
+            logger.info(f"[Search Debug] Skipped user IDs: {len(skipped_user_ids)} users")
+            if skipped_user_ids:
+                excluded_user_ids = excluded_user_ids | skipped_user_ids
+                query = query.where(User.id.not_in(skipped_user_ids))
+                logger.info(f"[Search Debug] Excluded already-skipped users from search results")
+        except Exception as e:
+            logger.error(f"[Search Debug] Error fetching skipped users: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"スキップ取得エラー: {str(e)}"
             )
         
         # ========== フィルター条件の構築 ==========
@@ -829,6 +849,26 @@ async def get_user_suggestions(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"マッチユーザー取得エラー: {str(e)}"
+            )
+
+        # ========== 自分がスキップしたユーザーを除外（探す画面に再表示しない） ==========
+        try:
+            logger.info(f"[Suggestions Debug] Fetching skipped user IDs...")
+            skipped_users_query = await db.execute(
+                select(Skip.skipped_id).where(Skip.skipper_id == current_user.id)
+            )
+            skipped_user_ids = {row[0] for row in skipped_users_query.all()}
+            logger.info(f"[Suggestions Debug] Skipped user IDs: {len(skipped_user_ids)} users")
+            if skipped_user_ids:
+                excluded_user_ids |= skipped_user_ids
+            logger.info(
+                f"[Suggestions Debug] Total excluded user IDs (including skipped): {len(excluded_user_ids)}"
+            )
+        except Exception as e:
+            logger.error(f"[Suggestions Debug] Error fetching skipped users: {str(e)}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"スキップユーザー取得エラー: {str(e)}"
             )
 
         # ========== フィルター条件を構築 ==========
