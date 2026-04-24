@@ -9,6 +9,7 @@ from app.models.like import Like
 from app.models.user import User
 from app.models.tag import UserTag
 from app.models.block import Block
+from app.models.skip import Skip
 from app.schemas.like import (
     LikeCreate,
     LikeResponse,
@@ -350,18 +351,40 @@ async def get_received_likes(
 ):
     """
     受け取ったいいね一覧を取得
+
+    表示対象:
+    - 相手からいいねを受け取っている
+    - かつ、自分がその相手にまだいいねを返していない
+    - かつ、自分がその相手をスキップしていない
     """
-    # 総数取得
-    count_query = select(func.count()).select_from(Like).where(
-        Like.liked_id == current_user.id
+    # すでに自分がいいねを返したユーザーID
+    my_liked_users_result = await db.execute(
+        select(Like.liked_id).where(Like.liker_id == current_user.id)
     )
+    my_liked_user_ids = {row[0] for row in my_liked_users_result.all()}
+
+    # すでに自分がスキップしたユーザーID
+    skipped_users_result = await db.execute(
+        select(Skip.skipped_id).where(Skip.skipper_id == current_user.id)
+    )
+    skipped_user_ids = {row[0] for row in skipped_users_result.all()}
+
+    # 表示対象外ユーザー（いいね返し済み + スキップ済み）
+    excluded_liker_ids = my_liked_user_ids | skipped_user_ids
+
+    like_filters = [Like.liked_id == current_user.id]
+    if excluded_liker_ids:
+        like_filters.append(Like.liker_id.not_in(excluded_liker_ids))
+
+    # 総数取得
+    count_query = select(func.count()).select_from(Like).where(and_(*like_filters))
     total_result = await db.execute(count_query)
     total = total_result.scalar() or 0
 
     # いいね一覧取得
     query = (
         select(Like)
-        .where(Like.liked_id == current_user.id)
+        .where(and_(*like_filters))
         .options(selectinload(Like.liker))
         .order_by(Like.created_at.desc())
         .limit(limit)

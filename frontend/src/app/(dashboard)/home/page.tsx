@@ -87,9 +87,9 @@ export default function DiscoverPage() {
       console.log('[Filter] API call with search filters:', filters)
       const searchFilters = {
         tags: filters.tags,
-        campus: filters.campus && filters.campus.length > 0 ? filters.campus.join(',') : undefined,
-        faculty: filters.faculty && filters.faculty.length > 0 ? filters.faculty.join(',') : undefined,
-        grade: filters.grade && filters.grade.length > 0 ? filters.grade.join(',') : undefined,
+        campus: filters.campus,
+        faculty: filters.faculty,
+        grade: filters.grade,
         sort: sort,
         limit: 100,
         offset: 0,

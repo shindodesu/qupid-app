@@ -38,6 +38,44 @@ logger = logging.getLogger(__name__)
 # Define the router with a prefix and tags
 router = APIRouter(prefix="/users", tags=["users"])
 
+
+# フィルター互換マッピング（本番の旧データに日本語保存が混在していても一致させる）
+SEXUALITY_FILTER_ALIASES = {
+    "gay": ["gay", "ゲイ"],
+    "lesbian": ["lesbian", "レズビアン"],
+    "bisexual": ["bisexual", "バイセクシュアル"],
+    "transgender": ["transgender", "トランスジェンダー"],
+    "pansexual": ["pansexual", "パンセクシュアル"],
+    "asexual": ["asexual", "アセクシュアル"],
+    "other": ["other", "その他"],
+    "prefer_not_to_say": ["prefer_not_to_say", "回答しない"],
+}
+
+RELATIONSHIP_GOAL_FILTER_ALIASES = {
+    "dating": ["dating", "恋愛関係"],
+    "friends": ["friends", "友達"],
+    "casual": ["casual", "カジュアルな関係"],
+    "long_term": ["long_term", "長期的な関係"],
+    "other": ["other", "その他"],
+}
+
+SEX_FILTER_ALIASES = {
+    "male": ["male", "man", "男性"],
+    "female": ["female", "woman", "女性"],
+    "inter_sex": ["inter_sex", "インターセックス"],
+}
+
+
+def _expand_filter_aliases(values: list[str], alias_map: dict[str, list[str]]) -> list[str]:
+    expanded: set[str] = set()
+    for value in values:
+        normalized_value = value.strip()
+        if not normalized_value:
+            continue
+        expanded.add(normalized_value)
+        expanded.update(alias_map.get(normalized_value, []))
+    return list(expanded)
+
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 
 # 関数シグネチャ
@@ -881,15 +919,18 @@ async def get_user_suggestions(
                 sexuality_list = [s.strip() for s in sexuality.split(",") if s.strip()]
                 logger.info(f"[Suggestions Debug] Parsed sexuality list: {sexuality_list}")
                 if sexuality_list:
+                    sexuality_candidates = _expand_filter_aliases(
+                        sexuality_list, SEXUALITY_FILTER_ALIASES
+                    )
                     # プライバシー設定を考慮：show_sexualityがTrueのユーザーのみを対象
                     filter_conditions.append(
                         and_(
-                            User.sexuality.in_(sexuality_list),
+                            User.sexuality.in_(sexuality_candidates),
                             User.show_sexuality == True
                         )
                     )
-                    logger.info(f"[Suggestions Debug] Sexuality filter applied: {sexuality_list} (with privacy check)")
-                    print(f"[Suggestions Debug] Sexuality filter applied: {sexuality_list} (with privacy check)", file=sys.stderr)
+                    logger.info(f"[Suggestions Debug] Sexuality filter applied: {sexuality_candidates} (with privacy check)")
+                    print(f"[Suggestions Debug] Sexuality filter applied: {sexuality_candidates} (with privacy check)", file=sys.stderr)
             
             # 関係性目標フィルター（複数選択対応、looking_forフィールドに対応）
             if relationship_goal:
@@ -901,7 +942,10 @@ async def get_user_suggestions(
                     if "all" in relationship_goal_list:
                         logger.info(f"[Suggestions Debug] Relationship goal contains 'all', skipping filter")
                         print(f"[Suggestions Debug] Relationship goal contains 'all', skipping filter", file=sys.stderr)
-                else:
+                    else:
+                        relationship_goal_candidates = _expand_filter_aliases(
+                            relationship_goal_list, RELATIONSHIP_GOAL_FILTER_ALIASES
+                        )
                         # 複数の関係性目標に一致するユーザーを検索（looking_forは単一またはカンマ区切り複数、プライバシー考慮）
                         def _looking_for_matches(goal: str):
                             return or_(
@@ -915,11 +959,11 @@ async def get_user_suggestions(
                                 _looking_for_matches(goal),
                                 User.show_looking_for == True,
                             )
-                            for goal in relationship_goal_list
+                            for goal in relationship_goal_candidates
                         ]
                         filter_conditions.append(or_(*relationship_goal_conditions))
-                        logger.info(f"[Suggestions Debug] Relationship goal filter applied: {relationship_goal_list} (with privacy check)")
-                        print(f"[Suggestions Debug] Relationship goal filter applied: {relationship_goal_list} (with privacy check)", file=sys.stderr)
+                        logger.info(f"[Suggestions Debug] Relationship goal filter applied: {relationship_goal_candidates} (with privacy check)")
+                        print(f"[Suggestions Debug] Relationship goal filter applied: {relationship_goal_candidates} (with privacy check)", file=sys.stderr)
             
             # キャンパスフィルター（複数選択対応、プライバシー設定を考慮）
             if campus:
@@ -978,15 +1022,16 @@ async def get_user_suggestions(
                 sex_list = [s.strip() for s in sex.split(",") if s.strip()]
                 logger.info(f"[Suggestions Debug] Parsed sex list: {sex_list}")
                 if sex_list:
+                    sex_candidates = _expand_filter_aliases(sex_list, SEX_FILTER_ALIASES)
                     # プライバシー設定を考慮：show_genderがTrueのユーザーのみを対象
                     filter_conditions.append(
                         and_(
-                            User.gender.in_(sex_list),
+                            User.gender.in_(sex_candidates),
                             User.show_gender == True
                         )
                     )
-                    logger.info(f"[Suggestions Debug] Sex filter applied: {sex_list} (with privacy check)")
-                    print(f"[Suggestions Debug] Sex filter applied: {sex_list} (with privacy check)", file=sys.stderr)
+                    logger.info(f"[Suggestions Debug] Sex filter applied: {sex_candidates} (with privacy check)")
+                    print(f"[Suggestions Debug] Sex filter applied: {sex_candidates} (with privacy check)", file=sys.stderr)
             
             # 年齢フィルター（birthdayから年齢を計算）
             if age_min is not None or age_max is not None:
