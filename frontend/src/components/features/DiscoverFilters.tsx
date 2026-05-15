@@ -612,65 +612,7 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
           )}
         </div>
 
-        {/* タグ選択（検索フィルターとして最後に配置） */}
-        <div>
-          <label className="block text-sm text-neutral-600 mb-3">タグ</label>
-          <div className="relative" ref={tagPickerRef}>
-            <div
-              className="w-full p-4 bg-white border border-neutral-300 rounded-xl flex items-center justify-between cursor-pointer hover:bg-neutral-50"
-              onClick={() => setShowTagPicker(!showTagPicker)}
-            >
-              <span className="text-neutral-900">{getTagDisplayText()}</span>
-              <svg
-                className={`w-5 h-5 text-neutral-400 transition-transform ${showTagPicker ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </div>
-            {showTagPicker && (
-              <div className="absolute z-20 w-full mt-2 bg-white border border-neutral-300 rounded-xl shadow-lg max-h-60 overflow-y-auto">
-                <div className="p-3 space-y-2">
-                  {allTags.map((tag) => (
-                    <label
-                      key={tag.id}
-                      className="flex items-center space-x-3 cursor-pointer hover:bg-neutral-50 p-2 rounded"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={filters.tags?.includes(tag.name) || false}
-                        onChange={() => handleTagToggle(tag)}
-                        className="w-4 h-4 text-pink-500 border-neutral-300 rounded focus:ring-pink-500"
-                      />
-                      <span className="text-neutral-900">{tag.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-          {selectedTags.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {selectedTags.map((tag) => (
-                <span
-                  key={tag.id}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-pink-100 text-pink-700"
-                >
-                  {tag.name}
-                  <button
-                    type="button"
-                    onClick={() => handleTagToggle(tag)}
-                    className="ml-2 text-pink-700 hover:text-pink-900"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
+
       </div>
 
       {/* Continue ボタン */}

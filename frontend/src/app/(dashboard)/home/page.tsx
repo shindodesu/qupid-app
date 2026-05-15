@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { searchApi } from '@/lib/api/search'
 import { DiscoverUserGridCard } from '@/components/features/DiscoverUserGridCard'
@@ -15,8 +16,11 @@ import { ProfilePreviewModal, type ProfilePreviewData } from '@/components/featu
 import { getAvatarUrl } from '@/lib/utils/image'
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/ui/PageTransition'
 import { useTheme } from '@/hooks/useTheme'
+import { useUser } from '@/stores/auth'
 
 export default function DiscoverPage() {
+  const router = useRouter()
+  const user = useUser()
   const [processedUserIds, setProcessedUserIds] = useState<Set<number>>(new Set())
   const [showFilters, setShowFilters] = useState(false)
   const [showDownloadModal, setShowDownloadModal] = useState(false)
@@ -25,6 +29,29 @@ export default function DiscoverPage() {
   const [showSortMenu, setShowSortMenu] = useState(false)
   const sortMenuRef = useRef<HTMLDivElement>(null)
   const { toast, toasts, removeToast } = useToast()
+
+  // プロフィール未完了チェック
+  useEffect(() => {
+    if (user && user.profile_completed === false) {
+      console.log('[Home] Profile not completed, redirecting to initial-profile')
+      router.push('/initial-profile')
+    }
+  }, [user, router])
+
+  // 並び替えメニューの外側クリックで閉じる
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (sortMenuRef.current && !sortMenuRef.current.contains(event.target as Node)) {
+        setShowSortMenu(false)
+      }
+    }
+    if (showSortMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showSortMenu])
 
   // 並び替えメニューの外側クリックで閉じる
   useEffect(() => {

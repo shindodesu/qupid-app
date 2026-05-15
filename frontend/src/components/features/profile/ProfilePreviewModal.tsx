@@ -149,25 +149,7 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
           </div>
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-neutral-500">Tags</h3>
-            {profile.tags && profile.tags.length > 3 && (
-              <span className="text-xs font-medium text-primary-500">See all</span>
-            )}
-          </div>
-          {profile.tags && profile.tags.length > 0 ? (
-            <div className="flex flex-wrap gap-2">
-              {profile.tags.slice(0, 6).map((tag) => (
-                <Badge key={tag.id} variant="outline" className="border-neutral-200 bg-white text-neutral-700">
-                  {tag.name}
-                </Badge>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-neutral-500">タグはまだ設定されていません。</p>
-          )}
-        </div>
+
 
         {profile.gallery && profile.gallery.length > 0 && (
           <div className="space-y-3">

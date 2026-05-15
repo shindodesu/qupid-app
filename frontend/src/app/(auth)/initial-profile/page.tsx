@@ -16,13 +16,30 @@ export default function InitialProfilePage() {
   const { toast, toasts, removeToast } = useToast()
   const user = useUser()
   const isLoading = useAuthLoading()
-  const { updateUser } = useAuthStore()
+  const updateUser = useAuthStore(state => state.updateUser)
 
-  // プロフィールが既に完了している場合はホームへリダイレクト
+  // 認証チェックとリダイレクト
   useEffect(() => {
-    if (!isLoading && user?.profile_completed === true) {
+    if (isLoading) return
+
+    // 未認証の場合はログインページへリダイレクト
+    if (!user) {
+      console.log('[InitialProfile] Not authenticated, redirecting to login')
+      router.replace('/auth/login')
+      return
+    }
+
+    // プロフィールが既に完了している場合はホームへリダイレクト
+    if (user.profile_completed === true) {
       console.log('[InitialProfile] Profile already completed, redirecting to home')
       router.push('/home')
+      return
+    }
+
+    // 年齢確認が未完了の場合は確認待機ページへリダイレクト
+    if (user.age_verified === false) {
+      console.log('[InitialProfile] Age not verified, redirecting to age-verification-pending')
+      router.push('/age-verification-pending')
     }
   }, [user, isLoading, router])
   
@@ -130,10 +147,10 @@ export default function InitialProfilePage() {
         type: "success"
       })
       
-      // 状態更新後に心理的安全性の説明ページにリダイレクト
+      // 状態更新後にホームへリダイレクト
       setTimeout(() => {
-        console.log('[InitialProfile] Redirecting to safety intro...')
-        router.push('/safety-intro')
+        console.log('[InitialProfile] Redirecting to home...')
+        router.push('/home')
       }, 300)
     },
     onError: (error: any) => {

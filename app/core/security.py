@@ -78,10 +78,18 @@ def hash_password(password: str) -> str:
     Returns:
         ハッシュ化されたパスワード
     """
+    import logging
+    logger = logging.getLogger(__name__)
+    
     # bcryptは72バイトまでしか処理できないため、長いパスワードは切り詰める
-    if len(password.encode('utf-8')) > 72:
+    original_length = len(password.encode('utf-8'))
+    if original_length > 72:
         password = password[:72]
-    return pwd_context.hash(password)
+        logger.warning(f"[Password Debug] Password truncated from {original_length} to 72 bytes")
+    
+    hashed = pwd_context.hash(password)
+    logger.info(f"[Password Debug] Password hashed: original_length={original_length}, hash_length={len(hashed)}")
+    return hashed
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
@@ -96,10 +104,17 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
     # Noneまたは空文字列の場合はFalseを返す
     if not hashed_password or not plain_password:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"[Password Debug] Empty password or hash: plain_password={bool(plain_password)}, hashed_password={bool(hashed_password)}")
         return False
     
     try:
-        return pwd_context.verify(plain_password, hashed_password)
+        result = pwd_context.verify(plain_password, hashed_password)
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"[Password Debug] Verification result: {result}, plain_length={len(plain_password)}, hash_length={len(hashed_password)}")
+        return result
     except Exception as e:
         # bcryptエラーなどの予期しないエラーをキャッチ
         import logging

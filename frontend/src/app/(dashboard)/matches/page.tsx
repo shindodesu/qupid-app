@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -15,8 +15,11 @@ import { Badge } from '@/components/ui/Badge'
 import type { TagInfo } from '@/types/search'
 import { PageTransition } from '@/components/ui/PageTransition'
 import { useTheme } from '@/hooks/useTheme'
+import { useUser } from '@/stores/auth'
 
 export default function LikesPage() {
+  const router = useRouter()
+  const user = useUser()
   const [reportUserId, setReportUserId] = useState<number | null>(null)
   const [reportUserName, setReportUserName] = useState<string>('')
   const [blockUserId, setBlockUserId] = useState<number | null>(null)
@@ -34,6 +37,14 @@ export default function LikesPage() {
   const queryClient = useQueryClient()
   const router = useRouter()
   const theme = useTheme()
+
+  // プロフィール未完了チェック
+  useEffect(() => {
+    if (user && user.profile_completed === false) {
+      console.log('[Matches] Profile not completed, redirecting to initial-profile')
+      router.push('/initial-profile')
+    }
+  }, [user, router])
 
   // 受け取ったいいね一覧取得
   const { data: likesData, isLoading } = useQuery({

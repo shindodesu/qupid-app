@@ -34,7 +34,8 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = ""  # 本番環境で設定
     
     # CORS設定
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"  # カンマ区切り
+    # フロント側が開発時に 3001 番で起動することがあるため、localhost/127.0.0.1 の両方を許可する
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"  # カンマ区切り
 
     class Config:
         env_file = ".env"

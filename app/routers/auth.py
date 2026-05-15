@@ -18,6 +18,8 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/login")
 async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     """ログイン - パスワード認証"""
+    logger.info(f"[Login Debug] Login attempt for email: {payload.email}")
+    
     # パスワードが提供されていない場合はエラー
     if not payload.password:
         raise HTTPException(
@@ -27,6 +29,7 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     
     # 九州大学メールドメインの検証
     if settings.ALLOWED_EMAIL_DOMAIN and not payload.email.endswith(f"@{settings.ALLOWED_EMAIL_DOMAIN}"):
+        logger.warning(f"[Login Debug] Invalid email domain for: {payload.email}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"九州大学のメールアドレス（@{settings.ALLOWED_EMAIL_DOMAIN}）のみ登録できます"
@@ -37,20 +40,28 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     user = q.scalar_one_or_none()
     
     if not user:
+        logger.warning(f"[Login Debug] User not found for email: {payload.email}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="メールアドレスまたはパスワードが正しくありません"
         )
     
+    logger.info(f"[Login Debug] User found: id={user.id}, email={user.email}, has_password={bool(user.hashed_password)}")
+    
     # パスワードが設定されていない場合（古いデータなど）
     if not user.hashed_password:
+        logger.error(f"[Login Debug] User has no password set: id={user.id}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="メールアドレスまたはパスワードが正しくありません"
         )
     
     # パスワード検証
-    if not verify_password(payload.password, user.hashed_password):
+    password_valid = verify_password(payload.password, user.hashed_password)
+    logger.info(f"[Login Debug] Password verification result: {password_valid}")
+    
+    if not password_valid:
+        logger.warning(f"[Login Debug] Invalid password for user: id={user.id}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="メールアドレスまたはパスワードが正しくありません"
@@ -58,6 +69,7 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     
     # アカウントが無効化されている場合（is_activeがNoneの場合はTrueとして扱う）
     if user.is_active is False:
+        logger.warning(f"[Login Debug] User account is inactive: id={user.id}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="このアカウントは無効化されています"
@@ -66,6 +78,8 @@ async def login(payload: LoginRequest, db: AsyncSession = Depends(get_db)):
     try:
         token = create_access_token(sub=str(user.id))
         user_data = UserRead.model_validate(user)
+        
+        logger.info(f"[Login Debug] Login successful for user: id={user.id}")
         
         # フロントエンドが期待する形式で返却
         return {

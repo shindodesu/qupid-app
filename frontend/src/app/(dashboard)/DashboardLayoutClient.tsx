@@ -32,8 +32,15 @@ export default function DashboardLayoutClient({
       return
     }
     
-    // プロフィール未完了の場合は初期プロフィール設定へ
-    if (user && user.profile_completed === false) {
+    // 年齢確認が未完了の場合は学生証アップロードへ（管理者は除外）
+    if (user && user.age_verified === false && !user.is_admin) {
+      redirectingRef.current = true
+      router.replace('/student-id-upload')
+      return
+    }
+    
+    // プロフィール未完了の場合は初期プロフィール設定へ（管理者は除外）
+    if (user && user.profile_completed === false && !user.is_admin) {
       redirectingRef.current = true
       router.replace('/initial-profile')
     }
@@ -64,7 +71,7 @@ export default function DashboardLayoutClient({
   }
 
   // プロフィール未完了（リダイレクト待ち）
-  if (user && user.profile_completed === false) {
+  if (user && user.profile_completed === false && !user.is_admin) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">

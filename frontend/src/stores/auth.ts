@@ -15,6 +15,8 @@ export interface User {
   sexuality?: string
   looking_for?: string
   profile_completed?: boolean
+  age_verified?: boolean
+  age_verified_at?: string
   is_active?: boolean
   created_at?: string
 }
@@ -378,6 +380,7 @@ export const useAuthStore = create<AuthState>()(
                 headers: {
                   'Authorization': `Bearer ${token}`,
                 },
+                cache: 'no-store'
               })
               
               if (response.ok) {

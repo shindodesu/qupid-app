@@ -15,20 +15,33 @@ export default function AuthLayoutClient({
   const isLoading = useAuthLoading()
   const redirectingRef = useRef(false)
 
-  // 認証済みユーザーはホームにリダイレクト（initial-profileページを除く）
+  // 認証済みユーザーはホームにリダイレクト（オンボーディング関連ページを除く）
   useEffect(() => {
     // ローディング中または既にリダイレクト中は何もしない
     if (isLoading || redirectingRef.current) {
       return
     }
     
-    // initial-profileとsafety-introページは認証済みユーザーもアクセス可能
-    if (pathname === '/initial-profile' || pathname === '/safety-intro') {
+    // オンボーディング中に必要なページは認証済みユーザーもアクセス可能
+    const onboardingPaths = [
+      '/initial-profile',
+      '/safety-intro',
+      '/student-id-upload',
+      '/age-verification-pending',
+    ]
+    if (onboardingPaths.includes(pathname)) {
       return
     }
     
     // 認証済みの場合はホームへ
+    // ただし、ログインページ等での認証直後は、ページ側でのルーティング(router.push)を
+    // 優先させるため、AuthLayoutClient側での強制リダイレクトはスキップする
     if (isAuthenticated) {
+      const authPaths = ['/auth/login', '/auth/register', '/email-login']
+      if (authPaths.includes(pathname)) {
+        return
+      }
+
       redirectingRef.current = true
       router.replace('/home')
     }
@@ -46,8 +59,14 @@ export default function AuthLayoutClient({
     )
   }
 
-  // 認証済みかつinitial-profile/safety-introページでない場合はリダイレクト画面を表示
-  if (isAuthenticated && pathname !== '/initial-profile' && pathname !== '/safety-intro') {
+  // 認証済みかつオンボーディング関連ページでない場合はリダイレクト画面を表示
+  const onboardingPaths = [
+    '/initial-profile',
+    '/safety-intro',
+    '/student-id-upload',
+    '/age-verification-pending',
+  ]
+  if (isAuthenticated && !onboardingPaths.includes(pathname)) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-white">
         <div className="text-center">

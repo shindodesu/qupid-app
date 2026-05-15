@@ -87,6 +87,8 @@ def get_verification_email_text(verification_code: str, app_name: str = "Qupid")
 {app_name}へようこそ！
 
 以下の認証コードを入力してメールアドレスの確認を完了してください。
+この番号は人に見せないでください。
+また、心当たりがない場合は、このメールを削除してください。
 
 認証コード: {verification_code}
 

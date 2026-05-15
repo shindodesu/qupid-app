@@ -14,6 +14,8 @@ export type User = {
   sexuality?: string
   looking_for?: string
   profile_completed?: boolean
+  age_verified?: boolean
+  age_verified_at?: string
   is_active?: boolean
   created_at?: string
   updated_at?: string

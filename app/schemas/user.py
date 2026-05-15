@@ -27,7 +27,10 @@ class UserRead(BaseModel):
     sexuality: Optional[str] = None
     looking_for: Optional[str] = None
     profile_completed: Optional[bool] = False
+    age_verified: Optional[bool] = False
+    age_verified_at: Optional[datetime] = None
     is_active: Optional[bool] = True
+    is_admin: Optional[bool] = False
     created_at: Optional[datetime] = None
     
     # プライバシー設定

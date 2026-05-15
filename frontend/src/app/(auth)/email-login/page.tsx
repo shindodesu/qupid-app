@@ -135,10 +135,32 @@ export default function EmailLoginPage() {
         console.log('認証情報を保存しました: トークン、ユーザー情報')
       }
       
-      // プロフィール完了チェック
-      if (data.user.profile_completed) {
+      // 遷移判定
+      const isProfileCompleted = data.user && data.user.profile_completed === true
+      const isAgeVerified = data.user && data.user.age_verified === true
+      console.log('[EmailLogin] Profile completion check:', {
+        profile_completed: data.user?.profile_completed,
+        age_verified: data.user?.age_verified,
+        isProfileCompleted,
+        isAgeVerified,
+        isNewUser: data.is_new_user,
+        userId: data.user?.id
+      })
+      
+      // 新規ユーザーは必ず学生証アップロードへ
+      if (data.is_new_user) {
+        console.log('[EmailLogin] New user, redirecting to student-id-upload')
+        router.push('/student-id-upload')
+      } else if (!isAgeVerified) {
+        // 既存ユーザーでも年齢確認が終わっていない場合は学生証アップロードへ
+        // （既に提出済みの場合はアップロードAPIがpending/approvedを返す）
+        console.log('[EmailLogin] Existing user without age verification, redirecting to student-id-upload')
+        router.push('/student-id-upload')
+      } else if (isProfileCompleted) {
+        console.log('[EmailLogin] Existing user with profile completed, redirecting to home')
         router.push('/home')
       } else {
+        console.log('[EmailLogin] Existing user without profile, redirecting to initial-profile')
         router.push('/initial-profile')
       }
     },
