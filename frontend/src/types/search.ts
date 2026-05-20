@@ -84,8 +84,9 @@ export interface DiscoverFilters {
 // 検索フィルター
 export interface SearchFilters {
   tags?: string[]
-  faculty?: string
-  grade?: string
+  campus?: string[]
+  faculty?: string[]
+  grade?: string[]
   search?: string
   sort?: SortOrder
   limit?: number

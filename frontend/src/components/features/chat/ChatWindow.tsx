@@ -264,6 +264,10 @@ export function ChatWindow({ conversationId }: ChatWindowProps) {
                       src={otherUserAvatar}
                       alt={otherUserName}
                       className="h-full w-full object-cover"
+                      onError={(e) => {
+                        // 画像URLが無効/期限切れでもチャット画面を壊さない
+                        e.currentTarget.src = '/initial_icon.svg'
+                      }}
                     />
                   ) : (
                     <span className="text-lg font-semibold text-neutral-600">

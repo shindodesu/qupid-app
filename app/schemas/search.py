@@ -1,9 +1,10 @@
 # app/schemas/search.py
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import Optional, List
 from enum import Enum
+from app.schemas.avatar_utils import normalize_avatar_url
 
 
 class SortOrder(str, Enum):
@@ -42,6 +43,11 @@ class UserSearchResult(BaseModel):
     created_at: datetime
     like_status: LikeStatus
 
+    @field_validator("avatar_url", mode="before")
+    @classmethod
+    def validate_avatar_url(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_avatar_url(value)
+
     class Config:
         from_attributes = True
 
@@ -67,6 +73,11 @@ class UserSuggestion(BaseModel):
     match_score: float = Field(..., ge=0.0, le=1.0, description="マッチスコア（0.0～1.0）")
     reason: str = Field(..., description="おすすめ理由")
     has_received_like: bool = Field(default=False, description="すでにいいねをもらっているか")
+
+    @field_validator("avatar_url", mode="before")
+    @classmethod
+    def validate_avatar_url(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_avatar_url(value)
 
     class Config:
         from_attributes = True

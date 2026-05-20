@@ -83,7 +83,7 @@ const ProfilePreviewContent = ({ profile, isLoading, actions }: ProfilePreviewCo
                 profileAvatarUrl: profile.avatar_url,
               })
               // エラー時はデフォルト画像にフォールバック
-              e.currentTarget.src = '/initial_icon.png'
+              e.currentTarget.src = '/initial_icon.svg'
             }}
             onLoad={() => {
               console.log('[ProfilePreviewContent] Image loaded successfully:', heroImage)

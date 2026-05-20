@@ -304,7 +304,7 @@ export default function HomePage() {
               transition={{ delay: 0.4, duration: 0.6 }}
               className="text-xl text-neutral-700 mb-8 max-w-2xl mx-auto leading-relaxed"
             >
-              Qupidは、九州大学内のLGBTQ+当事者学生が、匿名で安心して恋人・友人とつながることを支援するマッチングアプリです。
+              {/* Qupidは、九州大学内のLGBTQ+当事者学生が、匿名で安心して恋人・友人とつながることを支援するマッチングアプリです。 */}
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -360,7 +360,7 @@ export default function HomePage() {
               Qupidの特徴
             </Heading>
             <Paragraph className="text-lg text-neutral-700 max-w-2xl mx-auto">
-              あなたの安心と安全を最優先に設計された機能
+              {/* あなたの安心と安全を最優先に設計された機能 */}
             </Paragraph>
           </motion.div>
 
@@ -380,13 +380,14 @@ export default function HomePage() {
                 gradient: 'from-[#FFE8E0] to-[#FFF4F0]',
                 iconBg: 'from-[#FF9A8B] to-[#FFB4A8]',
               },
-              {
-                icon: Sparkles,
-                title: 'タグベースマッチング',
-                description: '興味や価値観をタグで表現し、共通点のある人と自然に出会えます。',
-                gradient: 'from-[#FFF0E8] to-[#FFF8F5]',
-                iconBg: 'from-[#FFB4A8] to-[#FFC4B8]',
-              },
+              // タグ機能は一時停止中
+              // {
+              //   icon: Sparkles,
+              //   title: 'タグベースマッチング',
+              //   description: '興味や価値観をタグで表現し、共通点のある人と自然に出会えます。',
+              //   gradient: 'from-[#FFF0E8] to-[#FFF8F5]',
+              //   iconBg: 'from-[#FFB4A8] to-[#FFC4B8]',
+              // },
               {
                 icon: Heart,
                 title: 'いいね・マッチング',
@@ -448,7 +449,8 @@ export default function HomePage() {
                     </CardHeader>
                     <CardContent>
                       <CardDescription className="text-base text-neutral-700">
-                        {feature.description}
+                        {/* 説明文は一時停止中 */}
+                        {/* {feature.description} */}
                       </CardDescription>
                     </CardContent>
                     <motion.div
@@ -477,7 +479,7 @@ export default function HomePage() {
                 安全性への取り組み
               </Heading>
               <Paragraph className="text-lg text-neutral-700">
-                あなたの安心を最優先に考えたセーフティ機能
+                {/* あなたの安心を最優先に考えたセーフティ機能 */}
               </Paragraph>
             </motion.div>
 
@@ -512,7 +514,7 @@ export default function HomePage() {
                     </CardHeader>
                     <CardContent className="relative z-10">
                       <Paragraph className="text-neutral-700">
-                        不適切な行為や不快なユーザーを簡単に通報・ブロックできます。管理者が迅速に対応します。
+                        {/* 不適切な行為や不快なユーザーを簡単に通報・ブロックできます。管理者が迅速に対応します。 */}
                       </Paragraph>
                     </CardContent>
                   </Card>
@@ -549,7 +551,7 @@ export default function HomePage() {
                     </CardHeader>
                     <CardContent className="relative z-10">
                       <Paragraph className="text-neutral-700">
-                        九州大学の学生のみが参加できるクローズドなコミュニティ。同じキャンパスで安心して出会えます。
+                        {/* 九州大学の学生のみが参加できるクローズドなコミュニティ。同じキャンパスで安心して出会えます。 */}
                       </Paragraph>
                     </CardContent>
                   </Card>
@@ -633,7 +635,7 @@ export default function HomePage() {
               素敵な出会いを見つけましょう
             </motion.h2>
             <Paragraph className="text-xl text-white/90 mb-8 drop-shadow-md">
-              九州大学のLGBTQ+学生のための、安心・安全なマッチングアプリ
+              {/* 九州大学のLGBTQ+学生のための、安心・安全なマッチングアプリ */}
             </Paragraph>
             <Link href="/auth/register">
               <motion.div
@@ -677,7 +679,7 @@ export default function HomePage() {
                 </span>
               </div>
               <Paragraph className="text-sm text-neutral-400">
-                九州大学のLGBTQ+学生のためのマッチングアプリ
+                {/* 九州大学のLGBTQ+学生のためのマッチングアプリ */}
               </Paragraph>
             </motion.div>
             {[

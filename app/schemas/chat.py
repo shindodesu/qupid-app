@@ -1,9 +1,10 @@
 # app/schemas/chat.py
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from datetime import datetime
 from typing import Optional, List
 from app.models.enums import ConversationType, MessageType
+from app.schemas.avatar_utils import normalize_avatar_url
 
 
 class ConversationCreate(BaseModel):
@@ -28,6 +29,11 @@ class UserInfo(BaseModel):
     avatar_url: Optional[str] = None
     is_online: bool = Field(default=False, description="オンライン状態")
     last_seen_at: Optional[datetime] = Field(None, description="最終アクセス時刻")
+
+    @field_validator("avatar_url", mode="before")
+    @classmethod
+    def validate_avatar_url(cls, value: Optional[str]) -> Optional[str]:
+        return normalize_avatar_url(value)
 
     class Config:
         from_attributes = True

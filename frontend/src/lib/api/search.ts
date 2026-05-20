@@ -225,6 +225,13 @@ export const searchApi = {
     try {
       await apiClient.post('/skips', { skipped_user_id: userId })
     } catch (error: any) {
+      const message = String(error?.message || '')
+      const isAlreadySkipped =
+        message.includes('already skipped') || message.includes('既にスキップ')
+      if (isAlreadySkipped) {
+        // 二重送信や一覧反映遅延で同一ユーザーを再スキップした場合は成功扱いにする
+        return
+      }
       throw new SearchApiError(
         error.message || 'スキップの送信に失敗しました',
         error.status,
