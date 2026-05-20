@@ -581,7 +581,6 @@ export function DiscoverFilters({ filters, onFiltersChange, onApply, onClear }: 
           )}
         </div>
 
-        {/* タグ機能は一時停止中 */}
       </div>
 
       {/* Continue ボタン */}

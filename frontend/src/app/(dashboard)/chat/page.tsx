@@ -1,6 +1,8 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { chatApi } from '@/lib/api/chat'
@@ -9,9 +11,21 @@ import { Button } from '@/components/ui/Button'
 import { ConversationList } from '@/components/features/chat'
 import { PageTransition } from '@/components/ui/PageTransition'
 import { useTheme } from '@/hooks/useTheme'
+import { useUser } from '@/stores/auth'
 
 export default function ChatPage() {
+  const router = useRouter()
+  const user = useUser()
   const theme = useTheme()
+
+  // プロフィール未完了チェック
+  useEffect(() => {
+    if (user && user.profile_completed === false) {
+      console.log('[Chat] Profile not completed, redirecting to initial-profile')
+      router.push('/initial-profile')
+    }
+  }, [user, router])
+
   // 会話一覧取得
   const { data: conversationsData, isLoading, error } = useQuery({
     queryKey: ['conversations'],

@@ -1,7 +1,6 @@
 // カスタムService Worker for PWA
-const CACHE_NAME = 'qupid-pwa-v2'
+const CACHE_NAME = 'qupid-pwa-v3'
 const urlsToCache = [
-  '/',
   '/icon.png',
   '/apple-icon.png'
 ]
@@ -68,9 +67,23 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // HTMLドキュメント（ページ）は常にネットワークから取得（キャッシュしない）
-  if (event.request.destination === 'document' || 
-      event.request.headers.get('accept')?.includes('text/html')) {
+  // HTMLドキュメント・ページルートは常にネットワークから取得（キャッシュしない）
+  // - mode: 'navigate' : 通常のブラウザナビゲーション
+  // - destination: 'document' : 標準的なHTMLドキュメントリクエスト
+  // - accept: text/html : HTMLを期待するリクエスト
+  // - isPageRoute : Fast Refresh等のprogrammatic fetchでも拡張子なしパスはページとみなす
+  const isPageRoute =
+    url.origin === self.location.origin &&
+    !url.pathname.startsWith('/_next/') &&
+    !url.pathname.startsWith('/api/') &&
+    !url.pathname.startsWith('/__next') &&
+    !url.pathname.match(/\.\w+$/) && // 拡張子なし（.js .css .png 等を除外）
+    !url.search.includes('_rsc=')    // RSCペイロードは除外（Next.js内部）
+
+  if (event.request.mode === 'navigate' ||
+      event.request.destination === 'document' || 
+      event.request.headers.get('accept')?.includes('text/html') ||
+      isPageRoute) {
     console.log('Service Worker: HTML document, bypassing cache:', event.request.url)
     event.respondWith(
       fetch(event.request, {

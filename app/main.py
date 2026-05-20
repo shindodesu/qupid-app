@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
-from app.routers import health, users, auth, tags, chat, files, email_auth, ws
+from app.routers import health, users, auth, tags, chat, files, email_auth, ws, age_verification
 from app.routers.likes import router as likes_router, matches_router
 from app.routers.safety import reports_router, blocks_router, admin_router
 from app.routers.skips import router as skips_router
@@ -114,6 +114,7 @@ app.add_exception_handler(Exception, unhandled_exception_handler)
 app.include_router(health.router)
 app.include_router(auth.router)
 app.include_router(email_auth.router)
+app.include_router(age_verification.router)
 app.include_router(users.router)
 app.include_router(tags.router)
 app.include_router(likes_router)

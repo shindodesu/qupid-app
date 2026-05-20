@@ -155,13 +155,21 @@ class EmailService:
         
         # 開発環境またはメール送信が無効な場合はコンソールに出力
         if is_development or not self.enable_email:
-            # 開発環境ではコンソールに出力
+            # 開発環境ではコンソールに出力（メール全文を表示）
+            subject = f"{self.app_name} メール認証コード"
+            html_body = get_verification_email_html(verification_code, self.app_name)
+            text_body = get_verification_email_text(verification_code, self.app_name)
+            
             logger.info("=== メール認証コード (開発環境モード) ===")
             logger.info(f"ENABLE_EMAIL: {self.enable_email}")
             logger.info(f"APP_ENV: {app_settings.APP_ENV}")
             logger.info(f"is_development: {is_development}")
             logger.info(f"宛先: {email}")
-            logger.info(f"認証コード: {verification_code}")
+            logger.info(f"件名: {subject}")
+            logger.info("--- プレーンテキスト ---")
+            logger.info(text_body)
+            logger.info("--- HTML ---")
+            logger.info(html_body)
             logger.info("========================================")
             return True
 

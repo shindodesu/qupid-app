@@ -17,6 +17,18 @@ const PUBLIC_PAGES = [
 // 初回プロフィール入力ページ（認証必要）
 const INITIAL_PROFILE_ROUTE = '/initial-profile'
 
+// プロフィール未完了時にアクセス可能なページ
+const ALLOWED_WITHOUT_PROFILE = [
+  '/initial-profile',
+  '/profile',
+  '/privacy-settings',
+  '/safety',
+  '/help',
+  '/support',
+  '/terms',
+  '/privacy',
+]
+
 // 静的リソース（認証不要）
 const PUBLIC_RESOURCES = [
   '/manifest.webmanifest',
@@ -89,6 +101,9 @@ export function authMiddleware(request: NextRequest) {
 
   // 認証済みの場合は全てのページにアクセス可能
   console.log(`[Middleware] Authenticated, allowing access: ${pathname}`)
+  
+  // プロフィール未完了チェックは各ページのコンポーネントで行う
+  // ミドルウェアでは認証チェックのみ実施
   return NextResponse.next()
 }
 

@@ -34,7 +34,8 @@ class Settings(BaseSettings):
     SENTRY_DSN: str = ""  # 本番環境で設定
     
     # CORS設定
-    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000"  # カンマ区切り
+    # フロント側が開発時に 3001 番で起動することがあるため、localhost/127.0.0.1 の両方を許可する
+    CORS_ORIGINS: str = "http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001"  # カンマ区切り
 
     class Config:
         env_file = ".env"
@@ -63,7 +64,7 @@ class Settings(BaseSettings):
 
 settings = Settings()
 import sys
-print(f"✅ Loaded settings: APP_NAME={settings.APP_NAME}, APP_ENV={settings.APP_ENV}, ENABLE_EMAIL={settings.ENABLE_EMAIL}, SMTP_SERVER={settings.SMTP_SERVER}, SMTP_USERNAME={settings.SMTP_USERNAME}, ALLOWED_EMAIL_DOMAIN={settings.ALLOWED_EMAIL_DOMAIN}", file=sys.stderr)
-print(f"✅ Loaded settings: APP_NAME={settings.APP_NAME}, APP_ENV={settings.APP_ENV}, ENABLE_EMAIL={settings.ENABLE_EMAIL}, SMTP_SERVER={settings.SMTP_SERVER}, SMTP_USERNAME={settings.SMTP_USERNAME}, ALLOWED_EMAIL_DOMAIN={settings.ALLOWED_EMAIL_DOMAIN}")
-print(f"📋 CORS_ORIGINS={settings.CORS_ORIGINS}", file=sys.stderr)
-print(f"📋 CORS_ORIGINS={settings.CORS_ORIGINS}")
+print(f"[OK] Loaded settings: APP_NAME={settings.APP_NAME}, APP_ENV={settings.APP_ENV}, ENABLE_EMAIL={settings.ENABLE_EMAIL}, SMTP_SERVER={settings.SMTP_SERVER}, SMTP_USERNAME={settings.SMTP_USERNAME}, ALLOWED_EMAIL_DOMAIN={settings.ALLOWED_EMAIL_DOMAIN}", file=sys.stderr)
+print(f"[OK] Loaded settings: APP_NAME={settings.APP_NAME}, APP_ENV={settings.APP_ENV}, ENABLE_EMAIL={settings.ENABLE_EMAIL}, SMTP_SERVER={settings.SMTP_SERVER}, SMTP_USERNAME={settings.SMTP_USERNAME}, ALLOWED_EMAIL_DOMAIN={settings.ALLOWED_EMAIL_DOMAIN}")
+print(f"[INFO] CORS_ORIGINS={settings.CORS_ORIGINS}", file=sys.stderr)
+print(f"[INFO] CORS_ORIGINS={settings.CORS_ORIGINS}")

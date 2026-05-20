@@ -310,12 +310,15 @@ async def reset_password(
     db: AsyncSession = Depends(get_db)
 ):
     """パスワードをリセット"""
+    logger.info(f"[ResetPassword Debug] Reset password attempt for email: {request.email}")
+    
     email = request.email.lower()
     verification_code = request.verification_code
     new_password = request.new_password
     
     # 九州大学メールドメインの検証
     if settings.ALLOWED_EMAIL_DOMAIN and not email.endswith(f"@{settings.ALLOWED_EMAIL_DOMAIN}"):
+        logger.warning(f"[ResetPassword Debug] Invalid email domain for: {email}")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=f"九州大学のメールアドレス（@{settings.ALLOWED_EMAIL_DOMAIN}）のみ登録できます"
@@ -337,10 +340,13 @@ async def reset_password(
     verification = result.scalar_one_or_none()
     
     if not verification:
+        logger.warning(f"[ResetPassword Debug] Invalid or expired verification code for: {email}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="認証コードが無効または期限切れです"
         )
+    
+    logger.info(f"[ResetPassword Debug] Verification code valid for: {email}")
     
     # ユーザーを取得
     user_result = await db.execute(
@@ -349,27 +355,42 @@ async def reset_password(
     user = user_result.scalar_one_or_none()
     
     if not user:
+        logger.error(f"[ResetPassword Debug] User not found for email: {email}")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="ユーザーが見つかりません"
         )
     
+    logger.info(f"[ResetPassword Debug] User found: id={user.id}, email={user.email}")
+    
     # パスワード検証
     if len(new_password) < 8:
+        logger.warning(f"[ResetPassword Debug] Password too short for user: id={user.id}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="パスワードは8文字以上である必要があります"
         )
     
     # パスワードを更新
+    old_hash = user.hashed_password
     user.hashed_password = hash_password(new_password)
+    logger.info(f"[ResetPassword Debug] Password updated for user: id={user.id}, old_hash_length={len(old_hash) if old_hash else 0}, new_hash_length={len(user.hashed_password)}")
     
     # 認証コードを有効化
     verification.is_verified = True
     verification.user_id = user.id
     
     # コミット
-    await db.commit()
+    try:
+        await db.commit()
+        logger.info(f"[ResetPassword Debug] Password reset successful for user: id={user.id}")
+    except Exception as e:
+        logger.error(f"[ResetPassword Debug] Database commit failed for user: id={user.id}, error: {e}", exc_info=True)
+        await db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="パスワードのリセットに失敗しました"
+        )
     
     return ResetPasswordResponse(
         message="パスワードをリセットしました",

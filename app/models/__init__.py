@@ -6,6 +6,8 @@ from .message import Message
 from .report import Report
 from .block import Block
 from .skip import Skip
+from .email_verification import EmailVerification
+from .student_id_verification import StudentIdVerification
 
 __all__ = [
     "User",
@@ -18,4 +20,6 @@ __all__ = [
     "Report",
     "Block",
     "Skip",
+    "EmailVerification",
+    "StudentIdVerification",
 ]

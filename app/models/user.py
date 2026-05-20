@@ -38,6 +38,10 @@ class User(Base, TimestampMixin):
     # 初回プロフィール完了フラグ
     profile_completed: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
+    # 年齢確認フラグ（担当者による年齢確認済み）
+    age_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    age_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     # プライバシー設定（各項目の公開/非公開）
     show_campus: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     show_faculty: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
