@@ -81,6 +81,18 @@ export default function DashboardLayoutClient({
     )
   }
 
+  // 年齢確認未完了（リダイレクト待ち）— 学生証アップロードへ
+  if (user && user.age_verified === false && !user.is_admin) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500"></div>
+          <p className="mt-4 text-neutral-600">年齢確認へ移動中...</p>
+        </div>
+      </div>
+    )
+  }
+
   // プロフィール未完了（リダイレクト待ち）
   if (user && user.profile_completed === false && !user.is_admin) {
     return (
@@ -95,7 +107,7 @@ export default function DashboardLayoutClient({
 
 
 
-  // 認証済み＆プロフィール完了
+  // 認証済み＆年齢確認・プロフィール完了
   return (
     <ThemeProvider>
       <FilterProvider>

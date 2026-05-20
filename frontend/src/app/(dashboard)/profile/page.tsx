@@ -783,8 +783,6 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-        {/* タグ機能は一時停止中 */}
-
         {/* セーフティとテーマ設定 */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* セーフティ */}
