@@ -65,3 +65,5 @@ out/
 
 # Build outputs
 *.pyc
+
+app/schemas/__pycache__/
