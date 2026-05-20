@@ -4,6 +4,13 @@ from typing import Optional
 
 # === ユーザー向けスキーマ ===
 
+class VerificationCodeResponse(BaseModel):
+    """撮影用4桁認証コードのレスポンス"""
+    code: str  # 4桁の数字文字列
+    expires_at: datetime
+    expires_in_seconds: int  # 残り秒数
+
+
 class StudentIdUploadResponse(BaseModel):
     """学生証アップロード後のレスポンス"""
     id: int
@@ -34,6 +41,7 @@ class PendingVerificationResponse(BaseModel):
     user_id: int
     email: str
     image_url: Optional[str] = None
+    verification_code: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -56,6 +64,7 @@ class VerificationDetailResponse(BaseModel):
     user_id: int
     email: str
     image_url: Optional[str] = None
+    verification_code: Optional[str] = None
     status: str
     created_at: datetime
     approved_at: Optional[datetime] = None

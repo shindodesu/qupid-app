@@ -128,17 +128,20 @@ export default function HomePage() {
   }, [scrollY])
 
   useEffect(() => {
+    console.log('[HomePage] useEffect triggered:', { isAuthenticated, isLoading, hasRedirected: hasRedirected.current })
     // ローディング中はリダイレクトしない
     if (isLoading || hasRedirected.current) {
       return
     }
 
     // 認証状態が確定したらリダイレクト
-    hasRedirected.current = true
     if (isAuthenticated) {
+      console.log('[HomePage] Authenticated, triggering redirect to /home')
+      hasRedirected.current = true
       router.replace('/home')
+    } else {
+      console.log('[HomePage] Not authenticated, staying on landing page')
     }
-    // 未認証の場合はランディングページを表示（リダイレクトしない）
   }, [isAuthenticated, isLoading, router])
 
   // ローディング中または認証済みの場合はローディング表示

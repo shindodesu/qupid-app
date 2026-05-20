@@ -18,6 +18,7 @@ export interface User {
   age_verified?: boolean
   age_verified_at?: string
   is_active?: boolean
+  is_admin?: boolean
   created_at?: string
 }
 

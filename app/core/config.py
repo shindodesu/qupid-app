@@ -64,7 +64,7 @@ class Settings(BaseSettings):
 
 settings = Settings()
 import sys
-print(f"✅ Loaded settings: APP_NAME={settings.APP_NAME}, APP_ENV={settings.APP_ENV}, ENABLE_EMAIL={settings.ENABLE_EMAIL}, SMTP_SERVER={settings.SMTP_SERVER}, SMTP_USERNAME={settings.SMTP_USERNAME}, ALLOWED_EMAIL_DOMAIN={settings.ALLOWED_EMAIL_DOMAIN}", file=sys.stderr)
-print(f"✅ Loaded settings: APP_NAME={settings.APP_NAME}, APP_ENV={settings.APP_ENV}, ENABLE_EMAIL={settings.ENABLE_EMAIL}, SMTP_SERVER={settings.SMTP_SERVER}, SMTP_USERNAME={settings.SMTP_USERNAME}, ALLOWED_EMAIL_DOMAIN={settings.ALLOWED_EMAIL_DOMAIN}")
-print(f"📋 CORS_ORIGINS={settings.CORS_ORIGINS}", file=sys.stderr)
-print(f"📋 CORS_ORIGINS={settings.CORS_ORIGINS}")
+print(f"[OK] Loaded settings: APP_NAME={settings.APP_NAME}, APP_ENV={settings.APP_ENV}, ENABLE_EMAIL={settings.ENABLE_EMAIL}, SMTP_SERVER={settings.SMTP_SERVER}, SMTP_USERNAME={settings.SMTP_USERNAME}, ALLOWED_EMAIL_DOMAIN={settings.ALLOWED_EMAIL_DOMAIN}", file=sys.stderr)
+print(f"[OK] Loaded settings: APP_NAME={settings.APP_NAME}, APP_ENV={settings.APP_ENV}, ENABLE_EMAIL={settings.ENABLE_EMAIL}, SMTP_SERVER={settings.SMTP_SERVER}, SMTP_USERNAME={settings.SMTP_USERNAME}, ALLOWED_EMAIL_DOMAIN={settings.ALLOWED_EMAIL_DOMAIN}")
+print(f"[INFO] CORS_ORIGINS={settings.CORS_ORIGINS}", file=sys.stderr)
+print(f"[INFO] CORS_ORIGINS={settings.CORS_ORIGINS}")

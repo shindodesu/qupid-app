@@ -20,7 +20,7 @@ class AgeVerificationService:
 
     @staticmethod
     async def upload_student_id(
-        db: AsyncSession, user_id: int, email: str, image_file: UploadFile
+        db: AsyncSession, user_id: int, email: str, image_file: UploadFile, verification_code: str | None = None
     ) -> StudentIdVerification:
         """
         学生証画像をアップロード
@@ -48,6 +48,7 @@ class AgeVerificationService:
             user_id=user_id,
             email=email,
             image_url=file_path,
+            verification_code=verification_code,
             status="pending",
         )
         db.add(verification)

@@ -20,6 +20,14 @@ export default function DashboardLayoutClient({
 
   // 認証チェック（ローディング完了後のみ、リダイレクト防止機能付き）
   useEffect(() => {
+    console.log('[DashboardLayoutClient] useEffect triggered:', { 
+      isAuthenticated, 
+      isLoading, 
+      userId: user?.id, 
+      is_admin: user?.is_admin, 
+      pathname: typeof window !== 'undefined' ? window.location.pathname : '' 
+    })
+    
     // ローディング中または既にリダイレクト中は何もしない
     if (isLoading || redirectingRef.current) {
       return
@@ -27,6 +35,7 @@ export default function DashboardLayoutClient({
     
     // 未認証の場合はログインページへ
     if (!isAuthenticated) {
+      console.log('[DashboardLayoutClient] Not authenticated, redirecting to login')
       redirectingRef.current = true
       router.replace('/auth/login')
       return
@@ -34,6 +43,7 @@ export default function DashboardLayoutClient({
     
     // 年齢確認が未完了の場合は学生証アップロードへ（管理者は除外）
     if (user && user.age_verified === false && !user.is_admin) {
+      console.log('[DashboardLayoutClient] Age not verified, redirecting to student-id-upload')
       redirectingRef.current = true
       router.replace('/student-id-upload')
       return
@@ -41,6 +51,7 @@ export default function DashboardLayoutClient({
     
     // プロフィール未完了の場合は初期プロフィール設定へ（管理者は除外）
     if (user && user.profile_completed === false && !user.is_admin) {
+      console.log('[DashboardLayoutClient] Profile not completed, redirecting to initial-profile')
       redirectingRef.current = true
       router.replace('/initial-profile')
     }
@@ -81,6 +92,8 @@ export default function DashboardLayoutClient({
       </div>
     )
   }
+
+
 
   // 認証済み＆プロフィール完了
   return (

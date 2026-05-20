@@ -1,4 +1,6 @@
 import logging
+import random
+from datetime import datetime, timezone, timedelta
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -13,15 +15,74 @@ from app.schemas.age_verification import (
     ApproveVerificationRequest,
     RejectVerificationRequest,
     VerificationDetailResponse,
+    VerificationCodeResponse,
 )
 from app.services.age_verification_service import age_verification_service
 
 logger = logging.getLogger(__name__)
 
+# 撮影用認証コードのインメモリストア: { user_id: (code, expires_at) }
+_verification_code_store: dict[int, tuple[str, datetime]] = {}
+CODE_EXPIRY_MINUTES = 10
+
 router = APIRouter(prefix="/age-verification", tags=["age-verification"])
 
 
 # === ユーザー向けエンドポイント ===
+
+
+@router.post("/verification-code", response_model=VerificationCodeResponse)
+async def issue_verification_code(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    撮影用4桁認証コードを発行（または再発行）する。
+
+    - 認証済みユーザーのみ
+    - コードは10分間有効
+    - 再呼び出しで新しいコードを発行する
+    """
+    code = "{:04d}".format(random.randint(0, 9999))
+    expires_at = datetime.now(timezone.utc) + timedelta(minutes=CODE_EXPIRY_MINUTES)
+    _verification_code_store[current_user.id] = (code, expires_at)
+
+    logger.info(f"[AgeVerification] Code issued: user_id={current_user.id}, expires_at={expires_at}")
+
+    return VerificationCodeResponse(
+        code=code,
+        expires_at=expires_at,
+        expires_in_seconds=CODE_EXPIRY_MINUTES * 60,
+    )
+
+
+@router.get("/verification-code", response_model=VerificationCodeResponse)
+async def get_verification_code(
+    current_user: User = Depends(get_current_user),
+):
+    """
+    現在の撮影用認証コードを取得する。
+
+    - 有効なコードがなければ自動的に新規発行する
+    """
+    entry = _verification_code_store.get(current_user.id)
+    now = datetime.now(timezone.utc)
+
+    if entry is None or entry[1] <= now:
+        # コードが存在しないか期限切れ → 新規発行
+        code = "{:04d}".format(random.randint(0, 9999))
+        expires_at = now + timedelta(minutes=CODE_EXPIRY_MINUTES)
+        _verification_code_store[current_user.id] = (code, expires_at)
+        logger.info(f"[AgeVerification] Code auto-issued: user_id={current_user.id}")
+    else:
+        code, expires_at = entry
+
+    remaining_seconds = max(0, int((expires_at - now).total_seconds()))
+
+    return VerificationCodeResponse(
+        code=code,
+        expires_at=expires_at,
+        expires_in_seconds=remaining_seconds,
+    )
 
 
 @router.post("/upload", response_model=StudentIdUploadResponse)
@@ -39,8 +100,20 @@ async def upload_student_id(
     logger.info(f"[AgeVerification] Upload started: user_id={current_user.id}, email={current_user.email}")
 
     try:
+        # 現在の認証コードを取得（有効期限内であれば）
+        code_entry = _verification_code_store.get(current_user.id)
+        current_code = None
+        if code_entry:
+            code, expires_at = code_entry
+            if expires_at > datetime.now(timezone.utc):
+                current_code = code
+
         verification = await age_verification_service.upload_student_id(
-            db=db, user_id=current_user.id, email=current_user.email, image_file=file
+            db=db, 
+            user_id=current_user.id, 
+            email=current_user.email, 
+            image_file=file,
+            verification_code=current_code
         )
         return StudentIdUploadResponse.from_orm(verification)
     except HTTPException:

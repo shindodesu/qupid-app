@@ -13,6 +13,7 @@ interface PendingVerification {
   user_id: number
   email: string
   image_url: string
+  verification_code: string | null
   created_at: string
 }
 
@@ -95,6 +96,7 @@ export default function AgeVerificationsPage() {
                   <tr>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-neutral-700">ID</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-neutral-700">メールアドレス</th>
+                    <th className="px-6 py-3 text-left text-sm font-semibold text-neutral-700">認証コード</th>
                     <th className="px-6 py-3 text-left text-sm font-semibold text-neutral-700">アップロード日時</th>
                     <th className="px-6 py-3 text-right text-sm font-semibold text-neutral-700">操作</th>
                   </tr>
@@ -104,6 +106,9 @@ export default function AgeVerificationsPage() {
                     <tr key={verification.id} className="hover:bg-neutral-50 transition">
                       <td className="px-6 py-4 text-sm text-neutral-900">#{verification.id}</td>
                       <td className="px-6 py-4 text-sm text-neutral-900">{verification.email}</td>
+                      <td className="px-6 py-4 text-sm font-mono font-bold text-pink-600">
+                        {verification.verification_code || '---'}
+                      </td>
                       <td className="px-6 py-4 text-sm text-neutral-600">
                         {new Date(verification.created_at).toLocaleString('ja-JP')}
                       </td>

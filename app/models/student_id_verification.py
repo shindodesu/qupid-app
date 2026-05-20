@@ -19,6 +19,9 @@ class StudentIdVerification(Base, TimestampMixin):
     # ステータス: pending / approved / rejected
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)
     
+    # 撮影時に表示されていた認証コード
+    verification_code: Mapped[str | None] = mapped_column(String(10), nullable=True)
+    
     # 却下理由
     rejection_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
     

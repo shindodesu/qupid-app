@@ -14,6 +14,7 @@ interface VerificationDetail {
   user_id: number
   email: string
   image_url: string
+  verification_code: string | null
   status: string
   created_at: string
   approved_at: string | null
@@ -216,6 +217,25 @@ export default function VerificationDetailPage() {
 
           {/* 情報パネル */}
           <div className="space-y-4">
+            {/* 認証コード表示 (重要) */}
+            <div className="bg-pink-50 rounded-lg border-2 border-pink-200 p-4 shadow-sm">
+              <h3 className="font-bold text-pink-900 mb-2 flex items-center gap-2">
+                <span className="text-xl">📝</span> 手描き認証コード
+              </h3>
+              <div className="text-center py-4 bg-white rounded border border-pink-100">
+                {verification.verification_code ? (
+                  <p className="text-5xl font-black tracking-widest text-pink-600">
+                    {verification.verification_code}
+                  </p>
+                ) : (
+                  <p className="text-neutral-400 italic text-sm">コード未記録</p>
+                )}
+              </div>
+              <p className="text-[10px] text-pink-700 mt-2 text-center">
+                ※写真内にこの数字が手書きされているか確認してください
+              </p>
+            </div>
+
             {/* ユーザー情報 */}
             <div className="bg-white rounded-lg border border-neutral-200 p-4">
               <h3 className="font-semibold text-neutral-900 mb-3">ユーザー情報</h3>
